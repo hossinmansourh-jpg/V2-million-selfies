@@ -3,14 +3,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebas
 import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 // ===== إعدادات Firebase =====
-// ⚠️ استبدل هذا الجزء بالكود الذي نسخته من Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDeNKi4mjxT8ADaDRSwa8HriyL...",
+  apiKey: "AIzaSyDeNKi4mjxT8ADaDRSwa8Hriyl_ocC315A",
   authDomain: "v2-million-selfies.firebaseapp.com",
   projectId: "v2-million-selfies",
   storageBucket: "v2-million-selfies.firebasestorage.app",
   messagingSenderId: "853762238562",
-  appId: "1:853762238562:web:b613fe254d79b..."
+  appId: "1:853762238562:web:b613fe254d79b4afb6c93b"
 };
 
 // Initialize Firebase
