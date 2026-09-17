@@ -1,0 +1,465 @@
+/* ===== المتغيرات ===== */
+:root {
+  --bg-dark: #0a0a0f;
+  --bg-gray: #14141c;
+  --bg-light: #2a2a35;
+  --gold: #d4a017;
+  --gold-light: #f5b301;
+  --blue: #4a9eff;
+  --green: #3a9a3a;
+  --red: #9a3a3a;
+  --text: #ffffff;
+  --text-muted: #a0a0b0;
+}
+
+/* ===== الأساسيات ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== الشريط العلوي ===== */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg-gray);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+  border-bottom: 2px solid var(--gold);
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.lang-btn {
+  background: var(--gold);
+  color: var(--bg-dark);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.lang-btn:hover {
+  background: var(--gold-light);
+}
+
+/* ===== القسم الرئيسي ===== */
+.hero {
+  margin-top: 80px;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.hero h1 {
+  font-size: 36px;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.hero p {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+/* ===== الإحصائيات ===== */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: var(--bg-gray);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  padding: 20px 30px;
+  text-align: center;
+  min-width: 150px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--gold-light);
+}
+
+.stat-label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+/* ===== شريط التقدم ===== */
+.progress-section {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.progress-bar {
+  height: 20px;
+  background: var(--bg-light);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width 0.5s ease;
+}
+
+.progress-text {
+  text-align: center;
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ===== أدوات التحكم ===== */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px;
+}
+
+.ctrl-btn {
+  background: var(--bg-gray);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.ctrl-btn:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+}
+
+/* ===== الشبكة ===== */
+.grid-container {
+  width: 100%;
+  height: 70vh;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-dark);
+  border-top: 1px solid var(--bg-light);
+  border-bottom: 1px solid var(--bg-light);
+}
+
+#gridCanvas {
+  display: block;
+  cursor: crosshair;
+}
+
+/* ===== أزرار التواصل والإدارة ===== */
+.floating-buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 999;
+}
+
+.contact-btn,
+.admin-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  text-decoration: none;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.contact-btn:hover,
+.admin-btn:hover {
+  transform: scale(1.1);
+}
+
+.whatsapp {
+  background: #25D366;
+}
+
+.whatsapp:hover {
+  background: #1ebe5b;
+}
+
+.telegram {
+  background: #0088cc;
+}
+
+.telegram:hover {
+  background: #0077b3;
+}
+
+.admin-btn {
+  background: var(--gold);
+}
+
+.admin-btn:hover {
+  background: var(--gold-light);
+}
+
+/* ===== النافذة المنبثقة (Modal) ===== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--bg-gray);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: var(--red);
+  color: white;
+  border: none;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modal-content h2 {
+  color: var(--gold);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* ===== النماذج ===== */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-light);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-group input {
+  width: auto;
+}
+
+/* ===== معلومات الدفع ===== */
+.payment-info {
+  background: var(--bg-dark);
+  border: 1px dashed var(--gold);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.payment-info img {
+  max-width: 200px;
+  margin: 10px auto;
+  display: block;
+}
+
+/* ===== صندوق الشروط ===== */
+.terms-box {
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-light);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+.terms-box h4 {
+  color: var(--gold);
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.terms-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.terms-list li {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--bg-light);
+}
+
+.terms-list li:last-child {
+  border-bottom: none;
+}
+
+/* ===== ملاحظة استرجاع المال ===== */
+.refund-notice {
+  background: rgba(212, 160, 23, 0.1);
+  border-right: 3px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin: 15px 0;
+}
+
+.refund-notice p {
+  color: var(--gold-light);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ===== السعر ===== */
+.price-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--gold-light);
+}
+
+/* ===== زر الإرسال ===== */
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--gold);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit-btn:hover {
+  background: var(--gold-light);
+}
+
+.submit-btn:disabled {
+  background: var(--bg-light);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.form-message {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.form-message.success {
+  color: var(--green);
+}
+
+.form-message.error {
+  color: var(--red);
+}
+
+/* ===== الهاتف ===== */
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 24px;
+  }
+  
+  .stat-card {
+    min-width: 100px;
+    padding: 15px;
+  }
+  
+  .stat-value {
+    font-size: 22px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+  }
+}
