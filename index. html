@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>جدارية مليون صورة سيلفي</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- الشريط العلوي -->
+  <header class="topbar">
+    <div class="logo">🎨 جدارية المليون</div>
+    <button id="langToggle" class="lang-btn">EN</button>
+  </header>
+
+  <!-- العنوان الرئيسي -->
+  <section class="hero">
+    <h1 data-i18n="heroTitle">جدارية مليون صورة سيلفي</h1>
+    <p data-i18n="heroSubtitle">احجز مربعك الآن وكن جزءاً من التاريخ</p>
+  </section>
+
+  <!-- الإحصائيات -->
+  <section class="stats">
+    <div class="stat-card">
+      <span class="stat-value" id="statBooked">0</span>
+      <span class="stat-label" data-i18n="statBooked">مربع محجوز</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value" id="statAvailable">1,000,000</span>
+      <span class="stat-label" data-i18n="statAvailable">مربع متبقٍ</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value" id="statSelfies">0</span>
+      <span class="stat-label" data-i18n="statSelfies">صورة سيلفي</span>
+    </div>
+  </section>
+
+  <!-- شريط التقدم -->
+  <section class="progress-section">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <p class="progress-text" id="progressText">0% مكتمل</p>
+  </section>
+
+  <!-- أدوات التحكم -->
+  <section class="controls">
+    <button id="zoomIn" class="ctrl-btn">🔍+</button>
+    <button id="zoomOut" class="ctrl-btn">🔍-</button>
+    <button id="resetView" class="ctrl-btn">↺</button>
+  </section>
+
+  <!-- الشبكة (Canvas) -->
+  <section class="grid-container">
+    <canvas id="gridCanvas"></canvas>
+  </section>
+
+  <!-- أزرار التواصل والإدارة -->
+  <div class="floating-buttons">
+    <a href="https://wa.me/963991269367" class="contact-btn whatsapp" title="تواصل معنا واتساب" target="_blank">💬</a>
+    <a href="https://t.me/Hossinn11" class="contact-btn telegram" title="تواصل معنا تيليجرام" target="_blank">✈️</a>
+    <a href="hossin.html" class="admin-btn" title="لوحة الإدارة">🔒</a>
+  </div>
+
+  <!-- نموذج الحجز (Modal) -->
+  <div id="bookingModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">✕</button>
+      <h2 data-i18n="bookingTitle">حجز المربعات</h2>
+      
+      <div class="form-group">
+        <label data-i18n="quantityLabel">عدد المربعات (1-400)</label>
+        <input type="number" id="quantityInput" min="1" max="400" value="1">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="nameLabel">الاسم</label>
+        <input type="text" id="nameInput" placeholder="اسمك">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="phoneLabel">رقم الهاتف (اختياري)</label>
+        <input type="tel" id="phoneInput" placeholder="+963...">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="linkLabel">رابط حسابك (اختياري)</label>
+        <input type="url" id="linkInput" placeholder="https://...">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="noteLabel">ملاحظة (اختياري)</label>
+        <textarea id="noteInput" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="selfieLabel">صورة السيلفي</label>
+        <input type="file" id="selfieInput" 
+               accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="receiptLabel">إيصال الدفع</label>
+        <input type="file" id="receiptInput" 
+               accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="paymentLabel">طريقة الدفع</label>
+        <select id="paymentMethod">
+          <option value="chamacash">شام كاش</option>
+          <option value="usdt">USDT (TRC20)</option>
+        </select>
+      </div>
+
+      <!-- معلومات الدفع -->
+      <div id="paymentInfo" class="payment-info"></div>
+
+      <!-- الشروط والأحكام -->
+      <div class="terms-box">
+        <h4 data-i18n="termsTitle">📋 الشروط والأحكام</h4>
+        <ul class="terms-list">
+          <li data-i18n="term1">• يجب أن تكون الصورة سيلفي شخصية وحقيقية.</li>
+          <li data-i18n="term2">• يُمنع رفع صور مخالفة للقوانين أو الآداب العامة.</li>
+          <li data-i18n="term3">• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.</li>
+          <li data-i18n="term4">• مدة معالجة الطلب: 24-48 ساعة.</li>
+        </ul>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="termsCheck">
+        <label for="termsCheck" data-i18n="termsLabel">أوافق على الشروط والأحكام</label>
+      </div>
+
+      <!-- ملاحظة استرجاع المال -->
+      <div class="refund-notice">
+        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.</p>
+      </div>
+
+      <div class="price-display">
+        <span data-i18n="totalLabel">الإجمالي:</span>
+        <span id="totalPrice">1 $</span>
+      </div>
+
+      <button id="submitBooking" class="submit-btn" data-i18n="submitBtn">إرسال الطلب</button>
+      <p id="formMessage" class="form-message"></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
