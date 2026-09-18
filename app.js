@@ -65,26 +65,63 @@ function drawGrid() {
 
   drawBookings();
 
-  // رسم مؤشر الخلية
+  // ===== رسم مؤشر الخلية =====
   if (hoveredCell && !isDragging && !inertiaFrame) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
 
-    // تعبئة خفيفة
     ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
     ctx.fillRect(px, py, CELL_PIXEL_SIZE * selectedQuantity, CELL_PIXEL_SIZE);
 
-    // إطار ذهبي متوهج
     ctx.strokeStyle = '#f5b301';
     ctx.lineWidth = 2;
     ctx.shadowColor = '#f5b301';
     ctx.shadowBlur = 12;
     ctx.strokeRect(px + 1, py + 1, CELL_PIXEL_SIZE * selectedQuantity - 2, CELL_PIXEL_SIZE - 2);
 
-    // إعادة تعيين الظل
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
   }
+
+  // ===== رسم أشرطة التمرير =====
+  drawScrollbars();
+}
+
+// ===== رسم أشرطة التمرير =====
+function drawScrollbars() {
+  const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
+  const totalHeight = GRID_SIZE * CELL_PIXEL_SIZE;
+
+  const scrollbarThickness = 8;
+  const scrollbarMargin = 4;
+  const scrollbarColor = 'rgba(212, 160, 23, 0.7)';
+  const scrollbarBgColor = 'rgba(42, 42, 53, 0.8)';
+
+  // شريط التمرير العمودي (على اليمين)
+  const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
+  const vTrackY = scrollbarMargin;
+  const vTrackHeight = canvas.height - (scrollbarMargin * 2);
+
+  ctx.fillStyle = scrollbarBgColor;
+  ctx.fillRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight);
+
+  const vHandleHeight = Math.max(30, (canvas.height / totalHeight) * vTrackHeight);
+  const vHandleY = vTrackY + (offsetY / totalHeight) * vTrackHeight;
+  ctx.fillStyle = scrollbarColor;
+  ctx.fillRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight);
+
+  // شريط التمرير الأفقي (في الأسفل)
+  const hTrackX = scrollbarMargin;
+  const hTrackY = canvas.height - scrollbarThickness - scrollbarMargin;
+  const hTrackWidth = canvas.width - (scrollbarMargin * 2);
+
+  ctx.fillStyle = scrollbarBgColor;
+  ctx.fillRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness);
+
+  const hHandleWidth = Math.max(30, (canvas.width / totalWidth) * hTrackWidth);
+  const hHandleX = hTrackX + (offsetX / totalWidth) * hTrackWidth;
+  ctx.fillStyle = scrollbarColor;
+  ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
 // ===== رسم الحجوزات =====
@@ -282,7 +319,6 @@ canvas.addEventListener('touchstart', (e) => {
     velocityX = 0;
     velocityY = 0;
 
-    // عرض مؤشر الخلية عند اللمس
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
     const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
