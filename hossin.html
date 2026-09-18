@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الإدارة - جدارية المليون</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #0a0a0f;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .login-box {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #14141c;
+      border: 2px solid #d4a017;
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .login-box h1 {
+      color: #d4a017;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 900;
+      margin-bottom: 25px;
+      font-size: 24px;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 14px;
+      background: #0a0a0f;
+      border: 1px solid #2a2a35;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      font-family: 'Cairo', sans-serif;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .login-box input:focus {
+      outline: none;
+      border-color: #d4a017;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: #d4a017;
+      color: #0a0a0f;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.3s;
+    }
+    .login-btn:hover {
+      background: #f5b301;
+    }
+    .login-btn:disabled {
+      background: #2a2a35;
+      color: #a0a0b0;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      color: #9a3a3a;
+      font-size: 14px;
+      margin-top: 10px;
+      font-weight: 700;
+    }
+    .admin-panel {
+      max-width: 900px;
+      margin: 0 auto;
+      display: none;
+    }
+    .admin-panel.active {
+      display: block;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #14141c;
+      border: 2px solid #d4a017;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .admin-header h1 {
+      color: #d4a017;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+    }
+    .logout-btn {
+      background: #9a3a3a;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: #14141c;
+      border: 1px solid #2a2a35;
+      border-top: 3px solid #d4a017;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    .stat-box .num {
+      display: block;
+      font-size: 24px;
+      font-weight: 900;
+      color: #f5b301;
+      font-family: 'Cairo', sans-serif;
+    }
+    .stat-box .lbl {
+      display: block;
+      font-size: 12px;
+      color: #a0a0b0;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: #14141c;
+      color: #a0a0b0;
+      border: 1px solid #2a2a35;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+    }
+    .tab-btn.active {
+      background: #d4a017;
+      color: #0a0a0f;
+      border-color: #d4a017;
+    }
+    .search-box {
+      width: 100%;
+      padding: 12px 15px;
+      background: #14141c;
+      border: 1px solid #2a2a35;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+    .search-box:focus {
+      outline: none;
+      border-color: #d4a017;
+    }
+    .booking-card {
+      background: #14141c;
+      border: 1px solid #2a2a35;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .booking-card img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #2a2a35;
+    }
+    .booking-info {
+      flex: 1;
+      min-width: 200px;
+    }
+    .booking-info p {
+      color: #a0a0b0;
+      font-size: 14px;
+      margin-bottom: 6px;
+      font-family: 'Cairo', sans-serif;
+    }
+    .booking-info p strong {
+      color: #fff;
+    }
+    .booking-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      color: white;
+    }
+    .approve-btn { background: #3a9a3a; }
+    .reject-btn { background: #9a3a3a; }
+    .delete-btn { background: #555; }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    }
+    .status-pending { background: #8a6a1a; color: #fff; }
+    .status-approved { background: #3a9a3a; color: #fff; }
+    .status-rejected { background: #9a3a3a; color: #fff; }
+    .empty-msg {
+      text-align: center;
+      color: #a0a0b0;
+      padding: 40px;
+      font-family: 'Cairo', sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- شاشة تسجيل الدخول -->
+  <div class="login-box" id="loginBox">
+    <h1>🔒 لوحة الإدارة</h1>
+    <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" />
+    <button class="login-btn" id="loginBtn">دخول</button>
+    <p class="error-msg" id="errorMsg"></p>
+  </div>
+
+  <!-- لوحة الإدارة -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-header">
+      <h1>لوحة الإدارة</h1>
+      <button class="logout-btn" id="logoutBtn">خروج</button>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="stats-grid">
+      <div class="stat-box"><span class="num" id="totalVisits">0</span><span class="lbl">إجمالي الزوار</span></div>
+      <div class="stat-box"><span class="num" id="todayVisits">0</span><span class="lbl">زوار اليوم</span></div>
+      <div class="stat-box"><span class="num" id="totalBookings">0</span><span class="lbl">إجمالي الطلبات</span></div>
+      <div class="stat-box"><span class="num" id="pendingCount">0</span><span class="lbl">معلقة</span></div>
+      <div class="stat-box"><span class="num" id="approvedCount">0</span><span class="lbl">مقبولة</span></div>
+      <div class="stat-box"><span class="num" id="rejectedCount">0</span><span class="lbl">مرفوضة</span></div>
+    </div>
+
+    <!-- التبويبات -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="pending">معلقة</button>
+      <button class="tab-btn" data-tab="approved">مقبولة</button>
+      <button class="tab-btn" data-tab="rejected">مرفوضة</button>
+      <button class="tab-btn" data-tab="all">الكل</button>
+    </div>
+
+    <!-- البحث -->
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 ابحث بالاسم أو الهاتف أو رقم المربع..." />
+
+    <!-- الطلبات -->
+    <div id="bookingsList"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDeNKi4mjxT8ADaDRSwa8Hriyl_ocC315A",
+      authDomain: "v2-million-selfies.firebaseapp.com",
+      projectId: "v2-million-selfies",
+      storageBucket: "v2-million-selfies.firebasestorage.app",
+      messagingSenderId: "853762238562",
+      appId: "1:853762238562:web:b613fe254d79b4afb6c93b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const ADMIN_EMAIL = "hossinmansourh@gmail.com";
+
+    let allBookings = [];
+    let currentTab = 'pending';
+    let searchQuery = '';
+
+    // ===== تسجيل الدخول =====
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const password = document.getElementById('passwordInput').value;
+      const errMsg = document.getElementById('errorMsg');
+      const btn = document.getElementById('loginBtn');
+
+      if (!password) {
+        errMsg.textContent = 'أدخل كلمة المرور';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'جاري الدخول...';
+
+      try {
+        await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
+        errMsg.textContent = '';
+      } catch (error) {
+        console.error(error);
+        errMsg.textContent = '❌ كلمة المرور غير صحيحة';
+        btn.disabled = false;
+        btn.textContent = 'دخول';
+      }
+    });
+
+    // ===== مراقبة حالة الدخول =====
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('adminPanel').classList.add('active');
+        loadAllData();
+        setInterval(loadAllData, 30000);
+      } else {
+        document.getElementById('loginBox').style.display = 'block';
+        document.getElementById('adminPanel').classList.remove('active');
+        document.getElementById('loginBtn').disabled = false;
+        document.getElementById('loginBtn').textContent = 'دخول';
+      }
+    });
+
+    // ===== الخروج =====
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await signOut(auth);
+    });
+
+    // ===== تحميل كل البيانات =====
+    async function loadAllData() {
+      await loadBookings();
+      await loadVisits();
+    }
+
+    // ===== تحميل الحجوزات =====
+    async function loadBookings() {
+      try {
+        const q = query(collection(db, "bookings"), orderBy("timestamp", "desc"));
+        const snapshot = await getDocs(q);
+        allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateBookingStats();
+        renderBookings();
+      } catch (error) {
+        console.error("خطأ في تحميل الحجوزات:", error);
+      }
+    }
+
+    // ===== تحميل الزيارات =====
+    async function loadVisits() {
+      try {
+        const snapshot = await getDocs(collection(db, "visits"));
+        const visits = snapshot.docs.map(d => d.data());
+        const today = new Date().toISOString().split('T')[0];
+        const todayVisits = visits.filter(v => v.date === today).length;
+
+        document.getElementById('totalVisits').textContent = visits.length.toLocaleString('en-US');
+        document.getElementById('todayVisits').textContent = todayVisits.toLocaleString('en-US');
+      } catch (error) {
+        console.error("خطأ في تحميل الزيارات:", error);
+      }
+    }
+
+    // ===== إحصائيات الحجوزات =====
+    function updateBookingStats() {
+      const pending = allBookings.filter(b => b.status === 'pending').length;
+      const approved = allBookings.filter(b => b.status === 'approved').length;
+      const rejected = allBookings.filter(b => b.status === 'rejected').length;
+
+      document.getElementById('totalBookings').textContent = allBookings.length.toLocaleString('en-US');
+      document.getElementById('pendingCount').textContent = pending.toLocaleString('en-US');
+      document.getElementById('approvedCount').textContent = approved.toLocaleString('en-US');
+      document.getElementById('rejectedCount').textContent = rejected.toLocaleString('en-US');
+    }
+
+    // ===== عرض الحجوزات =====
+    function renderBookings() {
+      const list = document.getElementById('bookingsList');
+      let filtered = allBookings;
+
+      if (currentTab !== 'all') {
+        filtered = filtered.filter(b => b.status === currentTab);
+      }
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(b =>
+          (b.userName || '').toLowerCase().includes(q) ||
+          (b.userPhone || '').includes(q) ||
+          (b.startCell || '').toString().includes(q)
+        );
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<p class="empty-msg">لا توجد طلبات في هذه الفئة</p>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(b => {
+        const statusClass = b.status === 'pending' ? 'status-pending' :
+                           b.status === 'approved' ? 'status-approved' : 'status-rejected';
+        const statusText = b.status === 'pending' ? 'معلقة' :
+                          b.status === 'approved' ? 'مقبولة' : 'مرفوضة';
+
+        return `
+          <div class="booking-card" data-id="${b.id}">
+            <img src="${b.selfieUrl || ''}" alt="سيلفي" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%232a2a35%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 fill=%22%23a0a0b0%22 text-anchor=%22middle%22 font-size=%2212%22>لا صورة</text></svg>'">
+            <div class="booking-info">
+              <p><strong>الاسم:</strong> ${b.userName || 'زائر'}</p>
+              <p><strong>الهاتف:</strong> ${b.userPhone || '-'}</p>
+              <p><strong>المربعات:</strong> ${b.quantity || 0} (يبدأ من ${b.startCell || 0})</p>
+              <p><strong>السعر:</strong> $${b.totalPrice || 0}</p>
+              <p><strong>الدفع:</strong> ${b.paymentMethod || '-'}</p>
+              <p><strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
+            </div>
+            <div class="booking-actions">
+              ${b.status !== 'approved' ? `<button class="action-btn approve-btn" onclick="approveBooking('${b.id}')">قبول</button>` : ''}
+              ${b.status !== 'rejected' ? `<button class="action-btn reject-btn" onclick="rejectBooking('${b.id}')">رفض</button>` : ''}
+              <button class="action-btn delete-btn" onclick="deleteBooking('${b.id}')">حذف</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== قبول الطلب =====
+    window.approveBooking = async (id) => {
+      if (!confirm('هل تريد قبول هذا الطلب؟')) return;
+      try {
+        await updateDoc(doc(db, "bookings", id), {
+          status: 'approved',
+          approvedAt: Date.now()
+        });
+        await loadBookings();
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ');
+      }
+    };
+
+    // ===== رفض الطلب =====
+    window.rejectBooking = async (id) => {
+      if (!confirm('هل تريد رفض هذا الطلب؟')) return;
+      try {
+        await updateDoc(doc(db, "bookings", id), {
+          status: 'rejected',
+          rejectedAt: Date.now()
+        });
+        await loadBookings();
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ');
+      }
+    };
+
+    // ===== حذف الطلب =====
+    window.deleteBooking = async (id) => {
+      if (!confirm('هل تريد حذف هذا الطلب نهائياً؟')) return;
+      try {
+        await deleteDoc(doc(db, "bookings", id));
+        await loadBookings();
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ');
+      }
+    };
+
+    // ===== التبويبات =====
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.dataset.tab;
+        renderBookings();
+      });
+    });
+
+    // ===== البحث =====
+    document.getElementById('searchBox').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderBookings();
+    });
+  </script>
+</body>
+</html>
