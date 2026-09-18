@@ -275,19 +275,19 @@ body {
   right: 0;
 }
 
-/* ===== حاوية الشبكة مع الإطار الاحترافي ===== */
+/* ===== حاوية الشبكة مع الإطار الرفيع ===== */
 .grid-frame {
   position: relative;
   width: 100%;
   height: 70vh;
   min-height: 480px;
-  padding: 3px;
+  padding: 1px;
   background: linear-gradient(135deg, #d4a017 0%, #6b4e0a 50%, #d4a017 100%);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 
-    0 0 0 1px rgba(212, 160, 23, 0.4),
-    0 0 20px rgba(212, 160, 23, 0.15),
-    0 8px 30px rgba(0, 0, 0, 0.5);
+    0 0 0 1px rgba(212, 160, 23, 0.3),
+    0 0 15px rgba(212, 160, 23, 0.12),
+    0 6px 25px rgba(0, 0, 0, 0.5);
 }
 
 .grid-container {
@@ -380,6 +380,7 @@ body {
 
 .edge-mark.left { left: -2px; }
 .edge-mark.right { right: -2px; }
+
 .hint {
   text-align: center;
   color: var(--text-muted);
@@ -645,7 +646,7 @@ body {
   .stat-label { font-size: 11px; }
   .section-title { font-size: 19px; }
   .zoom-btn { width: 38px; height: 38px; }
-  .grid-frame { height: 70vh; min-height: 450px; padding: 6px; }
+  .grid-frame { height: 70vh; min-height: 450px; padding: 1px; }
   .contact-btn { width: 42px; height: 42px; }
   .contact-label { font-size: 13px; }
   .stats { gap: 6px; padding: 15px 8px; }
