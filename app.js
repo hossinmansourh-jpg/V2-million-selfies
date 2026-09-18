@@ -115,7 +115,7 @@ async function loadBookings() {
   }
 }
 
-// ===== تحديث الإحصائيات (أرقام إنجليزية) =====
+// ===== تحديث الإحصائيات =====
 function updateStats() {
   const bookedCells = bookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
   const availableCells = TOTAL_CELLS - bookedCells;
@@ -129,19 +129,62 @@ function updateStats() {
   document.getElementById('progressText').textContent = progress + '%';
 }
 
-// ===== التفاعل مع الفأرة (سرعة ×5) =====
+// ===== متغيرات التفاعل =====
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 let hasDragged = false;
 
+// متغيرات القصور الذاتي
+let velocityX = 0;
+let velocityY = 0;
+let inertiaFrame = null;
+let lastMoveTime = 0;
+
+function startInertia() {
+  if (inertiaFrame) cancelAnimationFrame(inertiaFrame);
+
+  function animate() {
+    offsetX += velocityX;
+    offsetY += velocityY;
+
+    velocityX *= 0.95;
+    velocityY *= 0.95;
+
+    if (Math.abs(velocityX) < 0.1 && Math.abs(velocityY) < 0.1) {
+      velocityX = 0;
+      velocityY = 0;
+      inertiaFrame = null;
+      return;
+    }
+
+    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+
+    drawGrid();
+    inertiaFrame = requestAnimationFrame(animate);
+  }
+
+  inertiaFrame = requestAnimationFrame(animate);
+}
+
+// ===== التفاعل مع الفأرة =====
 canvas.addEventListener('mousemove', (e) => {
   if (isDragging) {
+    const now = Date.now();
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
+
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasDragged = true;
+
     offsetX -= dx * 2;
     offsetY -= dy * 2;
+
+    const dt = now - lastMoveTime || 16;
+    velocityX = -(dx * 2) / dt * 16;
+    velocityY = -(dy * 2) / dt * 16;
+
+    lastMoveTime = now;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
     offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
@@ -160,16 +203,26 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
+  if (inertiaFrame) {
+    cancelAnimationFrame(inertiaFrame);
+    inertiaFrame = null;
+  }
   isDragging = true;
   hasDragged = false;
   dragStartX = e.clientX;
   dragStartY = e.clientY;
+  lastMoveTime = Date.now();
+  velocityX = 0;
+  velocityY = 0;
   canvas.style.cursor = 'grabbing';
 });
 
 canvas.addEventListener('mouseup', () => {
   isDragging = false;
   canvas.style.cursor = 'crosshair';
+  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+    startInertia();
+  }
 });
 
 canvas.addEventListener('mouseleave', () => {
@@ -198,15 +251,22 @@ canvas.addEventListener('wheel', (e) => {
   drawGrid();
 }, { passive: false });
 
-// ===== اللمس على الهاتف (سرعة ×5) =====
+// ===== اللمس على الهاتف =====
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
 
 canvas.addEventListener('touchstart', (e) => {
+  if (inertiaFrame) {
+    cancelAnimationFrame(inertiaFrame);
+    inertiaFrame = null;
+  }
   if (e.touches.length === 1) {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
+    lastMoveTime = Date.now();
+    velocityX = 0;
+    velocityY = 0;
   } else if (e.touches.length === 2) {
     lastTouchDist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
@@ -218,10 +278,18 @@ canvas.addEventListener('touchstart', (e) => {
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (e.touches.length === 1) {
+    const now = Date.now();
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
+
     offsetX -= dx * 2;
     offsetY -= dy * 2;
+
+    const dt = now - lastMoveTime || 16;
+    velocityX = -(dx * 2) / dt * 16;
+    velocityY = -(dy * 2) / dt * 16;
+
+    lastMoveTime = now;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
@@ -249,6 +317,9 @@ canvas.addEventListener('touchmove', (e) => {
 
 canvas.addEventListener('touchend', () => {
   lastTouchDist = 0;
+  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+    startInertia();
+  }
 });
 
 // ===== النقر على الشبكة =====
