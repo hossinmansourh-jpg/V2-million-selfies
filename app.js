@@ -453,6 +453,7 @@ const translations = {
     refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.',
     totalLabel: 'الإجمالي:',
     submitBtn: 'إرسال الطلب'
+    contactUs: 'تواصل معنا',
   },
   en: {
     badge: '🚀 Historic Digital Challenge',
@@ -486,6 +487,7 @@ const translations = {
     refundNotice: '💡 If your image is rejected, please contact us via WhatsApp or Telegram for a refund.',
     totalLabel: 'Total:',
     submitBtn: 'Submit Request'
+  contactUs: 'Contact Us',
   }
 };
 
