@@ -47,7 +47,6 @@ function drawGrid() {
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // حساب المربعات المرئية فقط (Lazy Rendering)
   const startX = Math.floor(offsetX / CELL_PIXEL_SIZE);
   const startY = Math.floor(offsetY / CELL_PIXEL_SIZE);
   const endX = startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 1;
@@ -116,16 +115,16 @@ async function loadBookings() {
   }
 }
 
-// ===== تحديث الإحصائيات =====
+// ===== تحديث الإحصائيات (أرقام إنجليزية) =====
 function updateStats() {
   const bookedCells = bookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
   const availableCells = TOTAL_CELLS - bookedCells;
   const selfiesCount = bookings.length;
   const progress = ((bookedCells / TOTAL_CELLS) * 100).toFixed(2);
 
-  document.getElementById('statBooked').textContent = bookedCells.toLocaleString('ar-EG');
-  document.getElementById('statAvailable').textContent = availableCells.toLocaleString('ar-EG');
-  document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('ar-EG');
+  document.getElementById('statBooked').textContent = bookedCells.toLocaleString('en-US');
+  document.getElementById('statAvailable').textContent = availableCells.toLocaleString('en-US');
+  document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('en-US');
   document.getElementById('progressFill').style.width = progress + '%';
   document.getElementById('progressText').textContent = progress + '%';
 }
@@ -180,7 +179,7 @@ canvas.addEventListener('mouseleave', () => {
   drawGrid();
 });
 
-// ===== عجلة الفأرة للتكبير =====
+// ===== عجلة الفأرة =====
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   const oldSize = CELL_PIXEL_SIZE;
@@ -203,13 +202,11 @@ canvas.addEventListener('wheel', (e) => {
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
-let hasTouched = false;
 
 canvas.addEventListener('touchstart', (e) => {
   if (e.touches.length === 1) {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-    hasTouched = false;
   } else if (e.touches.length === 2) {
     lastTouchDist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
@@ -223,7 +220,6 @@ canvas.addEventListener('touchmove', (e) => {
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasTouched = true;
     offsetX -= dx;
     offsetY -= dy;
     touchStartX = e.touches[0].clientX;
@@ -256,7 +252,7 @@ canvas.addEventListener('touchend', () => {
 });
 
 // ===== النقر على الشبكة =====
-canvas.addEventListener('click', (e) => {
+canvas.addEventListener('click', () => {
   if (hasDragged) {
     hasDragged = false;
     return;
@@ -423,7 +419,7 @@ document.getElementById('zoomOut').addEventListener('click', () => {
 const translations = {
   ar: {
     badge: '🚀 تحدي رقمي تاريخي',
-    heroTitle: 'جدارية مليون صورة سيلفي',
+    heroTitle: 'جدارية مليون\nصورة سيلفي',
     heroSubtitle: 'كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.',
     priceNote: 'كل مربع 10×10 بكسل بـ دولار واحد فقط.',
     statBooked: 'مربعات محجوزة',
@@ -452,12 +448,12 @@ const translations = {
     termsLabel: 'أوافق على الشروط والأحكام',
     refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.',
     totalLabel: 'الإجمالي:',
-    submitBtn: 'إرسال الطلب'
-    contactUs: 'تواصل معنا',
+    submitBtn: 'إرسال الطلب',
+    contactUs: 'تواصل معنا'
   },
   en: {
     badge: '🚀 Historic Digital Challenge',
-    heroTitle: 'Million Selfies Wall',
+    heroTitle: 'Million Selfies\nWall',
     heroSubtitle: 'Be part of the largest interactive digital wall in the world. Book your square and leave your mark forever.',
     priceNote: 'Each 10×10 pixel square for just $1.',
     statBooked: 'Booked Squares',
@@ -486,8 +482,8 @@ const translations = {
     termsLabel: 'I agree to the Terms & Conditions',
     refundNotice: '💡 If your image is rejected, please contact us via WhatsApp or Telegram for a refund.',
     totalLabel: 'Total:',
-    submitBtn: 'Submit Request'
-  contactUs: 'Contact Us',
+    submitBtn: 'Submit Request',
+    contactUs: 'Contact Us'
   }
 };
 
@@ -496,7 +492,14 @@ function applyLanguage(lang) {
   const t = translations[lang];
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (t[key]) el.textContent = t[key];
+    if (t[key]) {
+      // إذا كان النص يحتوي على \n، نستخدم innerHTML لتحويله إلى <br>
+      if (t[key].includes('\n')) {
+        el.innerHTML = t[key].replace(/\n/g, '<br>');
+      } else {
+        el.textContent = t[key];
+      }
+    }
   });
   updateStats();
 }
@@ -510,6 +513,7 @@ function setLanguage(lang) {
   document.getElementById('langEn').classList.toggle('active', lang === 'en');
   applyLanguage(lang);
   localStorage.setItem('lang', lang);
+  drawGrid();
 }
 
 document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
@@ -542,29 +546,28 @@ async function trackVisit() {
   }
 }
 
+// ===== إخفاء شريط التواصل عند التمرير للأسفل =====
+let lastScrollY = 0;
+const contactBar = document.getElementById('contactBar');
+const adminBtn = document.getElementById('adminBtn');
+
+window.addEventListener('scroll', () => {
+  const currentScrollY = window.scrollY;
+
+  if (currentScrollY > lastScrollY && currentScrollY > 100) {
+    contactBar.classList.add('hidden-bar');
+    adminBtn.classList.add('hidden-bar');
+  } else {
+    contactBar.classList.remove('hidden-bar');
+    adminBtn.classList.remove('hidden-bar');
+  }
+
+  lastScrollY = currentScrollY;
+}, { passive: true });
+
 // ===== التشغيل =====
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 loadBookings();
 trackVisit();
-// ===== إخفاء شريط التواصل عند التمرير للأسفل =====
-let lastScrollY = 0;
-const contactBar = document.querySelector('.contact-bar');
-const adminBtn = document.querySelector('.admin-btn');
-
-window.addEventListener('scroll', () => {
-  const currentScrollY = window.scrollY;
-  
-  if (currentScrollY > lastScrollY && currentScrollY > 100) {
-    // التمرير للأسفل → إخفاء
-    contactBar.classList.add('hidden');
-    adminBtn.classList.add('hidden');
-  } else {
-    // التمرير للأعلى → إظهار
-    contactBar.classList.remove('hidden');
-    adminBtn.classList.remove('hidden');
-  }
-  
-  lastScrollY = currentScrollY;
-}, { passive: true });
 setInterval(loadBookings, 30000);
