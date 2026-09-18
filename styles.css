@@ -12,7 +12,6 @@
   --text-muted: #a0a0b0;
 }
 
-/* ===== الأساسيات ===== */
 * {
   margin: 0;
   padding: 0;
@@ -29,160 +28,280 @@ body {
 
 /* ===== الشريط العلوي ===== */
 .topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: var(--bg-gray);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 1000;
-  border-bottom: 2px solid var(--gold);
+  justify-content: center;
+  padding: 15px 20px;
+  background: transparent;
 }
 
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--gold);
+.lang-switch {
+  display: flex;
+  background: var(--bg-gray);
+  border-radius: 30px;
+  padding: 4px;
+  gap: 4px;
 }
 
-.lang-btn {
-  background: var(--gold);
-  color: var(--bg-dark);
+.lang-option {
+  background: transparent;
+  color: var(--text-muted);
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: bold;
+  padding: 8px 20px;
+  border-radius: 25px;
   cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
   transition: 0.3s;
 }
 
-.lang-btn:hover {
-  background: var(--gold-light);
+.lang-option.active {
+  background: var(--gold);
+  color: var(--bg-dark);
+}
+
+.lang-option:hover:not(.active) {
+  color: var(--text);
 }
 
 /* ===== القسم الرئيسي ===== */
 .hero {
-  margin-top: 80px;
   text-align: center;
-  padding: 40px 20px;
+  padding: 20px 20px 30px;
+}
+
+.badge {
+  display: inline-block;
+  background: transparent;
+  border: 2px solid var(--gold);
+  color: var(--gold);
+  padding: 8px 24px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 25px;
 }
 
 .hero h1 {
-  font-size: 36px;
+  font-size: 42px;
   color: var(--gold);
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 900;
+  line-height: 1.3;
 }
 
-.hero p {
-  color: var(--text-muted);
+.hero-desc {
+  color: var(--text);
   font-size: 18px;
+  line-height: 1.8;
+  max-width: 600px;
+  margin: 0 auto 15px;
+}
+
+.hero-price {
+  color: var(--gold-light);
+  font-size: 16px;
+  font-weight: bold;
 }
 
 /* ===== الإحصائيات ===== */
 .stats {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
   padding: 20px;
-  flex-wrap: wrap;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .stat-card {
   background: var(--bg-gray);
-  border: 1px solid var(--gold);
+  border: 2px solid var(--gold);
   border-radius: 12px;
-  padding: 20px 30px;
+  padding: 25px 15px;
   text-align: center;
-  min-width: 150px;
 }
 
 .stat-value {
   display: block;
-  font-size: 28px;
-  font-weight: bold;
+  font-size: 32px;
+  font-weight: 900;
   color: var(--gold-light);
+  margin-bottom: 8px;
 }
 
 .stat-label {
   display: block;
   font-size: 14px;
   color: var(--text-muted);
-  margin-top: 5px;
 }
 
 /* ===== شريط التقدم ===== */
 .progress-section {
-  max-width: 800px;
-  margin: 20px auto;
+  max-width: 700px;
+  margin: 10px auto 30px;
   padding: 0 20px;
 }
 
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
 .progress-bar {
-  height: 20px;
+  height: 12px;
   background: var(--bg-light);
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--gold);
 }
 
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--gold), var(--gold-light));
   transition: width 0.5s ease;
+  border-radius: 10px;
 }
 
-.progress-text {
+/* ===== قسم الجدارية ===== */
+.wall-section {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.section-title {
   text-align: center;
-  margin-top: 8px;
-  color: var(--text-muted);
-  font-size: 14px;
+  color: var(--gold);
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 900;
 }
 
-/* ===== أدوات التحكم ===== */
-.controls {
+/* ===== المفتاح التوضيحي ===== */
+.legend {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  padding: 15px;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 
-.ctrl-btn {
-  background: var(--bg-gray);
-  color: var(--gold);
-  border: 1px solid var(--gold);
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: 0.3s;
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
 }
 
-.ctrl-btn:hover {
+.legend-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.legend-box.empty {
+  border: 2px solid var(--bg-light);
+  background: transparent;
+}
+
+.legend-box.booked {
   background: var(--gold);
-  color: var(--bg-dark);
+}
+
+.legend-hint {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: bold;
 }
 
 /* ===== الشبكة ===== */
 .grid-container {
   width: 100%;
-  height: 70vh;
+  height: 60vh;
+  min-height: 400px;
   overflow: hidden;
   position: relative;
   background: var(--bg-dark);
-  border-top: 1px solid var(--bg-light);
-  border-bottom: 1px solid var(--bg-light);
+  border: 2px solid var(--bg-light);
+  border-radius: 12px;
 }
 
 #gridCanvas {
   display: block;
   cursor: crosshair;
+  touch-action: none;
 }
 
-/* ===== أزرار التواصل والإدارة ===== */
+/* ===== أزرار التحكم ===== */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.ctrl-btn {
+  width: 60px;
+  height: 60px;
+  background: transparent;
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: bold;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctrl-btn:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+  transform: scale(1.1);
+}
+
+/* ===== النصيحة ===== */
+.hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+/* ===== زر الإدارة ===== */
+.admin-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 55px;
+  height: 55px;
+  background: var(--bg-gray);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  text-decoration: none;
+  z-index: 999;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
+}
+
+.admin-btn:hover {
+  transform: scale(1.1);
+  background: var(--gold);
+}
+
+/* ===== أزرار التواصل ===== */
 .floating-buttons {
   position: fixed;
   bottom: 20px;
@@ -193,22 +312,20 @@ body {
   z-index: 999;
 }
 
-.contact-btn,
-.admin-btn {
-  width: 50px;
-  height: 50px;
+.contact-btn {
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   text-decoration: none;
   transition: 0.3s;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
-.contact-btn:hover,
-.admin-btn:hover {
+.contact-btn:hover {
   transform: scale(1.1);
 }
 
@@ -216,24 +333,8 @@ body {
   background: #25D366;
 }
 
-.whatsapp:hover {
-  background: #1ebe5b;
-}
-
 .telegram {
   background: #0088cc;
-}
-
-.telegram:hover {
-  background: #0077b3;
-}
-
-.admin-btn {
-  background: var(--gold);
-}
-
-.admin-btn:hover {
-  background: var(--gold-light);
 }
 
 /* ===== النافذة المنبثقة (Modal) ===== */
@@ -447,19 +548,55 @@ body {
 /* ===== الهاتف ===== */
 @media (max-width: 600px) {
   .hero h1 {
-    font-size: 24px;
+    font-size: 28px;
   }
-  
-  .stat-card {
-    min-width: 100px;
+
+  .hero-desc {
+    font-size: 15px;
+  }
+
+  .stats {
+    gap: 8px;
     padding: 15px;
   }
-  
+
+  .stat-card {
+    padding: 15px 8px;
+  }
+
   .stat-value {
     font-size: 22px;
   }
-  
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .grid-container {
+    height: 50vh;
+    min-height: 300px;
+  }
+
+  .ctrl-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+  }
+
   .modal-content {
     padding: 20px;
+  }
+
+  .legend {
+    gap: 12px;
+  }
+
+  .legend-hint {
+    width: 100%;
+    text-align: center;
   }
 }
