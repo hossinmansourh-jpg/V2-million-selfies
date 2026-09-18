@@ -98,7 +98,7 @@ body {
   font-weight: 900;
 }
 
-/* ===== الإحصائيات (أعرض لتتسع للرقم) ===== */
+/* ===== الإحصائيات ===== */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -275,16 +275,28 @@ body {
   right: 0;
 }
 
-/* ===== الشبكة (70% من الشاشة) ===== */
-.grid-container {
+/* ===== حاوية الشبكة مع الإطار الاحترافي ===== */
+.grid-frame {
+  position: relative;
   width: 100%;
   height: 70vh;
   min-height: 480px;
+  padding: 8px;
+  background: linear-gradient(135deg, var(--gold) 0%, #8b6a0f 50%, var(--gold) 100%);
+  border-radius: 16px;
+  box-shadow: 
+    0 0 0 1px rgba(212, 160, 23, 0.3),
+    0 0 25px rgba(212, 160, 23, 0.15),
+    0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.grid-container {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   position: relative;
   background: var(--bg-dark);
-  border: 2px solid var(--bg-light);
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 #gridCanvas {
@@ -293,6 +305,89 @@ body {
   touch-action: none;
   width: 100%;
   height: 100%;
+  border-radius: 10px;
+}
+
+/* ===== علامات الزوايا ===== */
+.corner-mark {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--gold);
+  border-style: solid;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.corner-mark.top-left {
+  top: -3px;
+  left: -3px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 8px;
+}
+
+.corner-mark.top-right {
+  top: -3px;
+  right: -3px;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: 8px;
+}
+
+.corner-mark.bottom-left {
+  bottom: -3px;
+  left: -3px;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: 8px;
+}
+
+.corner-mark.bottom-right {
+  bottom: -3px;
+  right: -3px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 8px;
+}
+
+/* ===== علامات صغيرة على الحواف ===== */
+.edge-mark {
+  position: absolute;
+  background: var(--gold);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.5;
+  border-radius: 2px;
+}
+
+.edge-mark.top,
+.edge-mark.bottom {
+  width: 12px;
+  height: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.edge-mark.top {
+  top: -4px;
+}
+
+.edge-mark.bottom {
+  bottom: -4px;
+}
+
+.edge-mark.left,
+.edge-mark.right {
+  width: 3px;
+  height: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.edge-mark.left {
+  left: -4px;
+}
+
+.edge-mark.right {
+  right: -4px;
 }
 
 .hint {
@@ -303,7 +398,7 @@ body {
   font-weight: 700;
 }
 
-/* ===== شريط التواصل (جزء من الصفحة) ===== */
+/* ===== شريط التواصل ===== */
 .contact-bar {
   display: flex;
   align-items: center;
@@ -330,13 +425,8 @@ body {
   transform: scale(1.1);
 }
 
-.whatsapp {
-  background: #25D366;
-}
-
-.telegram {
-  background: #0088cc;
-}
+.whatsapp { background: #25D366; }
+.telegram { background: #0088cc; }
 
 .contact-label {
   color: var(--text-muted);
@@ -379,9 +469,7 @@ body {
   padding: 20px;
 }
 
-.modal.hidden {
-  display: none;
-}
+.modal.hidden { display: none; }
 
 .modal-content {
   background: var(--bg-gray);
@@ -417,9 +505,7 @@ body {
   font-family: 'Cairo', sans-serif;
 }
 
-.form-group {
-  margin-bottom: 15px;
-}
+.form-group { margin-bottom: 15px; }
 
 .form-group label {
   display: block;
@@ -455,9 +541,7 @@ body {
   gap: 10px;
 }
 
-.checkbox-group input {
-  width: auto;
-}
+.checkbox-group input { width: auto; }
 
 .payment-info {
   background: var(--bg-dark);
@@ -504,9 +588,7 @@ body {
   font-weight: 700;
 }
 
-.terms-list li:last-child {
-  border-bottom: none;
-}
+.terms-list li:last-child { border-bottom: none; }
 
 .refund-notice {
   background: rgba(212, 160, 23, 0.1);
@@ -573,14 +655,14 @@ body {
   .stat-label { font-size: 11px; }
   .section-title { font-size: 19px; }
   .zoom-btn { width: 38px; height: 38px; }
-  .grid-container { height: 70vh; min-height: 450px; }
+  .grid-frame { height: 70vh; min-height: 450px; padding: 6px; }
   .contact-btn { width: 42px; height: 42px; }
   .contact-label { font-size: 13px; }
   .stats { gap: 6px; padding: 15px 8px; }
   .stat-card { padding: 22px 3px; }
+  .corner-mark { width: 18px; height: 18px; }
 }
 
-/* ===== شاشات صغيرة جداً (أقل من 380px) ===== */
 @media (max-width: 380px) {
   .stat-value { font-size: 18px; letter-spacing: -0.5px; }
   .stat-card { padding: 20px 2px; }
