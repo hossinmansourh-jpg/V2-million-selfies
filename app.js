@@ -65,11 +65,25 @@ function drawGrid() {
 
   drawBookings();
 
-  if (hoveredCell) {
+  // رسم مؤشر الخلية
+  if (hoveredCell && !isDragging && !inertiaFrame) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
-    ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
+
+    // تعبئة خفيفة
+    ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
     ctx.fillRect(px, py, CELL_PIXEL_SIZE * selectedQuantity, CELL_PIXEL_SIZE);
+
+    // إطار ذهبي متوهج
+    ctx.strokeStyle = '#f5b301';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#f5b301';
+    ctx.shadowBlur = 12;
+    ctx.strokeRect(px + 1, py + 1, CELL_PIXEL_SIZE * selectedQuantity - 2, CELL_PIXEL_SIZE - 2);
+
+    // إعادة تعيين الظل
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
   }
 }
 
@@ -267,6 +281,15 @@ canvas.addEventListener('touchstart', (e) => {
     lastMoveTime = Date.now();
     velocityX = 0;
     velocityY = 0;
+
+    // عرض مؤشر الخلية عند اللمس
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+    const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+      hoveredCell = { x, y };
+      drawGrid();
+    }
   } else if (e.touches.length === 2) {
     lastTouchDist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
