@@ -439,3 +439,115 @@ const translations = {
     noteLabel: 'ملاحظة (اختياري)',
     selfieLabel: 'صورة السيلفي',
     receiptLabel: 'إيصال الدفع',
+    paymentLabel: 'طريقة الدفع',
+    termsTitle: '📋 الشروط والأحكام',
+    term1: '• يجب أن تكون الصورة سيلفي شخصية وحقيقية.',
+    term2: '• يُمنع رفع صور مخالفة للقوانين أو الآداب العامة.',
+    term3: '• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.',
+    term4: '• مدة معالجة الطلب: 24-48 ساعة.',
+    termsLabel: 'أوافق على الشروط والأحكام',
+    refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.',
+    totalLabel: 'الإجمالي:',
+    submitBtn: 'إرسال الطلب',
+    contactUs: 'تواصل معنا'
+  },
+  en: {
+    badge: '🚀 Historic Digital Challenge',
+    heroTitle: 'Million Selfies\nWall',
+    heroSubtitle: 'Be part of the largest interactive digital wall in the world. Book your square and leave your mark forever.',
+    priceNote: 'Each 10×10 pixel square for just $1.',
+    statBooked: 'Booked Squares',
+    statAvailable: 'Available Squares',
+    statSelfies: 'Selfies',
+    progressLabel: 'Booking Progress',
+    wallTitle: 'Interactive Wall',
+    legendEmpty: 'Empty',
+    legendBooked: 'Booked',
+    legendHint: 'Click any square to book',
+    hint: '💡 Scroll inside the grid to explore the million squares',
+    bookingTitle: 'Book Squares',
+    quantityLabel: 'Number of Squares (1-400)',
+    nameLabel: 'Name',
+    phoneLabel: 'Phone (optional)',
+    linkLabel: 'Your Profile Link (optional)',
+    noteLabel: 'Note (optional)',
+    selfieLabel: 'Selfie Image',
+    receiptLabel: 'Payment Receipt',
+    paymentLabel: 'Payment Method',
+    termsTitle: '📋 Terms & Conditions',
+    term1: '• Image must be a real personal selfie.',
+    term2: '• Images violating laws or public morals are prohibited.',
+    term3: '• If your image is rejected, contact us for a full refund.',
+    term4: '• Processing time: 24-48 hours.',
+    termsLabel: 'I agree to the Terms & Conditions',
+    refundNotice: '💡 If your image is rejected, please contact us via WhatsApp or Telegram for a refund.',
+    totalLabel: 'Total:',
+    submitBtn: 'Submit Request',
+    contactUs: 'Contact Us'
+  }
+};
+
+// ===== تطبيق اللغة =====
+function applyLanguage(lang) {
+  const t = translations[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) {
+      if (t[key].includes('\n')) {
+        el.innerHTML = t[key].replace(/\n/g, '<br>');
+      } else {
+        el.textContent = t[key];
+      }
+    }
+  });
+  updateStats();
+}
+
+// ===== تبديل اللغة =====
+function setLanguage(lang) {
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langAr').classList.toggle('active', lang === 'ar');
+  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  applyLanguage(lang);
+  localStorage.setItem('lang', lang);
+  drawGrid();
+}
+
+document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
+document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
+
+// تحميل اللغة المحفوظة
+const savedLang = localStorage.getItem('lang') || 'ar';
+setLanguage(savedLang);
+
+// ===== تتبع الزيارات =====
+async function trackVisit() {
+  const lastVisit = localStorage.getItem('last_visit_time');
+  const now = Date.now();
+  const thirtyMinutes = 30 * 60 * 1000;
+
+  if (!lastVisit || (now - parseInt(lastVisit)) > thirtyMinutes) {
+    try {
+      await addDoc(collection(db, "visits"), {
+        timestamp: now,
+        date: new Date().toISOString().split('T')[0],
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screen: `${screen.width}x${screen.height}`,
+        referrer: document.referrer || 'direct'
+      });
+      localStorage.setItem('last_visit_time', now.toString());
+    } catch (error) {
+      console.error('خطأ في تسجيل الزيارة:', error);
+    }
+  }
+}
+
+// ===== التشغيل =====
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+loadBookings();
+trackVisit();
+setInterval(loadBookings, 30000);
