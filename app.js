@@ -127,18 +127,20 @@ function updateStats() {
   document.getElementById('statAvailable').textContent = availableCells.toLocaleString('ar-EG');
   document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('ar-EG');
   document.getElementById('progressFill').style.width = progress + '%';
-  document.getElementById('progressText').textContent = progress + '% مكتمل';
+  document.getElementById('progressText').textContent = progress + '%';
 }
 
 // ===== التفاعل مع الفأرة =====
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
+let hasDragged = false;
 
 canvas.addEventListener('mousemove', (e) => {
   if (isDragging) {
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasDragged = true;
     offsetX -= dx;
     offsetY -= dy;
     dragStartX = e.clientX;
@@ -160,6 +162,7 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mousedown', (e) => {
   isDragging = true;
+  hasDragged = false;
   dragStartX = e.clientX;
   dragStartY = e.clientY;
   canvas.style.cursor = 'grabbing';
@@ -200,11 +203,13 @@ canvas.addEventListener('wheel', (e) => {
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
+let hasTouched = false;
 
 canvas.addEventListener('touchstart', (e) => {
   if (e.touches.length === 1) {
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
+    hasTouched = false;
   } else if (e.touches.length === 2) {
     lastTouchDist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
@@ -218,6 +223,7 @@ canvas.addEventListener('touchmove', (e) => {
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasTouched = true;
     offsetX -= dx;
     offsetY -= dy;
     touchStartX = e.touches[0].clientX;
@@ -250,7 +256,11 @@ canvas.addEventListener('touchend', () => {
 });
 
 // ===== النقر على الشبكة =====
-canvas.addEventListener('click', () => {
+canvas.addEventListener('click', (e) => {
+  if (hasDragged) {
+    hasDragged = false;
+    return;
+  }
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
   openBookingModal(startCell);
@@ -409,21 +419,22 @@ document.getElementById('zoomOut').addEventListener('click', () => {
   drawGrid();
 });
 
-document.getElementById('resetView').addEventListener('click', () => {
-  CELL_PIXEL_SIZE = 50;
-  offsetX = 0;
-  offsetY = 0;
-  drawGrid();
-});
-
 // ===== الترجمات =====
 const translations = {
   ar: {
+    badge: '🚀 تحدي رقمي تاريخي',
     heroTitle: 'جدارية مليون صورة سيلفي',
-    heroSubtitle: 'احجز مربعك الآن وكن جزءاً من التاريخ',
-    statBooked: 'مربع محجوز',
-    statAvailable: 'مربع متبقٍ',
+    heroSubtitle: 'كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.',
+    priceNote: 'كل مربع 10×10 بكسل بـ دولار واحد فقط.',
+    statBooked: 'مربعات محجوزة',
+    statAvailable: 'مربعات متبقية',
     statSelfies: 'صورة سيلفي',
+    progressLabel: 'نسبة الحجز',
+    wallTitle: 'لوحة الجدارية التفاعلية',
+    legendEmpty: 'مربع فارغ',
+    legendBooked: 'محجوز',
+    legendHint: 'انقر على أي مربع للحجز',
+    hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
     bookingTitle: 'حجز المربعات',
     quantityLabel: 'عدد المربعات (1-400)',
     nameLabel: 'الاسم',
@@ -444,11 +455,19 @@ const translations = {
     submitBtn: 'إرسال الطلب'
   },
   en: {
+    badge: '🚀 Historic Digital Challenge',
     heroTitle: 'Million Selfies Wall',
-    heroSubtitle: 'Book your square now and be part of history',
+    heroSubtitle: 'Be part of the largest interactive digital wall in the world. Book your square and leave your mark forever.',
+    priceNote: 'Each 10×10 pixel square for just $1.',
     statBooked: 'Booked Squares',
     statAvailable: 'Available Squares',
     statSelfies: 'Selfies',
+    progressLabel: 'Booking Progress',
+    wallTitle: 'Interactive Wall',
+    legendEmpty: 'Empty',
+    legendBooked: 'Booked',
+    legendHint: 'Click any square to book',
+    hint: '💡 Scroll inside the grid to explore the million squares',
     bookingTitle: 'Book Squares',
     quantityLabel: 'Number of Squares (1-400)',
     nameLabel: 'Name',
@@ -477,27 +496,26 @@ function applyLanguage(lang) {
     const key = el.getAttribute('data-i18n');
     if (t[key]) el.textContent = t[key];
   });
+  updateStats();
 }
 
 // ===== تبديل اللغة =====
-document.getElementById('langToggle').addEventListener('click', () => {
+function setLanguage(lang) {
   const html = document.documentElement;
-  const isAr = html.lang === 'ar';
-  const newLang = isAr ? 'en' : 'ar';
-  html.lang = newLang;
-  html.dir = isAr ? 'ltr' : 'rtl';
-  document.getElementById('langToggle').textContent = isAr ? 'AR' : 'EN';
-  applyLanguage(newLang);
-  localStorage.setItem('lang', newLang);
-});
-
-const savedLang = localStorage.getItem('lang') || 'ar';
-if (savedLang === 'en') {
-  document.documentElement.lang = 'en';
-  document.documentElement.dir = 'ltr';
-  document.getElementById('langToggle').textContent = 'AR';
+  html.lang = lang;
+  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('langAr').classList.toggle('active', lang === 'ar');
+  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  applyLanguage(lang);
+  localStorage.setItem('lang', lang);
 }
-applyLanguage(savedLang);
+
+document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
+document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
+
+// تحميل اللغة المحفوظة
+const savedLang = localStorage.getItem('lang') || 'ar';
+setLanguage(savedLang);
 
 // ===== تتبع الزيارات =====
 async function trackVisit() {
