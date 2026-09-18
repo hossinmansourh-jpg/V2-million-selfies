@@ -308,79 +308,6 @@ body {
   border-radius: 11px;
 }
 
-/* ===== علامات الزوايا ===== */
-.corner-mark {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  border-color: var(--gold);
-  border-style: solid;
-  z-index: 5;
-  pointer-events: none;
-  opacity: 0.9;
-  filter: drop-shadow(0 0 4px rgba(212, 160, 23, 0.8));
-}
-
-.corner-mark.top-left {
-  top: -1px;
-  left: -1px;
-  border-width: 3px 0 0 3px;
-  border-top-left-radius: 12px;
-}
-
-.corner-mark.top-right {
-  top: -1px;
-  right: -1px;
-  border-width: 3px 3px 0 0;
-  border-top-right-radius: 12px;
-}
-
-.corner-mark.bottom-left {
-  bottom: -1px;
-  left: -1px;
-  border-width: 0 0 3px 3px;
-  border-bottom-left-radius: 12px;
-}
-
-.corner-mark.bottom-right {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 3px 3px 0;
-  border-bottom-right-radius: 12px;
-}
-
-/* ===== علامات منتصف الحواف ===== */
-.edge-mark {
-  position: absolute;
-  background: var(--gold);
-  z-index: 6;
-  pointer-events: none;
-  border-radius: 2px;
-  box-shadow: 0 0 8px rgba(212, 160, 23, 0.9);
-}
-
-.edge-mark.top,
-.edge-mark.bottom {
-  width: 18px;
-  height: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.edge-mark.top { top: -2px; }
-.edge-mark.bottom { bottom: -2px; }
-
-.edge-mark.left,
-.edge-mark.right {
-  width: 4px;
-  height: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.edge-mark.left { left: -2px; }
-.edge-mark.right { right: -2px; }
-
 .hint {
   text-align: center;
   color: var(--text-muted);
@@ -651,7 +578,6 @@ body {
   .contact-label { font-size: 13px; }
   .stats { gap: 6px; padding: 15px 8px; }
   .stat-card { padding: 22px 3px; }
-  .corner-mark { width: 18px; height: 18px; }
 }
 
 @media (max-width: 380px) {
