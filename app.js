@@ -129,7 +129,7 @@ function updateStats() {
   document.getElementById('progressText').textContent = progress + '%';
 }
 
-// ===== التفاعل مع الفأرة (سرعة ×2) =====
+// ===== التفاعل مع الفأرة (سرعة ×5) =====
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
@@ -198,7 +198,7 @@ canvas.addEventListener('wheel', (e) => {
   drawGrid();
 }, { passive: false });
 
-// ===== اللمس على الهاتف (سرعة ×2) =====
+// ===== اللمس على الهاتف (سرعة ×5) =====
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
