@@ -547,4 +547,24 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 loadBookings();
 trackVisit();
+// ===== إخفاء شريط التواصل عند التمرير للأسفل =====
+let lastScrollY = 0;
+const contactBar = document.querySelector('.contact-bar');
+const adminBtn = document.querySelector('.admin-btn');
+
+window.addEventListener('scroll', () => {
+  const currentScrollY = window.scrollY;
+  
+  if (currentScrollY > lastScrollY && currentScrollY > 100) {
+    // التمرير للأسفل → إخفاء
+    contactBar.classList.add('hidden');
+    adminBtn.classList.add('hidden');
+  } else {
+    // التمرير للأعلى → إظهار
+    contactBar.classList.remove('hidden');
+    adminBtn.classList.remove('hidden');
+  }
+  
+  lastScrollY = currentScrollY;
+}, { passive: true });
 setInterval(loadBookings, 30000);
