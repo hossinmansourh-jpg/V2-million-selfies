@@ -412,7 +412,21 @@ document.getElementById('closeModal').addEventListener('click', () => {
 
 // ===== تحديث السعر =====
 document.getElementById('quantityInput').addEventListener('input', (e) => {
-  selectedQuantity = parseInt(e.target.value) || 1;
+  let qty = parseInt(e.target.value) || 1;
+  if (qty < 1) qty = 1;
+  if (qty > 400) qty = 400;
+  selectedQuantity = qty;
+  const total = selectedQuantity * CELL_PRICE;
+  document.getElementById('totalPrice').textContent = total + ' $';
+  drawGrid();
+});
+
+document.getElementById('quantityInput').addEventListener('change', (e) => {
+  let qty = parseInt(e.target.value) || 1;
+  if (qty < 1) qty = 1;
+  if (qty > 400) qty = 400;
+  e.target.value = qty;
+  selectedQuantity = qty;
   const total = selectedQuantity * CELL_PRICE;
   document.getElementById('totalPrice').textContent = total + ' $';
   drawGrid();
