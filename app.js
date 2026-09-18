@@ -12,7 +12,6 @@ const firebaseConfig = {
   appId: "1:853762238562:web:b613fe254d79b4afb6c93b"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -25,6 +24,10 @@ let CELL_PIXEL_SIZE = 50;
 // ===== Canvas =====
 const canvas = document.getElementById('gridCanvas');
 const ctx = canvas.getContext('2d');
+
+// ===== إحداثيات العرض =====
+let offsetX = 0;
+let offsetY = 0;
 
 // ===== الحالة =====
 let bookings = [];
@@ -41,16 +44,20 @@ function resizeCanvas() {
 
 // ===== رسم الشبكة =====
 function drawGrid() {
-  const cols = Math.ceil(canvas.width / CELL_PIXEL_SIZE);
-  const rows = Math.ceil(canvas.height / CELL_PIXEL_SIZE);
-
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      const px = x * CELL_PIXEL_SIZE;
-      const py = y * CELL_PIXEL_SIZE;
+  // حساب المربعات المرئية فقط (Lazy Rendering)
+  const startX = Math.floor(offsetX / CELL_PIXEL_SIZE);
+  const startY = Math.floor(offsetY / CELL_PIXEL_SIZE);
+  const endX = startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 1;
+  const endY = startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 1;
+
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) continue;
+      const px = x * CELL_PIXEL_SIZE - offsetX;
+      const py = y * CELL_PIXEL_SIZE - offsetY;
       ctx.strokeStyle = '#2a2a35';
       ctx.lineWidth = 1;
       ctx.strokeRect(px, py, CELL_PIXEL_SIZE, CELL_PIXEL_SIZE);
@@ -60,13 +67,10 @@ function drawGrid() {
   drawBookings();
 
   if (hoveredCell) {
+    const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
+    const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
     ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
-    ctx.fillRect(
-      hoveredCell.x * CELL_PIXEL_SIZE,
-      hoveredCell.y * CELL_PIXEL_SIZE,
-      CELL_PIXEL_SIZE * selectedQuantity,
-      CELL_PIXEL_SIZE
-    );
+    ctx.fillRect(px, py, CELL_PIXEL_SIZE * selectedQuantity, CELL_PIXEL_SIZE);
   }
 }
 
@@ -75,10 +79,12 @@ function drawBookings() {
   bookings.forEach(booking => {
     if (booking.status !== 'approved') return;
 
-    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
-    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE - offsetY;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (startX + width < 0 || startX > canvas.width || startY + height < 0 || startY > canvas.height) return;
 
     ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
     ctx.fillRect(startX, startY, width, height);
@@ -125,19 +131,122 @@ function updateStats() {
 }
 
 // ===== التفاعل مع الفأرة =====
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
 canvas.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    offsetX -= dx;
+    offsetY -= dy;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+    drawGrid();
+    return;
+  }
+
   const rect = canvas.getBoundingClientRect();
-  const x = Math.floor((e.clientX - rect.left) / CELL_PIXEL_SIZE);
-  const y = Math.floor((e.clientY - rect.top) / CELL_PIXEL_SIZE);
+  const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+  const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
   if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
     hoveredCell = { x, y };
     drawGrid();
   }
 });
 
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvas.style.cursor = 'crosshair';
+});
+
 canvas.addEventListener('mouseleave', () => {
+  isDragging = false;
   hoveredCell = null;
+  canvas.style.cursor = 'crosshair';
   drawGrid();
+});
+
+// ===== عجلة الفأرة للتكبير =====
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const oldSize = CELL_PIXEL_SIZE;
+  if (e.deltaY < 0) {
+    CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + 5, 200);
+  } else {
+    CELL_PIXEL_SIZE = Math.max(CELL_PIXEL_SIZE - 5, 10);
+  }
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  offsetX = (offsetX + mouseX) * (CELL_PIXEL_SIZE / oldSize) - mouseX;
+  offsetY = (offsetY + mouseY) * (CELL_PIXEL_SIZE / oldSize) - mouseY;
+  offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+  offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+  drawGrid();
+}, { passive: false });
+
+// ===== اللمس على الهاتف =====
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTouchDist = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    lastTouchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+});
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    offsetX -= dx;
+    offsetY -= dy;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+    drawGrid();
+  } else if (e.touches.length === 2) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    if (lastTouchDist > 0) {
+      const oldSize = CELL_PIXEL_SIZE;
+      if (dist > lastTouchDist) {
+        CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + 5, 200);
+      } else {
+        CELL_PIXEL_SIZE = Math.max(CELL_PIXEL_SIZE - 5, 10);
+      }
+      offsetX = offsetX * (CELL_PIXEL_SIZE / oldSize);
+      offsetY = offsetY * (CELL_PIXEL_SIZE / oldSize);
+      drawGrid();
+    }
+    lastTouchDist = dist;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => {
+  lastTouchDist = 0;
 });
 
 // ===== النقر على الشبكة =====
@@ -302,6 +411,8 @@ document.getElementById('zoomOut').addEventListener('click', () => {
 
 document.getElementById('resetView').addEventListener('click', () => {
   CELL_PIXEL_SIZE = 50;
+  offsetX = 0;
+  offsetY = 0;
   drawGrid();
 });
 
