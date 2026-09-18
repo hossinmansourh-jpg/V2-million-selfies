@@ -9,25 +9,29 @@
 <body>
   <!-- الشريط العلوي -->
   <header class="topbar">
-    <div class="logo">🎨 جدارية المليون</div>
-    <button id="langToggle" class="lang-btn">EN</button>
+    <div class="lang-switch">
+      <button id="langAr" class="lang-option active">🇸🇾 عربي</button>
+      <button id="langEn" class="lang-option">🇬🇧 EN</button>
+    </div>
   </header>
 
-  <!-- العنوان الرئيسي -->
+  <!-- القسم الرئيسي -->
   <section class="hero">
+    <div class="badge" data-i18n="badge">🚀 تحدي رقمي تاريخي</div>
     <h1 data-i18n="heroTitle">جدارية مليون صورة سيلفي</h1>
-    <p data-i18n="heroSubtitle">احجز مربعك الآن وكن جزءاً من التاريخ</p>
+    <p class="hero-desc" data-i18n="heroSubtitle">كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.</p>
+    <p class="hero-price" data-i18n="priceNote">كل مربع 10×10 بكسل بـ دولار واحد فقط.</p>
   </section>
 
   <!-- الإحصائيات -->
   <section class="stats">
     <div class="stat-card">
-      <span class="stat-value" id="statBooked">0</span>
-      <span class="stat-label" data-i18n="statBooked">مربع محجوز</span>
+      <span class="stat-value" id="statAvailable">1,000,000</span>
+      <span class="stat-label" data-i18n="statAvailable">مربعات متبقية</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value" id="statAvailable">1,000,000</span>
-      <span class="stat-label" data-i18n="statAvailable">مربع متبقٍ</span>
+      <span class="stat-value" id="statBooked">0</span>
+      <span class="stat-label" data-i18n="statBooked">مربعات محجوزة</span>
     </div>
     <div class="stat-card">
       <span class="stat-value" id="statSelfies">0</span>
@@ -37,29 +41,56 @@
 
   <!-- شريط التقدم -->
   <section class="progress-section">
+    <div class="progress-header">
+      <span data-i18n="progressLabel">نسبة الحجز</span>
+      <span id="progressText">0.00%</span>
+    </div>
     <div class="progress-bar">
       <div class="progress-fill" id="progressFill" style="width: 0%"></div>
     </div>
-    <p class="progress-text" id="progressText">0% مكتمل</p>
   </section>
 
-  <!-- أدوات التحكم -->
-  <section class="controls">
-    <button id="zoomIn" class="ctrl-btn">🔍+</button>
-    <button id="zoomOut" class="ctrl-btn">🔍-</button>
-    <button id="resetView" class="ctrl-btn">↺</button>
+  <!-- لوحة الجدارية -->
+  <section class="wall-section">
+    <h2 class="section-title">
+      <span data-i18n="wallTitle">لوحة الجدارية التفاعلية</span> 🖼️
+    </h2>
+
+    <!-- المفتاح التوضيحي -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-box empty"></span>
+        <span data-i18n="legendEmpty">مربع فارغ</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-box booked"></span>
+        <span data-i18n="legendBooked">محجوز</span>
+      </div>
+      <span class="legend-hint" data-i18n="legendHint">انقر على أي مربع للحجز</span>
+    </div>
+
+    <!-- الشبكة -->
+    <div class="grid-container">
+      <canvas id="gridCanvas"></canvas>
+    </div>
+
+    <!-- أزرار التحكم -->
+    <div class="controls">
+      <button id="zoomIn" class="ctrl-btn" title="تكبير">+</button>
+      <button id="zoomOut" class="ctrl-btn" title="تصغير">−</button>
+    </div>
+
+    <!-- نصيحة -->
+    <p class="hint" data-i18n="hint">💡 مرر داخل الشبكة لاستكشاف المليون مربع</p>
   </section>
 
-  <!-- الشبكة (Canvas) -->
-  <section class="grid-container">
-    <canvas id="gridCanvas"></canvas>
-  </section>
+  <!-- زر الإدارة -->
+  <a href="hossin.html" class="admin-btn" title="لوحة الإدارة">🔒</a>
 
-  <!-- أزرار التواصل والإدارة -->
+  <!-- أزرار التواصل -->
   <div class="floating-buttons">
     <a href="https://wa.me/963991269367" class="contact-btn whatsapp" title="تواصل معنا واتساب" target="_blank">💬</a>
     <a href="https://t.me/Hossinn11" class="contact-btn telegram" title="تواصل معنا تيليجرام" target="_blank">✈️</a>
-    <a href="hossin.html" class="admin-btn" title="لوحة الإدارة">🔒</a>
   </div>
 
   <!-- نموذج الحجز (Modal) -->
@@ -67,7 +98,7 @@
     <div class="modal-content">
       <button class="close-btn" id="closeModal">✕</button>
       <h2 data-i18n="bookingTitle">حجز المربعات</h2>
-      
+
       <div class="form-group">
         <label data-i18n="quantityLabel">عدد المربعات (1-400)</label>
         <input type="number" id="quantityInput" min="1" max="400" value="1">
@@ -95,13 +126,13 @@
 
       <div class="form-group">
         <label data-i18n="selfieLabel">صورة السيلفي</label>
-        <input type="file" id="selfieInput" 
+        <input type="file" id="selfieInput"
                accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
       </div>
 
       <div class="form-group">
         <label data-i18n="receiptLabel">إيصال الدفع</label>
-        <input type="file" id="receiptInput" 
+        <input type="file" id="receiptInput"
                accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
       </div>
 
@@ -113,10 +144,8 @@
         </select>
       </div>
 
-      <!-- معلومات الدفع -->
       <div id="paymentInfo" class="payment-info"></div>
 
-      <!-- الشروط والأحكام -->
       <div class="terms-box">
         <h4 data-i18n="termsTitle">📋 الشروط والأحكام</h4>
         <ul class="terms-list">
@@ -132,7 +161,6 @@
         <label for="termsCheck" data-i18n="termsLabel">أوافق على الشروط والأحكام</label>
       </div>
 
-      <!-- ملاحظة استرجاع المال -->
       <div class="refund-notice">
         <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.</p>
       </div>
@@ -147,7 +175,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
