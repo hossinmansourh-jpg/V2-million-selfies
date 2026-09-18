@@ -10,7 +10,11 @@
   --red: #9a3a3a;
   --text: #ffffff;
   --text-muted: #a0a0b0;
+  --font-bold: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
 }
+
+/* استيراد خط عربي عريض */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
 
 * {
   margin: 0;
@@ -19,12 +23,12 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
   background: var(--bg-dark);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
-  padding-bottom: 80px;
+  padding-bottom: 90px;
 }
 
 /* ===== الشريط العلوي ===== */
@@ -50,9 +54,10 @@ body {
   padding: 8px 20px;
   border-radius: 25px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 900;
   font-size: 14px;
   transition: 0.3s;
+  font-family: 'Cairo', sans-serif;
 }
 
 .lang-option.active {
@@ -75,40 +80,49 @@ body {
   background: transparent;
   border: 2px solid var(--gold);
   color: var(--gold);
-  padding: 8px 24px;
+  padding: 10px 28px;
   border-radius: 30px;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 15px;
+  font-weight: 900;
   margin-bottom: 25px;
+  font-family: 'Cairo', sans-serif;
 }
 
 .hero h1 {
-  font-size: 42px;
+  font-size: 44px;
   color: var(--gold);
   margin-bottom: 20px;
   font-weight: 900;
-  line-height: 1.3;
+  line-height: 1.4;
+  font-family: 'Cairo', sans-serif;
 }
 
 .hero-desc {
   color: var(--text);
   font-size: 18px;
-  line-height: 1.8;
+  line-height: 1.9;
   max-width: 600px;
   margin: 0 auto 15px;
+  font-weight: 700;
+}
+
+.hero-desc strong,
+.hero-price {
+  color: var(--gold-light);
+  font-weight: 900;
 }
 
 .hero-price {
   color: var(--gold-light);
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 17px;
+  font-weight: 900;
 }
 
-/* ===== الإحصائيات ===== */
+/* ===== الإحصائيات (بطاقات بحد ذهبي علوي) ===== */
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 12px;
   padding: 20px;
   max-width: 700px;
   margin: 0 auto;
@@ -116,24 +130,40 @@ body {
 
 .stat-card {
   background: var(--bg-gray);
-  border: 2px solid var(--gold);
+  border: 1px solid var(--bg-light);
+  border-top: 3px solid var(--gold);
   border-radius: 12px;
-  padding: 25px 15px;
+  padding: 28px 12px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--gold);
+  box-shadow: 0 0 15px var(--gold);
 }
 
 .stat-value {
   display: block;
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 900;
   color: var(--gold-light);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-family: 'Cairo', sans-serif;
 }
 
 .stat-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-muted);
+  font-weight: 700;
 }
 
 /* ===== شريط التقدم ===== */
@@ -147,13 +177,14 @@ body {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 17px;
+  font-weight: 900;
   color: var(--gold);
+  font-family: 'Cairo', sans-serif;
 }
 
 .progress-bar {
-  height: 12px;
+  height: 10px;
   background: var(--bg-light);
   border-radius: 10px;
   overflow: hidden;
@@ -176,13 +207,14 @@ body {
 .section-title {
   text-align: center;
   color: var(--gold);
-  font-size: 24px;
+  font-size: 26px;
   margin-bottom: 20px;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  font-family: 'Cairo', sans-serif;
 }
 
 .title-icon {
@@ -205,6 +237,7 @@ body {
   gap: 8px;
   font-size: 14px;
   color: var(--text-muted);
+  font-weight: 700;
 }
 
 .legend-box {
@@ -226,7 +259,7 @@ body {
 .legend-hint {
   color: var(--gold);
   font-size: 13px;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 /* ===== حاوية الشبكة مع أزرار التكبير ===== */
@@ -290,9 +323,10 @@ body {
   color: var(--text-muted);
   font-size: 14px;
   margin-top: 15px;
+  font-weight: 700;
 }
 
-/* ===== شريط التواصل (أسفل الشاشة - مثبت) ===== */
+/* ===== شريط التواصل (الخيار A - يختفي عند التمرير للأسفل) ===== */
 .contact-bar {
   position: fixed;
   bottom: 0;
@@ -306,11 +340,17 @@ body {
   background: var(--bg-gray);
   border-top: 1px solid var(--bg-light);
   z-index: 998;
+  transition: transform 0.3s ease;
+}
+
+/* عند التمرير للأسفل - يختفي */
+.contact-bar.hidden {
+  transform: translateY(100%);
 }
 
 .contact-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -340,16 +380,16 @@ body {
   background: #0077b3;
 }
 
-/* نص "تواصل معنا" بين الأيقونات */
 .contact-label {
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.5px;
-  opacity: 0.7;
+  opacity: 0.8;
+  font-family: 'Cairo', sans-serif;
 }
 
-/* ===== زر الإدارة (صغير، بدون إطار، أسفل يسار) ===== */
+/* ===== زر الإدارة (يتحرك مع شريط التواصل) ===== */
 .admin-btn {
   position: fixed;
   bottom: 15px;
@@ -362,8 +402,13 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 999;
-  transition: 0.3s;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   opacity: 0.4;
+}
+
+.admin-btn.hidden {
+  transform: translateY(100px);
+  opacity: 0;
 }
 
 .admin-btn:hover {
@@ -420,6 +465,8 @@ body {
   color: var(--gold);
   margin-bottom: 20px;
   text-align: center;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
 }
 
 /* ===== النماذج ===== */
@@ -432,6 +479,7 @@ body {
   margin-bottom: 5px;
   color: var(--text-muted);
   font-size: 14px;
+  font-weight: 700;
 }
 
 .form-group input,
@@ -444,6 +492,7 @@ body {
   border-radius: 8px;
   color: var(--text);
   font-size: 15px;
+  font-family: 'Cairo', sans-serif;
 }
 
 .form-group input:focus,
@@ -472,6 +521,7 @@ body {
   margin: 15px 0;
   text-align: center;
   font-size: 14px;
+  font-weight: 700;
 }
 
 .payment-info img {
@@ -493,6 +543,8 @@ body {
   color: var(--gold);
   margin-bottom: 10px;
   font-size: 16px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
 }
 
 .terms-list {
@@ -506,6 +558,7 @@ body {
   font-size: 13px;
   padding: 5px 0;
   border-bottom: 1px solid var(--bg-light);
+  font-weight: 700;
 }
 
 .terms-list li:last-child {
@@ -525,6 +578,7 @@ body {
   color: var(--gold-light);
   font-size: 13px;
   margin: 0;
+  font-weight: 700;
 }
 
 /* ===== السعر ===== */
@@ -537,8 +591,9 @@ body {
   border-radius: 8px;
   margin: 15px 0;
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 900;
   color: var(--gold-light);
+  font-family: 'Cairo', sans-serif;
 }
 
 /* ===== زر الإرسال ===== */
@@ -550,9 +605,10 @@ body {
   border: none;
   border-radius: 8px;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 900;
   cursor: pointer;
   transition: 0.3s;
+  font-family: 'Cairo', sans-serif;
 }
 
 .submit-btn:hover {
@@ -569,6 +625,7 @@ body {
   text-align: center;
   margin-top: 10px;
   font-size: 14px;
+  font-weight: 700;
 }
 
 .form-message.success {
@@ -582,7 +639,7 @@ body {
 /* ===== الهاتف ===== */
 @media (max-width: 600px) {
   .hero h1 {
-    font-size: 28px;
+    font-size: 30px;
   }
 
   .hero-desc {
@@ -595,7 +652,7 @@ body {
   }
 
   .stat-card {
-    padding: 15px 8px;
+    padding: 20px 8px;
   }
 
   .stat-value {
@@ -607,7 +664,7 @@ body {
   }
 
   .section-title {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .zoom-btn {
@@ -615,7 +672,6 @@ body {
     height: 38px;
   }
 
-  /* الشبكة 75% من الشاشة على الهاتف */
   .grid-container {
     height: 75vh;
     min-height: 480px;
