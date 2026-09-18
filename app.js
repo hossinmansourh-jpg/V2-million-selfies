@@ -92,12 +92,12 @@ function drawScrollbars() {
   const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
   const totalHeight = GRID_SIZE * CELL_PIXEL_SIZE;
 
-  const scrollbarThickness = 8;
-  const scrollbarMargin = 4;
-  const scrollbarColor = 'rgba(212, 160, 23, 0.7)';
-  const scrollbarBgColor = 'rgba(42, 42, 53, 0.8)';
+  const scrollbarThickness = 10;
+  const scrollbarMargin = 6;
+  const scrollbarColor = '#f5b301';
+  const scrollbarBgColor = 'rgba(42, 42, 53, 0.9)';
 
-  // شريط التمرير العمودي (على اليمين)
+  // ===== شريط التمرير العمودي (على اليمين) =====
   const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
   const vTrackY = scrollbarMargin;
   const vTrackHeight = canvas.height - (scrollbarMargin * 2);
@@ -105,12 +105,15 @@ function drawScrollbars() {
   ctx.fillStyle = scrollbarBgColor;
   ctx.fillRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight);
 
-  const vHandleHeight = Math.max(30, (canvas.height / totalHeight) * vTrackHeight);
-  const vHandleY = vTrackY + (offsetY / totalHeight) * vTrackHeight;
+  const vHandleHeight = Math.max(40, (canvas.height / totalHeight) * vTrackHeight);
+  const vScrollableHeight = vTrackHeight - vHandleHeight;
+  const vMaxOffset = Math.max(1, totalHeight - canvas.height);
+  const vHandleY = vTrackY + (offsetY / vMaxOffset) * vScrollableHeight;
+
   ctx.fillStyle = scrollbarColor;
   ctx.fillRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight);
 
-  // شريط التمرير الأفقي (في الأسفل)
+  // ===== شريط التمرير الأفقي (في الأسفل) =====
   const hTrackX = scrollbarMargin;
   const hTrackY = canvas.height - scrollbarThickness - scrollbarMargin;
   const hTrackWidth = canvas.width - (scrollbarMargin * 2);
@@ -118,8 +121,11 @@ function drawScrollbars() {
   ctx.fillStyle = scrollbarBgColor;
   ctx.fillRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness);
 
-  const hHandleWidth = Math.max(30, (canvas.width / totalWidth) * hTrackWidth);
-  const hHandleX = hTrackX + (offsetX / totalWidth) * hTrackWidth;
+  const hHandleWidth = Math.max(40, (canvas.width / totalWidth) * hTrackWidth);
+  const hScrollableWidth = hTrackWidth - hHandleWidth;
+  const hMaxOffset = Math.max(1, totalWidth - canvas.width);
+  const hHandleX = hTrackX + (offsetX / hMaxOffset) * hScrollableWidth;
+
   ctx.fillStyle = scrollbarColor;
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
