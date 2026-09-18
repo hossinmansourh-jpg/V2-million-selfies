@@ -129,7 +129,7 @@ function updateStats() {
   document.getElementById('progressText').textContent = progress + '%';
 }
 
-// ===== التفاعل مع الفأرة =====
+// ===== التفاعل مع الفأرة (سرعة ×2) =====
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
@@ -140,8 +140,8 @@ canvas.addEventListener('mousemove', (e) => {
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasDragged = true;
-    offsetX -= dx;
-    offsetY -= dy;
+    offsetX -= dx * 2;
+    offsetY -= dy * 2;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
     offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
@@ -198,7 +198,7 @@ canvas.addEventListener('wheel', (e) => {
   drawGrid();
 }, { passive: false });
 
-// ===== اللمس على الهاتف =====
+// ===== اللمس على الهاتف (سرعة ×2) =====
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
@@ -220,8 +220,8 @@ canvas.addEventListener('touchmove', (e) => {
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    offsetX -= dx;
-    offsetY -= dy;
+    offsetX -= dx * 2;
+    offsetY -= dy * 2;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
