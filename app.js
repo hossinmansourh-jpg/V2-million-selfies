@@ -28,7 +28,8 @@ const ctx = canvas.getContext('2d');
 let offsetX = 0;
 let offsetY = 0;
 
-let bookings = [];
+let allBookings = [];   // جميع الحجوزات (pending + approved + rejected)
+let approvedBookings = []; // المعتمدة فقط (للرسم)
 let hoveredCell = null;
 let selectedQuantity = 1;
 let imageCache = {};
@@ -109,7 +110,7 @@ function drawGrid() {
     ctx.fillStyle = validSelection ? '#f5b301' : '#ff3333';
     ctx.font = 'bold 16px Cairo, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${count} مربع`, px + width / 2, py - 10);
+    ctx.fillText(`${count}`, px + width / 2, py - 10);
   }
 
   // رسم معاينة الصورة
@@ -199,11 +200,9 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات =====
+// ===== رسم الحجوزات (المعتمدة فقط) =====
 function drawBookings() {
-  bookings.forEach(booking => {
-    if (booking.status !== 'approved') return;
-
+  approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE - offsetY;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
@@ -237,10 +236,11 @@ function drawBookings() {
   });
 }
 
-// ===== التحقق من عدم وجود مربعات محجوزة =====
+// ===== التحقق من أن المربع محجوز (pending أو approved) =====
 function isCellBooked(cellX, cellY) {
-  return bookings.some(b => {
-    if (b.status !== 'approved') return false;
+  return allBookings.some(b => {
+    // فقط pending و approved (المرفوضة لا تحجز المربع)
+    if (b.status !== 'approved' && b.status !== 'pending') return false;
     const startX = b.startCell % GRID_SIZE;
     const startY = Math.floor(b.startCell / GRID_SIZE);
     const endX = startX + b.gridShape.cols - 1;
@@ -261,9 +261,15 @@ function isSelectionValid(x1, y1, x2, y2) {
 // ===== تحميل الحجوزات =====
 async function loadBookings() {
   try {
-    const q = query(collection(db, "bookings"), where("status", "==", "approved"));
+    // تحميل جميع الحجوزات (pending + approved)
+    const q = query(
+      collection(db, "bookings"),
+      where("status", "in", ["pending", "approved"])
+    );
     const snapshot = await getDocs(q);
-    bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    allBookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    approvedBookings = allBookings.filter(b => b.status === 'approved');
+    
     updateStats();
     drawGrid();
   } catch (error) {
@@ -273,9 +279,9 @@ async function loadBookings() {
 
 // ===== تحديث الإحصائيات =====
 function updateStats() {
-  const bookedCells = bookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
+  const bookedCells = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
   const availableCells = TOTAL_CELLS - bookedCells;
-  const selfiesCount = bookings.length;
+  const selfiesCount = approvedBookings.length;
   const progress = ((bookedCells / TOTAL_CELLS) * 100).toFixed(2);
 
   document.getElementById('statBooked').textContent = bookedCells.toLocaleString('en-US');
@@ -326,6 +332,7 @@ function startInertia() {
 // ===== تبديل وضع التحديد =====
 function toggleSelectionMode() {
   const btn = document.getElementById('selectModeBtn');
+  const currentLang = localStorage.getItem('lang') || 'ar';
 
   // إذا كنا في وضع التحديد ولدينا منطقة محددة → افتح نموذج الحجز
   if (selectionMode && selectionStart && selectionEnd) {
@@ -334,25 +341,24 @@ function toggleSelectionMode() {
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
     const y2 = Math.max(selectionStart.y, selectionEnd.y);
 
-    // التحقق من صلاحية المنطقة
     if (!isSelectionValid(x1, y1, x2, y2)) {
-      alert('⚠️ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.');
+      const msg = currentLang === 'ar' 
+        ? '⚠️ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.'
+        : '⚠️ Selected area contains booked squares. Choose an empty area.';
+      alert(msg);
       return;
     }
 
-    // حساب رقم المربع الأول
     const startCell = y1 * GRID_SIZE + x1;
     const quantity = (x2 - x1 + 1) * (y2 - y1 + 1);
 
-    // إيقاف وضع التحديد
     selectionMode = false;
     if (btn) {
       btn.classList.remove('active');
-      btn.textContent = '🖱️ تحديد المربعات';
+      btn.textContent = currentLang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
     }
     canvas.style.cursor = 'crosshair';
 
-    // فتح نموذج الحجز مع تعبئة البيانات
     openBookingModal(startCell);
     document.getElementById('quantityInput').value = quantity;
     selectedQuantity = quantity;
@@ -367,10 +373,11 @@ function toggleSelectionMode() {
 
   if (btn) {
     btn.classList.toggle('active', selectionMode);
-    btn.textContent = selectionMode ? '✅ إنهاء التحديد' : '🖱️ تحديد المربعات';
+    btn.textContent = selectionMode 
+      ? (currentLang === 'ar' ? '✅ إنهاء التحديد' : '✅ Finish Selection')
+      : (currentLang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares');
   }
 
-  // إعادة تعيين التحديد
   selectionStart = null;
   selectionEnd = null;
   previewImage = null;
@@ -623,8 +630,7 @@ canvas.addEventListener('click', (e) => {
   const clickX = e.clientX - rect.left + offsetX;
   const clickY = e.clientY - rect.top + offsetY;
 
-  for (const booking of bookings) {
-    if (booking.status !== 'approved') continue;
+  for (const booking of approvedBookings) {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
@@ -643,6 +649,17 @@ canvas.addEventListener('click', (e) => {
 
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
+  
+  // التحقق من أن المربع غير محجوز
+  if (isCellBooked(hoveredCell.x, hoveredCell.y)) {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    const msg = currentLang === 'ar' 
+      ? '⚠️ هذا المربع محجوز بالفعل' 
+      : '⚠️ This square is already booked';
+    alert(msg);
+    return;
+  }
+  
   openBookingModal(startCell);
 });
 
@@ -656,14 +673,19 @@ function updateSelectedCount() {
   const count = (x2 - x1 + 1) * (y2 - y1 + 1);
 
   const valid = isSelectionValid(x1, y1, x2, y2);
+  const currentLang = localStorage.getItem('lang') || 'ar';
 
   const display = document.getElementById('selectedCountDisplay');
   if (display) {
     if (valid) {
-      display.textContent = `المربعات المختارة: ${count}`;
+      display.textContent = currentLang === 'ar' 
+        ? `المربعات المختارة: ${count}` 
+        : `Selected squares: ${count}`;
       display.style.color = '#f5b301';
     } else {
-      display.textContent = `⚠️ المنطقة تحتوي على مربعات محجوزة`;
+      display.textContent = currentLang === 'ar' 
+        ? `⚠️ المنطقة تحتوي على مربعات محجوزة` 
+        : `⚠️ Area contains booked squares`;
       display.style.color = '#ff3333';
     }
   }
@@ -873,6 +895,9 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     previewImage = null;
     previewImageUrl = null;
 
+    // تحديث فوري
+    await loadBookings();
+
     setTimeout(() => {
       document.getElementById('bookingModal').classList.add('hidden');
       btn.disabled = false;
@@ -936,6 +961,8 @@ const translations = {
     legendBooked: 'محجوز',
     legendHint: 'انقر على أي مربع للحجز',
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
+    selectModeBtn: '🖱️ تحديد المربعات',
+    selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
     quantityLabel: 'عدد المربعات (1-400)',
     nameLabel: 'الاسم',
@@ -970,6 +997,8 @@ const translations = {
     legendBooked: 'Booked',
     legendHint: 'Click any square to book',
     hint: '💡 Scroll inside the grid to explore the million squares',
+    selectModeBtn: '🖱️ Select Squares',
+    selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
     quantityLabel: 'Number of Squares (1-400)',
     nameLabel: 'Name',
@@ -1006,6 +1035,21 @@ function applyLanguage(lang) {
     }
   });
   updateStats();
+  
+  // تحديث نصوص التحديد
+  if (selectionStart && selectionEnd) {
+    updateSelectedCount();
+  }
+  
+  // تحديث زر وضع التحديد
+  const btn = document.getElementById('selectModeBtn');
+  if (btn) {
+    if (selectionMode) {
+      btn.textContent = lang === 'ar' ? '✅ إنهاء التحديد' : '✅ Finish Selection';
+    } else {
+      btn.textContent = lang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
+    }
+  }
 }
 
 // ===== تبديل اللغة =====
