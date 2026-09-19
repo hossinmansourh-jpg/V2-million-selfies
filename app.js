@@ -25,27 +25,23 @@ let CELL_PIXEL_SIZE = 50;
 const canvas = document.getElementById('gridCanvas');
 const ctx = canvas.getContext('2d');
 
-// ===== إحداثيات العرض =====
 let offsetX = 0;
 let offsetY = 0;
 
-// ===== الحالة =====
 let bookings = [];
 let hoveredCell = null;
 let selectedQuantity = 1;
 let imageCache = {};
 
-// ===== اختيار المنطقة =====
+// متغيرات التحديد
 let selectionStart = null;
 let selectionEnd = null;
 let isSelecting = false;
 let selectionMode = false;
 
-// ===== معاينة الصورة =====
+// متغيرات المعاينة
 let previewImage = null;
 let previewImageUrl = null;
-let previewOffsetX = 0;
-let previewOffsetY = 0;
 
 // ===== إعداد Canvas =====
 function resizeCanvas() {
@@ -115,19 +111,14 @@ function drawGrid() {
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
     const y2 = Math.max(selectionStart.y, selectionEnd.y);
 
-    const px = x1 * CELL_PIXEL_SIZE - offsetX + previewOffsetX;
-    const py = y1 * CELL_PIXEL_SIZE - offsetY + previewOffsetY;
+    const px = x1 * CELL_PIXEL_SIZE - offsetX;
+    const py = y1 * CELL_PIXEL_SIZE - offsetY;
     const width = (x2 - x1 + 1) * CELL_PIXEL_SIZE;
     const height = (y2 - y1 + 1) * CELL_PIXEL_SIZE;
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(
-      x1 * CELL_PIXEL_SIZE - offsetX,
-      y1 * CELL_PIXEL_SIZE - offsetY,
-      width,
-      height
-    );
+    ctx.rect(px, py, width, height);
     ctx.clip();
     ctx.globalAlpha = 0.85;
     ctx.drawImage(previewImage, px, py, width, height);
@@ -137,29 +128,21 @@ function drawGrid() {
     ctx.strokeStyle = '#f5b301';
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 4]);
-    ctx.strokeRect(
-      x1 * CELL_PIXEL_SIZE - offsetX + 1,
-      y1 * CELL_PIXEL_SIZE - offsetY + 1,
-      width - 2,
-      height - 2
-    );
+    ctx.strokeRect(px + 1, py + 1, width - 2, height - 2);
     ctx.setLineDash([]);
   }
 
   // مؤشر الخلية
-  if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !previewImage && !selectionMode) {
+  if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
-
     ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
-    ctx.fillRect(px, py, CELL_PIXEL_SIZE * selectedQuantity, CELL_PIXEL_SIZE);
-
+    ctx.fillRect(px, py, CELL_PIXEL_SIZE, CELL_PIXEL_SIZE);
     ctx.strokeStyle = '#f5b301';
     ctx.lineWidth = 2;
     ctx.shadowColor = '#f5b301';
     ctx.shadowBlur = 12;
-    ctx.strokeRect(px + 1, py + 1, CELL_PIXEL_SIZE * selectedQuantity - 2, CELL_PIXEL_SIZE - 2);
-
+    ctx.strokeRect(px + 1, py + 1, CELL_PIXEL_SIZE - 2, CELL_PIXEL_SIZE - 2);
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
   }
@@ -218,24 +201,31 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
+    // إذا كانت خارج الشاشة، تجاهلها
     if (startX + width < 0 || startX > canvas.width || startY + height < 0 || startY > canvas.height) return;
 
+    // رسم إطار ذهبي
     ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
     ctx.fillRect(startX, startY, width, height);
     ctx.strokeStyle = '#d4a017';
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, width, height);
 
+    // رسم الصورة (إذا كانت محملة)
     if (booking.selfieUrl) {
-      if (imageCache[booking.id]) {
+      if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
-      } else {
+      } else if (!imageCache[booking.id]) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           imageCache[booking.id] = img;
-          ctx.drawImage(img, startX, startY, width, height);
+          drawGrid(); // إعادة رسم الشبكة بعد تحميل الصورة
         };
+        img.onerror = () => {
+          console.error('فشل تحميل الصورة:', booking.selfieUrl);
+        };
+        imageCache[booking.id] = img;
         img.src = booking.selfieUrl;
       }
     }
@@ -307,7 +297,7 @@ function startInertia() {
   inertiaFrame = requestAnimationFrame(animate);
 }
 
-// ===== وضع التحديد =====
+// ===== تبديل وضع التحديد =====
 function toggleSelectionMode() {
   selectionMode = !selectionMode;
   const btn = document.getElementById('selectModeBtn');
@@ -320,8 +310,6 @@ function toggleSelectionMode() {
   selectionEnd = null;
   previewImage = null;
   previewImageUrl = null;
-  previewOffsetX = 0;
-  previewOffsetY = 0;
   isSelecting = false;
 
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
@@ -333,7 +321,7 @@ canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
 
   if (selectionMode) {
-    if (isSelecting && selectionEnd) {
+    if (isSelecting) {
       const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
       const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
       if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
@@ -413,7 +401,7 @@ canvas.addEventListener('mouseup', () => {
   }
 
   isDragging = false;
-  canvas.style.cursor = 'crosshair';
+  canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
     startInertia();
   }
@@ -492,7 +480,7 @@ canvas.addEventListener('touchstart', (e) => {
       e.touches[0].clientY - e.touches[1].clientY
     );
   }
-});
+}, { passive: true });
 
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
@@ -556,7 +544,7 @@ canvas.addEventListener('touchend', () => {
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
     startInertia();
   }
-});
+}, { passive: true });
 
 // ===== النقر على الشبكة =====
 canvas.addEventListener('click', (e) => {
@@ -570,6 +558,7 @@ canvas.addEventListener('click', (e) => {
   const clickX = e.clientX - rect.left + offsetX;
   const clickY = e.clientY - rect.top + offsetY;
 
+  // التحقق من النقر على صورة محجوزة
   for (const booking of bookings) {
     if (booking.status !== 'approved') continue;
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
@@ -638,17 +627,6 @@ document.getElementById('quantityInput').addEventListener('input', (e) => {
   drawGrid();
 });
 
-document.getElementById('quantityInput').addEventListener('change', (e) => {
-  let qty = parseInt(e.target.value) || 1;
-  if (qty < 1) qty = 1;
-  if (qty > 400) qty = 400;
-  e.target.value = qty;
-  selectedQuantity = qty;
-  const total = selectedQuantity * CELL_PRICE;
-  document.getElementById('totalPrice').textContent = total + ' $';
-  drawGrid();
-});
-
 // ===== معلومات الدفع =====
 document.getElementById('paymentMethod').addEventListener('change', updatePaymentInfo);
 
@@ -689,8 +667,6 @@ document.getElementById('selfieInput').addEventListener('change', (e) => {
       img.onload = () => {
         previewImage = img;
         previewImageUrl = ev.target.result;
-        previewOffsetX = 0;
-        previewOffsetY = 0;
         drawGrid();
       };
       img.src = ev.target.result;
@@ -801,7 +777,6 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     selectionEnd = null;
     previewImage = null;
     previewImageUrl = null;
-    if (selectionMode) toggleSelectionMode();
 
     setTimeout(() => {
       document.getElementById('bookingModal').classList.add('hidden');
@@ -846,10 +821,10 @@ document.getElementById('zoomOut').addEventListener('click', () => {
   drawGrid();
 });
 
-const selectBtn = document.getElementById('selectModeBtn');
-if (selectBtn) {
-  selectBtn.addEventListener('click', toggleSelectionMode);
-}
+// زر وضع التحديد
+document.getElementById('selectModeBtn').addEventListener('click', function() {
+  toggleSelectionMode();
+});
 
 // ===== الترجمات =====
 const translations = {
