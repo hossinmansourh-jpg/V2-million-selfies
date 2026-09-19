@@ -3,38 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة الإدارة - جدارية المليون</title>
+  <title>لوحة التحكم - جدارية المليون</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
   <style>
-    body {
-      background: #0a0a0f;
-      padding: 20px;
-      min-height: 100vh;
+    /* ===== المتغيرات ===== */
+    :root {
+      --bg-dark: #0a0a0f;
+      --bg-gray: #14141c;
+      --bg-light: #2a2a35;
+      --gold: #d4a017;
+      --gold-light: #f5b301;
+      --blue: #4a9eff;
+      --green: #3a9a3a;
+      --red: #9a3a3a;
+      --text: #ffffff;
+      --text-muted: #a0a0b0;
     }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      padding-bottom: 60px;
+    }
+
+    /* ===== شاشة تسجيل الدخول ===== */
     .login-box {
       max-width: 400px;
       margin: 80px auto;
-      background: #14141c;
-      border: 2px solid #d4a017;
+      background: var(--bg-gray);
+      border: 2px solid var(--gold);
       border-radius: 16px;
       padding: 40px 30px;
       text-align: center;
     }
+
     .login-box h1 {
-      color: #d4a017;
-      font-family: 'Cairo', sans-serif;
+      color: var(--gold);
       font-weight: 900;
       margin-bottom: 25px;
       font-size: 24px;
     }
+
     .login-box input {
       width: 100%;
       padding: 14px;
-      background: #0a0a0f;
-      border: 1px solid #2a2a35;
+      background: var(--bg-dark);
+      border: 1px solid var(--bg-light);
       border-radius: 8px;
       color: #fff;
       font-size: 16px;
@@ -42,15 +67,17 @@
       margin-bottom: 15px;
       text-align: center;
     }
+
     .login-box input:focus {
       outline: none;
-      border-color: #d4a017;
+      border-color: var(--gold);
     }
+
     .login-btn {
       width: 100%;
       padding: 14px;
-      background: #d4a017;
-      color: #0a0a0f;
+      background: var(--gold);
+      color: var(--bg-dark);
       border: none;
       border-radius: 8px;
       font-size: 16px;
@@ -59,156 +86,291 @@
       font-family: 'Cairo', sans-serif;
       transition: 0.3s;
     }
+
     .login-btn:hover {
-      background: #f5b301;
+      background: var(--gold-light);
     }
+
     .login-btn:disabled {
-      background: #2a2a35;
-      color: #a0a0b0;
+      background: var(--bg-light);
+      color: var(--text-muted);
       cursor: not-allowed;
     }
+
     .error-msg {
-      color: #9a3a3a;
+      color: var(--red);
       font-size: 14px;
       margin-top: 10px;
       font-weight: 700;
+      min-height: 20px;
     }
+
+    /* ===== لوحة التحكم ===== */
     .admin-panel {
       max-width: 900px;
       margin: 0 auto;
       display: none;
     }
+
     .admin-panel.active {
       display: block;
     }
+
+    /* ===== رأس اللوحة ===== */
     .admin-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 20px;
-      background: #14141c;
-      border: 2px solid #d4a017;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-    .admin-header h1 {
-      color: #d4a017;
-      font-family: 'Cairo', sans-serif;
-      font-weight: 900;
-      font-size: 20px;
-    }
-    .logout-btn {
-      background: #9a3a3a;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .stat-box {
-      background: #14141c;
-      border: 1px solid #2a2a35;
-      border-top: 3px solid #d4a017;
-      border-radius: 10px;
-      padding: 15px;
-      text-align: center;
-    }
-    .stat-box .num {
-      display: block;
-      font-size: 24px;
-      font-weight: 900;
-      color: #f5b301;
-      font-family: 'Cairo', sans-serif;
-    }
-    .stat-box .lbl {
-      display: block;
-      font-size: 12px;
-      color: #a0a0b0;
-      font-weight: 700;
-      margin-top: 5px;
-    }
-    .tabs {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 15px;
+      margin-bottom: 25px;
       flex-wrap: wrap;
+      gap: 10px;
     }
-    .tab-btn {
-      background: #14141c;
-      color: #a0a0b0;
-      border: 1px solid #2a2a35;
+
+    .admin-header h1 {
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header-btn {
+      background: var(--bg-gray);
+      color: var(--gold);
+      border: 1.5px solid var(--gold);
       padding: 10px 18px;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: 700;
       font-family: 'Cairo', sans-serif;
       font-size: 14px;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .header-btn:hover {
+      background: var(--gold);
+      color: var(--bg-dark);
+    }
+
+    .header-btn.danger {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .header-btn.danger:hover {
+      background: var(--red);
+      color: #fff;
+    }
+
+    /* ===== عناوين الأقسام ===== */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin: 30px 0 15px;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--gold);
+      border-right: 4px solid var(--gold);
+      padding-right: 12px;
+    }
+
+    /* ===== شبكة الإحصائيات ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--bg-gray);
+      border: 1px solid var(--bg-light);
+      border-radius: 12px;
+      padding: 25px 15px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-box.blue-top::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--blue);
+      box-shadow: 0 0 12px var(--blue);
+    }
+
+    .stat-box.gold-top::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gold);
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    .stat-box .num {
+      display: block;
+      font-size: 32px;
+      font-weight: 900;
+      font-family: 'Cairo', sans-serif;
+      margin-bottom: 8px;
+      direction: ltr;
+    }
+
+    .stat-box .num.blue {
+      color: var(--blue);
+    }
+
+    .stat-box .num.gold {
+      color: var(--gold-light);
+    }
+
+    .stat-box .num.green {
+      color: #4ade80;
+    }
+
+    .stat-box .num.red {
+      color: #ff5555;
+    }
+
+    .stat-box .lbl {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* ===== التبويبات ===== */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: var(--bg-gray);
+      color: var(--text-muted);
+      border: 1.5px solid var(--bg-light);
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
     .tab-btn.active {
-      background: #d4a017;
-      color: #0a0a0f;
-      border-color: #d4a017;
+      background: var(--gold);
+      color: var(--bg-dark);
+      border-color: var(--gold);
     }
+
+    .tab-btn:hover:not(.active) {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ===== البحث ===== */
     .search-box {
       width: 100%;
-      padding: 12px 15px;
-      background: #14141c;
-      border: 1px solid #2a2a35;
-      border-radius: 8px;
+      padding: 14px 18px;
+      background: var(--bg-gray);
+      border: 1.5px solid var(--bg-light);
+      border-radius: 10px;
       color: #fff;
       font-family: 'Cairo', sans-serif;
       font-size: 15px;
       margin-bottom: 20px;
     }
+
     .search-box:focus {
       outline: none;
-      border-color: #d4a017;
+      border-color: var(--gold);
     }
+
+    .search-box::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ===== بطاقات الطلبات ===== */
     .booking-card {
-      background: #14141c;
-      border: 1px solid #2a2a35;
+      background: var(--bg-gray);
+      border: 1px solid var(--bg-light);
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 15px;
+      padding: 18px;
+      margin-bottom: 12px;
       display: flex;
       gap: 15px;
       flex-wrap: wrap;
+      align-items: flex-start;
     }
+
     .booking-card img {
       width: 100px;
       height: 100px;
       object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid #2a2a35;
+      border-radius: 10px;
+      border: 2px solid var(--bg-light);
+      flex-shrink: 0;
     }
+
     .booking-info {
       flex: 1;
       min-width: 200px;
     }
+
     .booking-info p {
-      color: #a0a0b0;
+      color: var(--text-muted);
       font-size: 14px;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       font-family: 'Cairo', sans-serif;
+      font-weight: 700;
     }
+
     .booking-info p strong {
       color: #fff;
     }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    .status-pending { background: #8a6a1a; color: #fff; }
+    .status-approved { background: #3a9a3a; color: #fff; }
+    .status-rejected { background: #9a3a3a; color: #fff; }
+
     .booking-actions {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+      min-width: 100px;
     }
+
     .action-btn {
-      padding: 8px 16px;
+      padding: 8px 14px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -216,26 +378,36 @@
       font-family: 'Cairo', sans-serif;
       font-size: 13px;
       color: white;
+      transition: 0.3s;
     }
+
+    .action-btn:hover {
+      opacity: 0.85;
+    }
+
     .approve-btn { background: #3a9a3a; }
     .reject-btn { background: #9a3a3a; }
     .delete-btn { background: #555; }
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-    }
-    .status-pending { background: #8a6a1a; color: #fff; }
-    .status-approved { background: #3a9a3a; color: #fff; }
-    .status-rejected { background: #9a3a3a; color: #fff; }
+
     .empty-msg {
       text-align: center;
-      color: #a0a0b0;
-      padding: 40px;
+      color: var(--text-muted);
+      padding: 40px 20px;
       font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      background: var(--bg-gray);
+      border-radius: 12px;
+      border: 1px dashed var(--bg-light);
+    }
+
+    /* ===== الهاتف ===== */
+    @media (max-width: 600px) {
+      .admin-header h1 { font-size: 22px; }
+      .stat-box .num { font-size: 26px; }
+      .stat-box { padding: 20px 10px; }
+      .booking-card { padding: 14px; }
+      .booking-card img { width: 80px; height: 80px; }
+      .header-btn { padding: 8px 14px; font-size: 13px; }
     }
   </style>
 </head>
@@ -243,42 +415,90 @@
 
   <!-- شاشة تسجيل الدخول -->
   <div class="login-box" id="loginBox">
-    <h1>🔒 لوحة الإدارة</h1>
+    <h1>🔒 لوحة التحكم</h1>
     <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" />
     <button class="login-btn" id="loginBtn">دخول</button>
     <p class="error-msg" id="errorMsg"></p>
   </div>
 
-  <!-- لوحة الإدارة -->
+  <!-- لوحة التحكم -->
   <div class="admin-panel" id="adminPanel">
+    
+    <!-- الرأس -->
     <div class="admin-header">
-      <h1>لوحة الإدارة</h1>
-      <button class="logout-btn" id="logoutBtn">خروج</button>
+      <h1>🎛️ لوحة التحكم</h1>
+      <div class="header-buttons">
+        <button class="header-btn" id="refreshBtn">🔄 تحديث</button>
+        <button class="header-btn danger" id="logoutBtn">🚪 خروج</button>
+      </div>
     </div>
 
-    <!-- الإحصائيات -->
+    <!-- إحصائيات الزوار -->
+    <div class="section-heading">
+      👥 إحصائيات الزوار
+    </div>
     <div class="stats-grid">
-      <div class="stat-box"><span class="num" id="totalVisits">0</span><span class="lbl">إجمالي الزوار</span></div>
-      <div class="stat-box"><span class="num" id="todayVisits">0</span><span class="lbl">زوار اليوم</span></div>
-      <div class="stat-box"><span class="num" id="totalBookings">0</span><span class="lbl">إجمالي الطلبات</span></div>
-      <div class="stat-box"><span class="num" id="pendingCount">0</span><span class="lbl">معلقة</span></div>
-      <div class="stat-box"><span class="num" id="approvedCount">0</span><span class="lbl">مقبولة</span></div>
-      <div class="stat-box"><span class="num" id="rejectedCount">0</span><span class="lbl">مرفوضة</span></div>
+      <div class="stat-box blue-top">
+        <span class="num blue" id="totalVisits">0</span>
+        <span class="lbl">إجمالي الزيارات</span>
+      </div>
+      <div class="stat-box blue-top">
+        <span class="num blue" id="todayVisits">0</span>
+        <span class="lbl">زيارات اليوم</span>
+      </div>
+      <div class="stat-box blue-top">
+        <span class="num blue" id="weekVisits">0</span>
+        <span class="lbl">آخر 7 أيام</span>
+      </div>
+      <div class="stat-box blue-top">
+        <span class="num blue" id="monthVisits">0</span>
+        <span class="lbl">آخر 30 يوماً</span>
+      </div>
     </div>
 
-    <!-- التبويبات -->
+    <!-- إحصائيات الطلبات -->
+    <div class="section-heading">
+      📋 إحصائيات الطلبات
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box gold-top">
+        <span class="num gold" id="totalBookings">0</span>
+        <span class="lbl">إجمالي الطلبات</span>
+      </div>
+      <div class="stat-box gold-top">
+        <span class="num gold" id="pendingCount">0</span>
+        <span class="lbl">قيد الانتظار</span>
+      </div>
+      <div class="stat-box gold-top">
+        <span class="num green" id="approvedCount">0</span>
+        <span class="lbl">مقبولة</span>
+      </div>
+      <div class="stat-box gold-top">
+        <span class="num red" id="rejectedCount">0</span>
+        <span class="lbl">مرفوضة</span>
+      </div>
+      <div class="stat-box gold-top" style="grid-column: span 2;">
+        <span class="num gold" id="totalRevenue">$0</span>
+        <span class="lbl">إجمالي المبالغ</span>
+      </div>
+    </div>
+
+    <!-- إدارة الطلبات -->
+    <div class="section-heading">
+      🗂️ إدارة الطلبات
+    </div>
+
     <div class="tabs">
-      <button class="tab-btn active" data-tab="pending">معلقة</button>
+      <button class="tab-btn active" data-tab="pending">قيد الانتظار</button>
       <button class="tab-btn" data-tab="approved">مقبولة</button>
       <button class="tab-btn" data-tab="rejected">مرفوضة</button>
       <button class="tab-btn" data-tab="all">الكل</button>
     </div>
 
-    <!-- البحث -->
     <input type="text" class="search-box" id="searchBox" placeholder="🔍 ابحث بالاسم أو الهاتف أو رقم المربع..." />
 
-    <!-- الطلبات -->
     <div id="bookingsList"></div>
+
   </div>
 
   <!-- Firebase SDK -->
@@ -331,6 +551,11 @@
       }
     });
 
+    // ===== Enter للدخول =====
+    document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+
     // ===== مراقبة حالة الدخول =====
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -348,7 +573,14 @@
 
     // ===== الخروج =====
     document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await signOut(auth);
+      if (confirm('هل تريد الخروج؟')) {
+        await signOut(auth);
+      }
+    });
+
+    // ===== زر التحديث =====
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadAllData();
     });
 
     // ===== تحميل كل البيانات =====
@@ -376,10 +608,18 @@
         const snapshot = await getDocs(collection(db, "visits"));
         const visits = snapshot.docs.map(d => d.data());
         const today = new Date().toISOString().split('T')[0];
-        const todayVisits = visits.filter(v => v.date === today).length;
+        const now = Date.now();
+        const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+
+        const todayCount = visits.filter(v => v.date === today).length;
+        const weekCount = visits.filter(v => v.timestamp >= sevenDaysAgo).length;
+        const monthCount = visits.filter(v => v.timestamp >= thirtyDaysAgo).length;
 
         document.getElementById('totalVisits').textContent = visits.length.toLocaleString('en-US');
-        document.getElementById('todayVisits').textContent = todayVisits.toLocaleString('en-US');
+        document.getElementById('todayVisits').textContent = todayCount.toLocaleString('en-US');
+        document.getElementById('weekVisits').textContent = weekCount.toLocaleString('en-US');
+        document.getElementById('monthVisits').textContent = monthCount.toLocaleString('en-US');
       } catch (error) {
         console.error("خطأ في تحميل الزيارات:", error);
       }
@@ -390,11 +630,15 @@
       const pending = allBookings.filter(b => b.status === 'pending').length;
       const approved = allBookings.filter(b => b.status === 'approved').length;
       const rejected = allBookings.filter(b => b.status === 'rejected').length;
+      const totalRevenue = allBookings
+        .filter(b => b.status === 'approved')
+        .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 
       document.getElementById('totalBookings').textContent = allBookings.length.toLocaleString('en-US');
       document.getElementById('pendingCount').textContent = pending.toLocaleString('en-US');
       document.getElementById('approvedCount').textContent = approved.toLocaleString('en-US');
       document.getElementById('rejectedCount').textContent = rejected.toLocaleString('en-US');
+      document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
     }
 
     // ===== عرض الحجوزات =====
@@ -423,7 +667,7 @@
       list.innerHTML = filtered.map(b => {
         const statusClass = b.status === 'pending' ? 'status-pending' :
                            b.status === 'approved' ? 'status-approved' : 'status-rejected';
-        const statusText = b.status === 'pending' ? 'معلقة' :
+        const statusText = b.status === 'pending' ? 'قيد الانتظار' :
                           b.status === 'approved' ? 'مقبولة' : 'مرفوضة';
 
         return `
@@ -438,9 +682,9 @@
               <p><strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
             </div>
             <div class="booking-actions">
-              ${b.status !== 'approved' ? `<button class="action-btn approve-btn" onclick="approveBooking('${b.id}')">قبول</button>` : ''}
-              ${b.status !== 'rejected' ? `<button class="action-btn reject-btn" onclick="rejectBooking('${b.id}')">رفض</button>` : ''}
-              <button class="action-btn delete-btn" onclick="deleteBooking('${b.id}')">حذف</button>
+              ${b.status !== 'approved' ? `<button class="action-btn approve-btn" onclick="approveBooking('${b.id}')">✅ قبول</button>` : ''}
+              ${b.status !== 'rejected' ? `<button class="action-btn reject-btn" onclick="rejectBooking('${b.id}')">❌ رفض</button>` : ''}
+              <button class="action-btn delete-btn" onclick="deleteBooking('${b.id}')">🗑️ حذف</button>
             </div>
           </div>
         `;
