@@ -76,6 +76,12 @@
       <span class="legend-hint" data-i18n="legendHint">انقر على أي مربع للحجز</span>
     </div>
 
+    <!-- أزرار وضع التحديد -->
+    <div class="selection-controls">
+      <button id="selectModeBtn" class="select-mode-btn">🖱️ تحديد المربعات</button>
+      <span id="selectedCountDisplay" class="selected-count">المربعات المختارة: 0</span>
+    </div>
+
     <!-- الشبكة -->
     <div class="grid-wrapper">
       <button id="zoomOut" class="zoom-btn zoom-out" title="تصغير">
@@ -164,11 +170,13 @@
       <div class="form-group">
         <label data-i18n="selfieLabel">صورة السيلفي</label>
         <input type="file" id="selfieInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
+        <img id="selfiePreview" class="img-preview" style="display:none;" alt="معاينة السيلفي">
       </div>
 
       <div class="form-group">
         <label data-i18n="receiptLabel">إيصال الدفع</label>
         <input type="file" id="receiptInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
+        <img id="receiptPreview" class="img-preview" style="display:none;" alt="معاينة الإيصال">
       </div>
 
       <div class="form-group">
