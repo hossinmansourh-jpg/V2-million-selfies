@@ -239,6 +239,47 @@ body {
   font-weight: 700;
 }
 
+/* ===== أزرار وضع التحديد ===== */
+.selection-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.select-mode-btn {
+  background: var(--bg-gray);
+  color: var(--gold);
+  border: 1.5px solid var(--gold);
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.select-mode-btn:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+}
+
+.select-mode-btn.active {
+  background: var(--gold);
+  color: var(--bg-dark);
+  box-shadow: 0 0 15px rgba(212, 160, 23, 0.6);
+}
+
+.selected-count {
+  color: var(--gold-light);
+  font-weight: 700;
+  font-size: 14px;
+  font-family: 'Cairo', sans-serif;
+}
+
 /* ===== حاوية الشبكة ===== */
 .grid-wrapper {
   position: relative;
@@ -267,15 +308,10 @@ body {
   color: var(--bg-dark);
 }
 
-.zoom-in {
-  left: 0;
-}
+.zoom-in { left: 0; }
+.zoom-out { right: 0; }
 
-.zoom-out {
-  right: 0;
-}
-
-/* ===== حاوية الشبكة مع الإطار الرفيع ===== */
+/* ===== إطار الشبكة ===== */
 .grid-frame {
   position: relative;
   width: 100%;
@@ -564,6 +600,16 @@ body {
 
 .form-message.success { color: #3a9a3a; }
 .form-message.error { color: #9a3a3a; }
+
+/* ===== معاينة الصور ===== */
+.img-preview {
+  max-width: 100%;
+  max-height: 150px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 2px solid var(--gold);
+  display: block;
+}
 
 /* ===== الهاتف ===== */
 @media (max-width: 600px) {
