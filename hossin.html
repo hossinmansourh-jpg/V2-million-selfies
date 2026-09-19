@@ -349,13 +349,8 @@
       border-color: var(--gold);
     }
 
-    .selfie-img {
-      border-color: var(--gold);
-    }
-
-    .receipt-img {
-      border-color: #4a9eff;
-    }
+    .selfie-img { border-color: var(--gold); }
+    .receipt-img { border-color: #4a9eff; }
 
     .booking-info {
       flex: 1;
@@ -450,6 +445,33 @@
       border-radius: 12px;
       border: 3px solid var(--gold);
       box-shadow: 0 0 40px rgba(212, 160, 23, 0.5);
+    }
+
+    .image-close-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 45px;
+      height: 45px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 3100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      transition: 0.3s;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    .image-close-btn:hover {
+      background: #c44;
+      transform: scale(1.1);
     }
 
     /* ===== الهاتف ===== */
@@ -555,6 +577,7 @@
 
   <!-- نافذة عرض الصورة -->
   <div class="image-modal" id="imageModal">
+    <button class="image-close-btn" id="imageCloseBtn">✕</button>
     <img id="modalImage" src="" alt="صورة كبيرة">
   </div>
 
@@ -770,12 +793,35 @@
       const img = document.getElementById('modalImage');
       img.src = url;
       modal.classList.add('active');
+      
+      // إضافة حالة في السجل حتى يعمل زر الرجوع على إغلاق الصورة فقط
+      history.pushState({ imageOpen: true }, '');
     };
 
-    // ===== إغلاق نافذة الصورة =====
+    // ===== زر إغلاق الصورة =====
+    document.getElementById('imageCloseBtn').addEventListener('click', () => {
+      const modal = document.getElementById('imageModal');
+      modal.classList.remove('active');
+      if (history.state && history.state.imageOpen) {
+        history.back();
+      }
+    });
+
+    // ===== إغلاق نافذة الصورة عند النقر خارجها =====
     document.getElementById('imageModal').addEventListener('click', (e) => {
       if (e.target.id === 'imageModal') {
         e.target.classList.remove('active');
+        if (history.state && history.state.imageOpen) {
+          history.back();
+        }
+      }
+    });
+
+    // ===== إغلاق نافذة الصورة عند زر الرجوع في الهاتف =====
+    window.addEventListener('popstate', () => {
+      const modal = document.getElementById('imageModal');
+      if (modal.classList.contains('active')) {
+        modal.classList.remove('active');
       }
     });
 
