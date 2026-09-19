@@ -86,19 +86,27 @@ function drawGrid() {
     const width = (x2 - x1 + 1) * CELL_PIXEL_SIZE;
     const height = (y2 - y1 + 1) * CELL_PIXEL_SIZE;
 
-    ctx.fillStyle = 'rgba(212, 160, 23, 0.2)';
-    ctx.fillRect(px, py, width, height);
+    const validSelection = isSelectionValid(x1, y1, x2, y2);
 
-    ctx.strokeStyle = '#f5b301';
+    if (validSelection) {
+      ctx.fillStyle = 'rgba(212, 160, 23, 0.2)';
+      ctx.strokeStyle = '#f5b301';
+      ctx.shadowColor = '#f5b301';
+    } else {
+      ctx.fillStyle = 'rgba(154, 58, 58, 0.3)';
+      ctx.strokeStyle = '#ff3333';
+      ctx.shadowColor = '#ff3333';
+    }
+
+    ctx.fillRect(px, py, width, height);
     ctx.lineWidth = 3;
-    ctx.shadowColor = '#f5b301';
     ctx.shadowBlur = 15;
     ctx.strokeRect(px + 1, py + 1, width - 2, height - 2);
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
 
     const count = (x2 - x1 + 1) * (y2 - y1 + 1);
-    ctx.fillStyle = '#f5b301';
+    ctx.fillStyle = validSelection ? '#f5b301' : '#ff3333';
     ctx.font = 'bold 16px Cairo, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`${count} مربع`, px + width / 2, py - 10);
@@ -201,17 +209,14 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
-    // إذا كانت خارج الشاشة، تجاهلها
     if (startX + width < 0 || startX > canvas.width || startY + height < 0 || startY > canvas.height) return;
 
-    // رسم إطار ذهبي
     ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
     ctx.fillRect(startX, startY, width, height);
     ctx.strokeStyle = '#d4a017';
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, width, height);
 
-    // رسم الصورة (إذا كانت محملة)
     if (booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -220,7 +225,7 @@ function drawBookings() {
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           imageCache[booking.id] = img;
-          drawGrid(); // إعادة رسم الشبكة بعد تحميل الصورة
+          drawGrid();
         };
         img.onerror = () => {
           console.error('فشل تحميل الصورة:', booking.selfieUrl);
@@ -230,6 +235,27 @@ function drawBookings() {
       }
     }
   });
+}
+
+// ===== التحقق من عدم وجود مربعات محجوزة =====
+function isCellBooked(cellX, cellY) {
+  return bookings.some(b => {
+    if (b.status !== 'approved') return false;
+    const startX = b.startCell % GRID_SIZE;
+    const startY = Math.floor(b.startCell / GRID_SIZE);
+    const endX = startX + b.gridShape.cols - 1;
+    const endY = startY + b.gridShape.rows - 1;
+    return cellX >= startX && cellX <= endX && cellY >= startY && cellY <= endY;
+  });
+}
+
+function isSelectionValid(x1, y1, x2, y2) {
+  for (let y = y1; y <= y2; y++) {
+    for (let x = x1; x <= x2; x++) {
+      if (isCellBooked(x, y)) return false;
+    }
+  }
+  return true;
 }
 
 // ===== تحميل الحجوزات =====
@@ -558,7 +584,6 @@ canvas.addEventListener('click', (e) => {
   const clickX = e.clientX - rect.left + offsetX;
   const clickY = e.clientY - rect.top + offsetY;
 
-  // التحقق من النقر على صورة محجوزة
   for (const booking of bookings) {
     if (booking.status !== 'approved') continue;
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
@@ -591,8 +616,18 @@ function updateSelectedCount() {
   const y2 = Math.max(selectionStart.y, selectionEnd.y);
   const count = (x2 - x1 + 1) * (y2 - y1 + 1);
 
+  const valid = isSelectionValid(x1, y1, x2, y2);
+
   const display = document.getElementById('selectedCountDisplay');
-  if (display) display.textContent = `المربعات المختارة: ${count}`;
+  if (display) {
+    if (valid) {
+      display.textContent = `المربعات المختارة: ${count}`;
+      display.style.color = '#f5b301';
+    } else {
+      display.textContent = `⚠️ المنطقة تحتوي على مربعات محجوزة`;
+      display.style.color = '#ff3333';
+    }
+  }
 
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) {
@@ -716,6 +751,12 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
     const y2 = Math.max(selectionStart.y, selectionEnd.y);
 
+    if (!isSelectionValid(x1, y1, x2, y2)) {
+      msg.textContent = '❌ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.';
+      msg.className = 'form-message error';
+      return;
+    }
+
     startCell = y1 * GRID_SIZE + x1;
     cols = x2 - x1 + 1;
     rows = y2 - y1 + 1;
@@ -725,6 +766,19 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     quantity = parseInt(document.getElementById('quantityInput').value) || 1;
     cols = Math.ceil(Math.sqrt(quantity));
     rows = Math.ceil(quantity / cols);
+
+    // التحقق من المربع الواحد
+    const checkX = startCell % GRID_SIZE;
+    const checkY = Math.floor(startCell / GRID_SIZE);
+    for (let i = 0; i < quantity; i++) {
+      const cx = (startCell + i) % GRID_SIZE;
+      const cy = Math.floor((startCell + i) / GRID_SIZE);
+      if (isCellBooked(cx, cy)) {
+        msg.textContent = '❌ المربعات المختارة تحتوي على مربعات محجوزة.';
+        msg.className = 'form-message error';
+        return;
+      }
+    }
   }
 
   if (quantity > 400) {
@@ -821,7 +875,6 @@ document.getElementById('zoomOut').addEventListener('click', () => {
   drawGrid();
 });
 
-// زر وضع التحديد
 document.getElementById('selectModeBtn').addEventListener('click', function() {
   toggleSelectionMode();
 });
