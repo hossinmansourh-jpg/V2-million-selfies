@@ -325,13 +325,52 @@ function startInertia() {
 
 // ===== تبديل وضع التحديد =====
 function toggleSelectionMode() {
-  selectionMode = !selectionMode;
   const btn = document.getElementById('selectModeBtn');
+
+  // إذا كنا في وضع التحديد ولدينا منطقة محددة → افتح نموذج الحجز
+  if (selectionMode && selectionStart && selectionEnd) {
+    const x1 = Math.min(selectionStart.x, selectionEnd.x);
+    const y1 = Math.min(selectionStart.y, selectionEnd.y);
+    const x2 = Math.max(selectionStart.x, selectionEnd.x);
+    const y2 = Math.max(selectionStart.y, selectionEnd.y);
+
+    // التحقق من صلاحية المنطقة
+    if (!isSelectionValid(x1, y1, x2, y2)) {
+      alert('⚠️ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.');
+      return;
+    }
+
+    // حساب رقم المربع الأول
+    const startCell = y1 * GRID_SIZE + x1;
+    const quantity = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // إيقاف وضع التحديد
+    selectionMode = false;
+    if (btn) {
+      btn.classList.remove('active');
+      btn.textContent = '🖱️ تحديد المربعات';
+    }
+    canvas.style.cursor = 'crosshair';
+
+    // فتح نموذج الحجز مع تعبئة البيانات
+    openBookingModal(startCell);
+    document.getElementById('quantityInput').value = quantity;
+    selectedQuantity = quantity;
+    document.getElementById('totalPrice').textContent = (quantity * CELL_PRICE) + ' $';
+
+    drawGrid();
+    return;
+  }
+
+  // الوضع العادي: تبديل وضع التحديد
+  selectionMode = !selectionMode;
+
   if (btn) {
     btn.classList.toggle('active', selectionMode);
     btn.textContent = selectionMode ? '✅ إنهاء التحديد' : '🖱️ تحديد المربعات';
   }
 
+  // إعادة تعيين التحديد
   selectionStart = null;
   selectionEnd = null;
   previewImage = null;
@@ -649,6 +688,11 @@ function openBookingModal(startCell) {
 // ===== إغلاق النافذة =====
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
+  selectionStart = null;
+  selectionEnd = null;
+  previewImage = null;
+  previewImageUrl = null;
+  drawGrid();
 });
 
 // ===== تحديث السعر =====
@@ -767,9 +811,6 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     cols = Math.ceil(Math.sqrt(quantity));
     rows = Math.ceil(quantity / cols);
 
-    // التحقق من المربع الواحد
-    const checkX = startCell % GRID_SIZE;
-    const checkY = Math.floor(startCell / GRID_SIZE);
     for (let i = 0; i < quantity; i++) {
       const cx = (startCell + i) % GRID_SIZE;
       const cy = Math.floor((startCell + i) / GRID_SIZE);
