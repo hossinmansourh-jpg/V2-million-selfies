@@ -601,7 +601,6 @@ body {
 .form-message.success { color: #3a9a3a; }
 .form-message.error { color: #9a3a3a; }
 
-/* ===== معاينة الصور ===== */
 .img-preview {
   max-width: 100%;
   max-height: 150px;
