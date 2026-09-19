@@ -158,48 +158,60 @@ function drawGrid() {
 
   drawScrollbars();
 }
-
 // ===== رسم أشرطة التمرير =====
 function drawScrollbars() {
   const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
   const totalHeight = GRID_SIZE * CELL_PIXEL_SIZE;
 
-  const scrollbarThickness = 10;
-  const scrollbarMargin = 6;
-  const scrollbarColor = '#f5b301';
-  const scrollbarBgColor = 'rgba(42, 42, 53, 0.9)';
+  const scrollbarThickness = 5;
+  const scrollbarMargin = 8;
+  const scrollbarColor = '#d4a017';
+  const scrollbarBgColor = 'rgba(42, 42, 53, 0.5)';
 
+  // ===== شريط التمرير العمودي (على اليمين) =====
   const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
   const vTrackY = scrollbarMargin;
   const vTrackHeight = canvas.height - (scrollbarMargin * 2);
 
+  // خلفية الشريط العمودي
   ctx.fillStyle = scrollbarBgColor;
-  ctx.fillRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight);
+  ctx.beginPath();
+  ctx.roundRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight, 3);
+  ctx.fill();
 
-  const vHandleHeight = Math.max(40, (canvas.height / totalHeight) * vTrackHeight);
+  // مقبض الشريط العمودي
+  const vHandleHeight = Math.max(50, (canvas.height / totalHeight) * vTrackHeight);
   const vScrollableHeight = vTrackHeight - vHandleHeight;
   const vMaxOffset = Math.max(1, totalHeight - canvas.height);
   const vHandleY = vTrackY + (offsetY / vMaxOffset) * vScrollableHeight;
 
   ctx.fillStyle = scrollbarColor;
-  ctx.fillRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight);
+  ctx.beginPath();
+  ctx.roundRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight, 3);
+  ctx.fill();
 
+  // ===== شريط التمرير الأفقي (في الأسفل) =====
   const hTrackX = scrollbarMargin;
   const hTrackY = canvas.height - scrollbarThickness - scrollbarMargin;
   const hTrackWidth = canvas.width - (scrollbarMargin * 2);
 
+  // خلفية الشريط الأفقي
   ctx.fillStyle = scrollbarBgColor;
-  ctx.fillRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness);
+  ctx.beginPath();
+  ctx.roundRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness, 3);
+  ctx.fill();
 
-  const hHandleWidth = Math.max(40, (canvas.width / totalWidth) * hTrackWidth);
+  // مقبض الشريط الأفقي
+  const hHandleWidth = Math.max(50, (canvas.width / totalWidth) * hTrackWidth);
   const hScrollableWidth = hTrackWidth - hHandleWidth;
   const hMaxOffset = Math.max(1, totalWidth - canvas.width);
   const hHandleX = hTrackX + (offsetX / hMaxOffset) * hScrollableWidth;
 
   ctx.fillStyle = scrollbarColor;
-  ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
+  ctx.beginPath();
+  ctx.roundRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness, 3);
+  ctx.fill();
 }
-
 // ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
