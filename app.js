@@ -28,8 +28,8 @@ const ctx = canvas.getContext('2d');
 let offsetX = 0;
 let offsetY = 0;
 
-let allBookings = [];   // جميع الحجوزات (pending + approved + rejected)
-let approvedBookings = []; // المعتمدة فقط (للرسم)
+let allBookings = [];
+let approvedBookings = [];
 let hoveredCell = null;
 let selectedQuantity = 1;
 let imageCache = {};
@@ -200,7 +200,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات (المعتمدة فقط) =====
+// ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -236,10 +236,9 @@ function drawBookings() {
   });
 }
 
-// ===== التحقق من أن المربع محجوز (pending أو approved) =====
+// ===== التحقق من حجز المربع =====
 function isCellBooked(cellX, cellY) {
   return allBookings.some(b => {
-    // فقط pending و approved (المرفوضة لا تحجز المربع)
     if (b.status !== 'approved' && b.status !== 'pending') return false;
     const startX = b.startCell % GRID_SIZE;
     const startY = Math.floor(b.startCell / GRID_SIZE);
@@ -261,15 +260,11 @@ function isSelectionValid(x1, y1, x2, y2) {
 // ===== تحميل الحجوزات =====
 async function loadBookings() {
   try {
-    // تحميل جميع الحجوزات (pending + approved)
-    const q = query(
-      collection(db, "bookings"),
-      where("status", "in", ["pending", "approved"])
-    );
-    const snapshot = await getDocs(q);
-    allBookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await getDocs(collection(db, "bookings"));
+    const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
     approvedBookings = allBookings.filter(b => b.status === 'approved');
-    
+    allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     updateStats();
     drawGrid();
   } catch (error) {
@@ -308,7 +303,6 @@ function startInertia() {
   function animate() {
     offsetX += velocityX;
     offsetY += velocityY;
-
     velocityX *= 0.95;
     velocityY *= 0.95;
 
@@ -334,7 +328,6 @@ function toggleSelectionMode() {
   const btn = document.getElementById('selectModeBtn');
   const currentLang = localStorage.getItem('lang') || 'ar';
 
-  // إذا كنا في وضع التحديد ولدينا منطقة محددة → افتح نموذج الحجز
   if (selectionMode && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -342,10 +335,9 @@ function toggleSelectionMode() {
     const y2 = Math.max(selectionStart.y, selectionEnd.y);
 
     if (!isSelectionValid(x1, y1, x2, y2)) {
-      const msg = currentLang === 'ar' 
+      alert(currentLang === 'ar' 
         ? '⚠️ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.'
-        : '⚠️ Selected area contains booked squares. Choose an empty area.';
-      alert(msg);
+        : '⚠️ Selected area contains booked squares. Choose an empty area.');
       return;
     }
 
@@ -368,7 +360,6 @@ function toggleSelectionMode() {
     return;
   }
 
-  // الوضع العادي: تبديل وضع التحديد
   selectionMode = !selectionMode;
 
   if (btn) {
@@ -409,16 +400,12 @@ canvas.addEventListener('mousemove', (e) => {
     const now = Date.now();
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
-
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasDragged = true;
-
     offsetX -= dx * 2;
     offsetY -= dy * 2;
-
     const dt = now - lastMoveTime || 16;
     velocityX = -(dx * 2) / dt * 16;
     velocityY = -(dy * 2) / dt * 16;
-
     lastMoveTime = now;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
@@ -471,7 +458,6 @@ canvas.addEventListener('mouseup', () => {
     isSelecting = false;
     return;
   }
-
   isDragging = false;
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
@@ -538,7 +524,6 @@ canvas.addEventListener('touchstart', (e) => {
     lastMoveTime = Date.now();
     velocityX = 0;
     velocityY = 0;
-
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
     const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
@@ -573,14 +558,11 @@ canvas.addEventListener('touchmove', (e) => {
     const now = Date.now();
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-
     offsetX -= dx * 2;
     offsetY -= dy * 2;
-
     const dt = now - lastMoveTime || 16;
     velocityX = -(dx * 2) / dt * 16;
     velocityY = -(dy * 2) / dt * 16;
-
     lastMoveTime = now;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
@@ -650,13 +632,11 @@ canvas.addEventListener('click', (e) => {
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
   
-  // التحقق من أن المربع غير محجوز
   if (isCellBooked(hoveredCell.x, hoveredCell.y)) {
     const currentLang = localStorage.getItem('lang') || 'ar';
-    const msg = currentLang === 'ar' 
+    alert(currentLang === 'ar' 
       ? '⚠️ هذا المربع محجوز بالفعل' 
-      : '⚠️ This square is already booked';
-    alert(msg);
+      : '⚠️ This square is already booked');
     return;
   }
   
@@ -763,7 +743,6 @@ document.getElementById('selfieInput').addEventListener('change', (e) => {
     reader.onload = (ev) => {
       preview.src = ev.target.result;
       preview.style.display = 'block';
-
       const img = new Image();
       img.onload = () => {
         previewImage = img;
@@ -895,7 +874,6 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     previewImage = null;
     previewImageUrl = null;
 
-    // تحديث فوري
     await loadBookings();
 
     setTimeout(() => {
@@ -1024,6 +1002,8 @@ const translations = {
 // ===== تطبيق اللغة =====
 function applyLanguage(lang) {
   const t = translations[lang];
+  if (!t) return;
+  
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (t[key]) {
@@ -1034,9 +1014,8 @@ function applyLanguage(lang) {
       }
     }
   });
-  updateStats();
   
-  // تحديث نصوص التحديد
+  // تحديث نصوص التحديد إذا كانت موجودة
   if (selectionStart && selectionEnd) {
     updateSelectedCount();
   }
@@ -1050,6 +1029,8 @@ function applyLanguage(lang) {
       btn.textContent = lang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
     }
   }
+  
+  updateStats();
 }
 
 // ===== تبديل اللغة =====
@@ -1057,16 +1038,23 @@ function setLanguage(lang) {
   const html = document.documentElement;
   html.lang = lang;
   html.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  document.getElementById('langAr').classList.toggle('active', lang === 'ar');
-  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  
+  const arBtn = document.getElementById('langAr');
+  const enBtn = document.getElementById('langEn');
+  
+  if (arBtn) arBtn.classList.toggle('active', lang === 'ar');
+  if (enBtn) enBtn.classList.toggle('active', lang === 'en');
+  
   applyLanguage(lang);
   localStorage.setItem('lang', lang);
   drawGrid();
 }
 
+// ===== ربط أزرار اللغة =====
 document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
 document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
 
+// تحميل اللغة المحفوظة
 const savedLang = localStorage.getItem('lang') || 'ar';
 setLanguage(savedLang);
 
