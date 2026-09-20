@@ -26,6 +26,39 @@
     <p class="hero-price" data-i18n="priceNote">كل مربع 10×10 بكسل بـ دولار واحد فقط.</p>
   </section>
 
+  <!-- كيف يعمل الموقع -->
+  <section class="how-it-works">
+    <h2 class="how-title" data-i18n="howTitle">🎯 كيف يعمل الموقع؟</h2>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-icon">🖱️</div>
+        <div class="how-num">1</div>
+        <h3 data-i18n="howStep1Title">اختر مربعك</h3>
+        <p data-i18n="howStep1Desc">اضغط على "تحديد المربعات" واسحب لتحديد منطقتك</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">📸</div>
+        <div class="how-num">2</div>
+        <h3 data-i18n="howStep2Title">ارفع صورتك</h3>
+        <p data-i18n="howStep2Desc">ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">💰</div>
+        <div class="how-num">3</div>
+        <h3 data-i18n="howStep3Title">ادفع بـ 1$</h3>
+        <p data-i18n="howStep3Desc">ادفع عبر شام كاش أو USDT وارفع الإيصال</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- بانر الإحالة -->
+  <div class="referral-banner">
+    <span data-i18n="referralText">🎁 ادعُ أصدقاءك واحصل على مربع مجاني!</span>
+    <button onclick="copyReferralLink()" class="referral-btn" data-i18n="referralBtn">
+      📋 نسخ رابط الإحالة
+    </button>
+  </div>
+
   <!-- الإحصائيات -->
   <section class="stats">
     <div class="stat-card">
@@ -77,10 +110,10 @@
     </div>
 
     <!-- أزرار وضع التحديد -->
-<div class="selection-controls">
-  <button id="selectModeBtn" class="select-mode-btn" data-i18n="selectModeBtn">🖱️ تحديد المربعات</button>
-  <span id="selectedCountDisplay" class="selected-count" data-i18n="selectedCount">المربعات المختارة: 0</span>
-</div>
+    <div class="selection-controls">
+      <button id="selectModeBtn" class="select-mode-btn" data-i18n="selectModeBtn">🖱️ تحديد المربعات</button>
+      <span id="selectedCountDisplay" class="selected-count" data-i18n="selectedCount">المربعات المختارة: 0</span>
+    </div>
 
     <!-- الشبكة -->
     <div class="grid-wrapper">
@@ -108,7 +141,13 @@
       </button>
     </div>
 
-    <p class="hint" data-i18n="hint">💡 مرر داخل الشبكة لاستكشاف المليون مربع</p>
+    <!-- النصائح -->
+    <div class="hints-section">
+      <p class="hint" data-i18n="hint">💡 مرر داخل الشبكة لاستكشاف المليون مربع</p>
+      <p class="hint hint-link" data-i18n="hintLink">
+        🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها
+      </p>
+    </div>
 
     <!-- شريط التواصل -->
     <div class="contact-bar">
@@ -136,6 +175,21 @@
     </a>
   </section>
 
+  <!-- لوحة الصدارة -->
+  <section class="leaderboard">
+    <h2 class="section-title" data-i18n="leaderboardTitle">🏆 لوحة الصدارة</h2>
+    <div class="leaderboard-grid">
+      <div class="lb-card">
+        <h3 data-i18n="lbRecent">📸 آخر الحجوزات</h3>
+        <div id="recentBookings"></div>
+      </div>
+      <div class="lb-card">
+        <h3 data-i18n="lbStats">📊 إحصائيات حية</h3>
+        <div id="liveStats"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- نموذج الحجز -->
   <div id="bookingModal" class="modal hidden">
     <div class="modal-content">
@@ -160,6 +214,9 @@
       <div class="form-group">
         <label data-i18n="linkLabel">رابط حسابك (اختياري)</label>
         <input type="url" id="linkInput" placeholder="https://...">
+        <p class="link-note" data-i18n="linkNote">
+          📌 سيتمكن الزوار من النقر على صورتك للانتقال إلى حسابك
+        </p>
       </div>
 
       <div class="form-group">
@@ -215,6 +272,20 @@
 
       <button id="submitBooking" class="submit-btn" data-i18n="submitBtn">إرسال الطلب</button>
       <p id="formMessage" class="form-message"></p>
+    </div>
+  </div>
+
+  <!-- نافذة التوجيه -->
+  <div class="modal hidden" id="onboardingModal">
+    <div class="modal-content onboarding-content">
+      <button class="close-btn" onclick="closeOnboarding()">✕</button>
+      <h2 data-i18n="onboardingTitle">📌 كيف تحجز؟</h2>
+      <ol class="onboarding-steps">
+        <li data-i18n="onboardingStep1">اضغط واسحب لتحديد المربعات التي تريدها</li>
+        <li data-i18n="onboardingStep2">اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز</li>
+        <li data-i18n="onboardingStep3">ارفع صورتك، املأ البيانات، وادفع</li>
+      </ol>
+      <button class="submit-btn" onclick="closeOnboarding()" data-i18n="onboardingBtn">فهمت، لنبدأ!</button>
     </div>
   </div>
 
