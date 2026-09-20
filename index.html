@@ -51,6 +51,28 @@
     </div>
   </section>
 
+  <!-- قسم التفاعل مع الصور -->
+  <section class="interaction-guide">
+    <h2 class="guide-title" data-i18n="guideTitle">🎮 كيف تتفاعل مع الصور؟</h2>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="guide-icon">👆</div>
+        <h3 data-i18n="guideClickTitle">انقر على الصورة</h3>
+        <p data-i18n="guideClickDesc">انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها (إذا كان الرابط موجوداً)</p>
+      </div>
+      <div class="guide-step">
+        <div class="guide-icon">❤️</div>
+        <h3 data-i18n="guideLikeTitle">انقر مرتين للإعجاب</h3>
+        <p data-i18n="guideLikeDesc">انقر مرتين (Double Click) على أي صورة لإعجابها. ستظهر عدد الإعجابات على الصورة</p>
+      </div>
+      <div class="guide-step">
+        <div class="guide-icon">🏆</div>
+        <h3 data-i18n="guideTopTitle">الأكثر إعجاباً</h3>
+        <p data-i18n="guideTopDesc">الصور الأكثر إعجاباً تظهر في لوحة الصدارة أسفل الصفحة</p>
+      </div>
+    </div>
+  </section>
+
   <!-- بانر الإحالة -->
   <div class="referral-banner">
     <span data-i18n="referralText">🎁 ادعُ أصدقاءك واحصل على مربع مجاني!</span>
@@ -147,6 +169,9 @@
       <p class="hint hint-link" data-i18n="hintLink">
         🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها
       </p>
+      <p class="hint hint-like" data-i18n="hintLike">
+        ❤️ انقر مرتين على أي صورة لإعجابها
+      </p>
     </div>
 
     <!-- شريط التواصل -->
@@ -186,6 +211,10 @@
       <div class="lb-card">
         <h3 data-i18n="lbStats">📊 إحصائيات حية</h3>
         <div id="liveStats"></div>
+      </div>
+      <div class="lb-card" style="grid-column: span 2;">
+        <h3 data-i18n="lbTopLiked">❤️ الأكثر إعجاباً</h3>
+        <div id="topLiked"></div>
       </div>
     </div>
   </section>
