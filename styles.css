@@ -5,6 +5,9 @@
   --bg-light: #2a2a35;
   --gold: #d4a017;
   --gold-light: #f5b301;
+  --blue: #4a9eff;
+  --green: #3a9a3a;
+  --red: #9a3a3a;
   --text: #ffffff;
   --text-muted: #a0a0b0;
 }
@@ -96,6 +99,122 @@ body {
   color: var(--gold-light);
   font-size: 17px;
   font-weight: 900;
+}
+
+/* ===== قسم كيف يعمل الموقع ===== */
+.how-it-works {
+  padding: 30px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.how-title {
+  text-align: center;
+  color: var(--gold);
+  font-size: 26px;
+  margin-bottom: 30px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.how-step {
+  background: var(--bg-gray);
+  border: 1px solid var(--bg-light);
+  border-top: 3px solid var(--gold);
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.how-step:hover {
+  transform: translateY(-5px);
+  border-top-color: var(--gold-light);
+}
+
+.how-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.how-num {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  background: var(--gold);
+  color: var(--bg-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.how-step h3 {
+  color: var(--gold-light);
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+}
+
+.how-step p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+/* ===== بانر الإحالة ===== */
+.referral-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px auto;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.15), rgba(212, 160, 23, 0.05));
+  border: 1.5px dashed var(--gold);
+  border-radius: 12px;
+  max-width: 600px;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.referral-banner span {
+  color: var(--gold-light);
+  font-weight: 900;
+  font-size: 15px;
+  font-family: 'Cairo', sans-serif;
+}
+
+.referral-btn {
+  background: var(--gold);
+  color: var(--bg-dark);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.referral-btn:hover {
+  background: var(--gold-light);
+  transform: scale(1.05);
 }
 
 /* ===== الإحصائيات ===== */
@@ -344,12 +463,31 @@ body {
   border-radius: 11px;
 }
 
+/* ===== قسم النصائح ===== */
+.hints-section {
+  text-align: center;
+  margin-top: 15px;
+}
+
 .hint {
   text-align: center;
   color: var(--text-muted);
   font-size: 14px;
-  margin-top: 15px;
+  margin-top: 8px;
   font-weight: 700;
+}
+
+.hint-link {
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(212, 160, 23, 0.08);
+  border: 1px dashed rgba(212, 160, 23, 0.4);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-top: 12px;
+  display: inline-block;
+  max-width: 90%;
 }
 
 /* ===== شريط التواصل ===== */
@@ -406,6 +544,68 @@ body {
 .admin-btn:hover {
   opacity: 1;
   transform: scale(1.15);
+}
+
+/* ===== لوحة الصدارة ===== */
+.leaderboard {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.leaderboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.lb-card {
+  background: var(--bg-gray);
+  border: 1px solid var(--bg-light);
+  border-top: 3px solid var(--gold);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.lb-card h3 {
+  color: var(--gold);
+  font-size: 16px;
+  margin-bottom: 15px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+}
+
+.lb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg-light);
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.lb-item:last-child {
+  border-bottom: none;
+}
+
+.lb-item img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+}
+
+.lb-item .name {
+  flex: 1;
+  color: #fff;
+}
+
+.lb-item .count {
+  color: var(--gold-light);
+  font-weight: 900;
 }
 
 /* ===== Modal ===== */
@@ -583,6 +783,11 @@ body {
   font-weight: 900;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
+  transition: 0.3s;
+}
+
+.submit-btn:hover {
+  background: var(--gold-light);
 }
 
 .submit-btn:disabled {
@@ -610,6 +815,62 @@ body {
   display: block;
 }
 
+/* ===== ملاحظة الرابط ===== */
+.link-note {
+  color: var(--gold-light);
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(212, 160, 23, 0.08);
+  border-right: 3px solid var(--gold);
+  border-radius: 4px;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* ===== نافذة التوجيه ===== */
+.onboarding-content {
+  max-width: 450px;
+}
+
+.onboarding-steps {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  counter-reset: step;
+}
+
+.onboarding-steps li {
+  position: relative;
+  padding: 15px 15px 15px 60px;
+  margin-bottom: 10px;
+  background: var(--bg-dark);
+  border-radius: 10px;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.6;
+  counter-increment: step;
+}
+
+.onboarding-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: var(--gold);
+  color: var(--bg-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+}
+
 /* ===== الهاتف ===== */
 @media (max-width: 600px) {
   .hero h1 { font-size: 38px; }
@@ -623,6 +884,9 @@ body {
   .contact-label { font-size: 13px; }
   .stats { gap: 6px; padding: 15px 8px; }
   .stat-card { padding: 22px 3px; }
+  .how-steps { grid-template-columns: 1fr; }
+  .how-title { font-size: 20px; }
+  .leaderboard-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 380px) {
