@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    /* ===== المتغيرات ===== */
     :root {
       --bg-dark: #0a0a0f;
       --bg-gray: #14141c;
@@ -22,11 +21,7 @@
       --text-muted: #a0a0b0;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
@@ -37,7 +32,7 @@
       padding-bottom: 60px;
     }
 
-    /* ===== شاشة تسجيل الدخول ===== */
+    /* ===== تسجيل الدخول ===== */
     .login-box {
       max-width: 400px;
       margin: 80px auto;
@@ -68,10 +63,7 @@
       text-align: center;
     }
 
-    .login-box input:focus {
-      outline: none;
-      border-color: var(--gold);
-    }
+    .login-box input:focus { outline: none; border-color: var(--gold); }
 
     .login-btn {
       width: 100%;
@@ -87,36 +79,15 @@
       transition: 0.3s;
     }
 
-    .login-btn:hover {
-      background: var(--gold-light);
-    }
+    .login-btn:hover { background: var(--gold-light); }
+    .login-btn:disabled { background: var(--bg-light); color: var(--text-muted); cursor: not-allowed; }
 
-    .login-btn:disabled {
-      background: var(--bg-light);
-      color: var(--text-muted);
-      cursor: not-allowed;
-    }
-
-    .error-msg {
-      color: var(--red);
-      font-size: 14px;
-      margin-top: 10px;
-      font-weight: 700;
-      min-height: 20px;
-    }
+    .error-msg { color: var(--red); font-size: 14px; margin-top: 10px; font-weight: 700; min-height: 20px; }
 
     /* ===== لوحة التحكم ===== */
-    .admin-panel {
-      max-width: 900px;
-      margin: 0 auto;
-      display: none;
-    }
+    .admin-panel { max-width: 900px; margin: 0 auto; display: none; }
+    .admin-panel.active { display: block; }
 
-    .admin-panel.active {
-      display: block;
-    }
-
-    /* ===== رأس اللوحة ===== */
     .admin-header {
       display: flex;
       justify-content: space-between;
@@ -135,10 +106,7 @@
       gap: 10px;
     }
 
-    .header-buttons {
-      display: flex;
-      gap: 10px;
-    }
+    .header-buttons { display: flex; gap: 10px; }
 
     .header-btn {
       background: var(--bg-gray);
@@ -156,22 +124,10 @@
       gap: 6px;
     }
 
-    .header-btn:hover {
-      background: var(--gold);
-      color: var(--bg-dark);
-    }
+    .header-btn:hover { background: var(--gold); color: var(--bg-dark); }
+    .header-btn.danger { border-color: var(--red); color: var(--red); }
+    .header-btn.danger:hover { background: var(--red); color: #fff; }
 
-    .header-btn.danger {
-      border-color: var(--red);
-      color: var(--red);
-    }
-
-    .header-btn.danger:hover {
-      background: var(--red);
-      color: #fff;
-    }
-
-    /* ===== عناوين الأقسام ===== */
     .section-heading {
       display: flex;
       align-items: center;
@@ -185,7 +141,7 @@
       padding-right: 12px;
     }
 
-    /* ===== شبكة الإحصائيات ===== */
+    /* ===== الإحصائيات ===== */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -205,9 +161,7 @@
     .stat-box.blue-top::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 3px;
       background: var(--blue);
       box-shadow: 0 0 12px var(--blue);
@@ -216,9 +170,7 @@
     .stat-box.gold-top::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 3px;
       background: var(--gold);
       box-shadow: 0 0 12px var(--gold);
@@ -254,10 +206,7 @@
       margin-top: 10px;
     }
 
-    .referrers-table table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .referrers-table table { width: 100%; border-collapse: collapse; }
 
     .referrers-table th {
       background: var(--bg-dark);
@@ -278,13 +227,8 @@
       border-bottom: 1px solid var(--bg-light);
     }
 
-    .referrers-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .referrers-table tr:hover td {
-      background: rgba(212, 160, 23, 0.05);
-    }
+    .referrers-table tr:last-child td { border-bottom: none; }
+    .referrers-table tr:hover td { background: rgba(212, 160, 23, 0.05); }
 
     .ref-code {
       color: var(--gold-light);
@@ -294,21 +238,9 @@
       display: inline-block;
     }
 
-    .ref-count {
-      color: var(--blue);
-      font-weight: 900;
-      font-size: 16px;
-    }
-
-    .ref-reward {
-      color: var(--green);
-      font-weight: 900;
-      font-size: 14px;
-    }
-
-    .ref-reward.pending {
-      color: #8a6a1a;
-    }
+    .ref-count { color: var(--blue); font-weight: 900; font-size: 16px; }
+    .ref-reward { color: var(--green); font-weight: 900; font-size: 14px; }
+    .ref-reward.pending { color: #8a6a1a; }
 
     .copy-btn {
       background: var(--bg-dark);
@@ -323,10 +255,7 @@
       transition: 0.3s;
     }
 
-    .copy-btn:hover {
-      background: var(--gold);
-      color: var(--bg-dark);
-    }
+    .copy-btn:hover { background: var(--gold); color: var(--bg-dark); }
 
     .empty-row {
       text-align: center;
@@ -336,12 +265,7 @@
     }
 
     /* ===== التبويبات ===== */
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
 
     .tab-btn {
       background: var(--bg-gray);
@@ -356,18 +280,9 @@
       transition: 0.3s;
     }
 
-    .tab-btn.active {
-      background: var(--gold);
-      color: var(--bg-dark);
-      border-color: var(--gold);
-    }
+    .tab-btn.active { background: var(--gold); color: var(--bg-dark); border-color: var(--gold); }
+    .tab-btn:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
 
-    .tab-btn:hover:not(.active) {
-      border-color: var(--gold);
-      color: var(--gold);
-    }
-
-    /* ===== البحث ===== */
     .search-box {
       width: 100%;
       padding: 14px 18px;
@@ -380,14 +295,8 @@
       margin-bottom: 20px;
     }
 
-    .search-box:focus {
-      outline: none;
-      border-color: var(--gold);
-    }
-
-    .search-box::placeholder {
-      color: var(--text-muted);
-    }
+    .search-box:focus { outline: none; border-color: var(--gold); }
+    .search-box::placeholder { color: var(--text-muted); }
 
     /* ===== بطاقات الطلبات ===== */
     .booking-card {
@@ -402,11 +311,7 @@
       align-items: flex-start;
     }
 
-    .booking-images {
-      display: flex;
-      gap: 10px;
-      flex-shrink: 0;
-    }
+    .booking-images { display: flex; gap: 10px; flex-shrink: 0; }
 
     .img-wrapper {
       position: relative;
@@ -433,18 +338,11 @@
       transition: 0.3s;
     }
 
-    .booking-img:hover {
-      transform: scale(1.05);
-      border-color: var(--gold);
-    }
-
+    .booking-img:hover { transform: scale(1.05); border-color: var(--gold); }
     .selfie-img { border-color: var(--gold); }
     .receipt-img { border-color: #4a9eff; }
 
-    .booking-info {
-      flex: 1;
-      min-width: 200px;
-    }
+    .booking-info { flex: 1; min-width: 200px; }
 
     .booking-info p {
       color: var(--text-muted);
@@ -454,9 +352,7 @@
       font-weight: 700;
     }
 
-    .booking-info p strong {
-      color: #fff;
-    }
+    .booking-info p strong { color: #fff; }
 
     .status-badge {
       display: inline-block;
@@ -471,12 +367,18 @@
     .status-approved { background: #3a9a3a; color: #fff; }
     .status-rejected { background: #9a3a3a; color: #fff; }
 
-    .booking-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 100px;
+    .like-count-badge {
+      display: inline-block;
+      background: #ff3366;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 900;
+      margin-right: 5px;
     }
+
+    .booking-actions { display: flex; flex-direction: column; gap: 6px; min-width: 100px; }
 
     .action-btn {
       padding: 8px 14px;
@@ -490,24 +392,11 @@
       transition: 0.3s;
     }
 
-    .action-btn:hover {
-      opacity: 0.85;
-    }
+    .action-btn:hover { opacity: 0.85; }
 
     .approve-btn { background: #3a9a3a; }
     .reject-btn { background: #9a3a3a; }
     .delete-btn { background: #555; }
-
-    .like-count-badge {
-      display: inline-block;
-      background: #ff3366;
-      color: #fff;
-      padding: 2px 10px;
-      border-radius: 15px;
-      font-size: 12px;
-      font-weight: 900;
-      margin-right: 5px;
-    }
 
     .empty-msg {
       text-align: center;
@@ -524,8 +413,7 @@
     .image-modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.95);
@@ -535,9 +423,7 @@
       padding: 20px;
     }
 
-    .image-modal.active {
-      display: flex;
-    }
+    .image-modal.active { display: flex; }
 
     .image-modal img {
       max-width: 95%;
@@ -569,10 +455,31 @@
       font-family: 'Cairo', sans-serif;
     }
 
-    .image-close-btn:hover {
-      background: #c44;
-      transform: scale(1.1);
+    .image-close-btn:hover { background: #c44; transform: scale(1.1); }
+
+    /* ===== إشعار الإدارة ===== */
+    .admin-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-gray);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 15px 20px;
+      color: var(--gold-light);
+      font-family: 'Cairo', sans-serif;
+      font-weight: 900;
+      font-size: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      transform: translateX(400px);
+      transition: transform 0.4s ease;
+      max-width: 300px;
     }
+
+    .admin-notification.show { transform: translateX(0); }
+    .admin-notification.new-booking { border-color: #4ade80; color: #4ade80; }
+    .admin-notification.new-like { border-color: #ff3366; color: #ff3366; }
 
     /* ===== الهاتف ===== */
     @media (max-width: 600px) {
@@ -582,8 +489,7 @@
       .booking-card { padding: 14px; }
       .booking-img { width: 70px; height: 70px; }
       .header-btn { padding: 8px 14px; font-size: 13px; }
-      .referrers-table th,
-      .referrers-table td { padding: 8px 10px; font-size: 12px; }
+      .referrers-table th, .referrers-table td { padding: 8px 10px; font-size: 12px; }
     }
   </style>
 </head>
@@ -600,7 +506,6 @@
   <!-- لوحة التحكم -->
   <div class="admin-panel" id="adminPanel">
     
-    <!-- الرأس -->
     <div class="admin-header">
       <h1>🎛️ لوحة التحكم</h1>
       <div class="header-buttons">
@@ -610,9 +515,7 @@
     </div>
 
     <!-- إحصائيات الزوار -->
-    <div class="section-heading">
-      👥 إحصائيات الزوار
-    </div>
+    <div class="section-heading">👥 إحصائيات الزوار</div>
     <div class="stats-grid">
       <div class="stat-box blue-top">
         <span class="num blue" id="totalVisits">0</span>
@@ -633,9 +536,7 @@
     </div>
 
     <!-- إحصائيات الطلبات -->
-    <div class="section-heading">
-      📋 إحصائيات الطلبات
-    </div>
+    <div class="section-heading">📋 إحصائيات الطلبات</div>
     <div class="stats-grid">
       <div class="stat-box gold-top">
         <span class="num gold" id="totalBookings">0</span>
@@ -663,10 +564,8 @@
       </div>
     </div>
 
-    <!-- أكثر المُحيلين -->
-    <div class="section-heading">
-      🏆 أكثر المُحيلين (نظام الإحالة)
-    </div>
+    <!-- المُحيلين -->
+    <div class="section-heading">🏆 أكثر المُحيلين</div>
     <div class="referrers-table">
       <table>
         <thead>
@@ -684,9 +583,7 @@
     </div>
 
     <!-- إدارة الطلبات -->
-    <div class="section-heading">
-      🗂️ إدارة الطلبات
-    </div>
+    <div class="section-heading">🗂️ إدارة الطلبات</div>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="pending">قيد الانتظار</button>
@@ -706,6 +603,9 @@
     <button class="image-close-btn" id="imageCloseBtn">✕</button>
     <img id="modalImage" src="" alt="صورة كبيرة">
   </div>
+
+  <!-- إشعار الإدارة -->
+  <div id="adminNotification" class="admin-notification"></div>
 
   <!-- Firebase SDK -->
   <script type="module">
@@ -732,6 +632,20 @@
     let allBookings = [];
     let currentTab = 'pending';
     let searchQuery = '';
+    let lastBookingsCount = 0;
+    let lastLikesCount = 0;
+    let isFirstLoad = true;
+
+    // ===== إشعار الإدارة =====
+    function showAdminNotification(message, type = 'info') {
+      const notification = document.getElementById('adminNotification');
+      notification.textContent = message;
+      notification.className = `admin-notification show ${type}`;
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 4000);
+    }
 
     // ===== تسجيل الدخول =====
     document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -766,6 +680,7 @@
       if (user) {
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('adminPanel').classList.add('active');
+        isFirstLoad = true;
         loadAllData();
         setInterval(loadAllData, 30000);
       } else {
@@ -796,6 +711,24 @@
         const q = query(collection(db, "bookings"), orderBy("timestamp", "desc"));
         const snapshot = await getDocs(q);
         allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // إشعارات الحجوزات الجديدة
+        if (!isFirstLoad && allBookings.length > lastBookingsCount && lastBookingsCount > 0) {
+          const newCount = allBookings.length - lastBookingsCount;
+          showAdminNotification(`📩 لديك ${newCount} طلب جديد!`, 'new-booking');
+        }
+        lastBookingsCount = allBookings.length;
+
+        // إشعارات الإعجابات الجديدة
+        const totalLikes = allBookings.reduce((sum, b) => sum + (b.likes || 0), 0);
+        if (!isFirstLoad && totalLikes > lastLikesCount && lastLikesCount > 0) {
+          const newLikes = totalLikes - lastLikesCount;
+          showAdminNotification(`❤️ لديك ${newLikes} إعجاب جديد!`, 'new-like');
+        }
+        lastLikesCount = totalLikes;
+
+        isFirstLoad = false;
+
         updateBookingStats();
         renderBookings();
         updateReferrers();
