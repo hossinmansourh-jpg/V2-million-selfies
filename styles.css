@@ -175,6 +175,62 @@ body {
   font-weight: 700;
 }
 
+/* ===== قسم التفاعل مع الصور ===== */
+.interaction-guide {
+  padding: 30px 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.guide-title {
+  text-align: center;
+  color: var(--gold);
+  font-size: 26px;
+  margin-bottom: 30px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+}
+
+.guide-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.guide-step {
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.1), rgba(212, 160, 23, 0.03));
+  border: 1.5px dashed var(--gold);
+  border-radius: 12px;
+  padding: 25px 20px;
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.guide-step:hover {
+  transform: translateY(-5px);
+  border-style: solid;
+}
+
+.guide-icon {
+  font-size: 36px;
+  margin-bottom: 15px;
+}
+
+.guide-step h3 {
+  color: var(--gold-light);
+  font-size: 17px;
+  margin-bottom: 10px;
+  font-weight: 900;
+  font-family: 'Cairo', sans-serif;
+}
+
+.guide-step p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
 /* ===== بانر الإحالة ===== */
 .referral-banner {
   display: flex;
@@ -483,6 +539,19 @@ body {
   font-weight: 700;
   background: rgba(212, 160, 23, 0.08);
   border: 1px dashed rgba(212, 160, 23, 0.4);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-top: 12px;
+  display: inline-block;
+  max-width: 90%;
+}
+
+.hint-like {
+  color: #ff3366;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(255, 51, 102, 0.08);
+  border: 1px dashed rgba(255, 51, 102, 0.4);
   border-radius: 8px;
   padding: 10px 15px;
   margin-top: 12px;
@@ -871,6 +940,32 @@ body {
   font-size: 14px;
 }
 
+/* ===== إشعار Toast ===== */
+.toast-notification {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--bg-gray);
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: 30px;
+  padding: 12px 24px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.toast-notification.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
 /* ===== الهاتف ===== */
 @media (max-width: 600px) {
   .hero h1 { font-size: 38px; }
@@ -886,7 +981,10 @@ body {
   .stat-card { padding: 22px 3px; }
   .how-steps { grid-template-columns: 1fr; }
   .how-title { font-size: 20px; }
+  .guide-steps { grid-template-columns: 1fr; }
+  .guide-title { font-size: 20px; }
   .leaderboard-grid { grid-template-columns: 1fr; }
+  .lb-card[style*="grid-column"] { grid-column: span 1 !important; }
 }
 
 @media (max-width: 380px) {
