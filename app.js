@@ -76,6 +76,33 @@ function showToast(message) {
   }, 2000);
 }
 
+// ===== إشعار الإعجاب =====
+function showLikeNotification(booking, count) {
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const message = currentLang === 'ar' 
+    ? `أعجبك صورة ${booking.userName || 'زائر'}! (${count} إعجاب)` 
+    : `You liked ${booking.userName || 'Guest'}'s photo! (${count} likes)`;
+  
+  const toast = document.createElement('div');
+  toast.className = 'like-notification';
+  toast.innerHTML = `
+    <div class="like-notification-content">
+      <img src="${booking.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
+      <div class="like-text">
+        <span class="like-heart">❤️</span>
+        <span>${message}</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
 // ===== نظام الإحالة =====
 function generateReferralCode() {
   return 'USER' + Math.random().toString(36).substr(2, 8).toUpperCase();
@@ -107,8 +134,8 @@ window.copyReferralLink = function() {
   navigator.clipboard.writeText(url).then(() => {
     const currentLang = localStorage.getItem('lang') || 'ar';
     showToast(currentLang === 'ar' 
-      ? '✅ تم نسخ رابط الإحالة! شاركه مع أصدقائك.' 
-      : '✅ Referral link copied! Share it with your friends.');
+      ? '✅ تم نسخ رابط الإحالة! شاركه مع 5 من أصدقائك.' 
+      : '✅ Referral link copied! Share it with 5 friends.');
   }).catch(() => {
     showToast('❌ فشل نسخ الرابط');
   });
@@ -315,7 +342,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات (مع عداد الإعجابات) =====
+// ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -331,7 +358,6 @@ function drawBookings() {
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, width, height);
 
-    // رسم الصورة
     if (booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -350,7 +376,7 @@ function drawBookings() {
       }
     }
 
-    // رسم عداد الإعجابات على الصورة
+    // عداد الإعجابات
     if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
@@ -427,7 +453,6 @@ async function updateLeaderboard() {
   try {
     const currentLang = localStorage.getItem('lang') || 'ar';
     
-    // آخر الحجوزات
     const recent = approvedBookings.slice(0, 5);
     const recentHTML = recent.map(b => `
       <div class="lb-item">
@@ -440,7 +465,6 @@ async function updateLeaderboard() {
     const recentEl = document.getElementById('recentBookings');
     if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
-    // الإحصائيات
     const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const lastBooking = approvedBookings[0];
     const lastTime = lastBooking ? Math.floor((Date.now() - (lastBooking.timestamp || 0)) / 60000) : null;
@@ -463,7 +487,6 @@ async function updateLeaderboard() {
       `;
     }
 
-    // الأكثر إعجاباً
     const topLiked = [...approvedBookings]
       .filter(b => b.likes && b.likes > 0)
       .sort((a, b) => (b.likes || 0) - (a.likes || 0))
@@ -697,13 +720,120 @@ canvas.addEventListener('wheel', (e) => {
   drawGrid();
 }, { passive: false });
 
-// ===== اللمس على الهاتف =====
-let touchStartX = 0;
-let touchStartY = 0;
-let lastTouchDist = 0;
-let lastTapTime = 0;
-let lastTapX = 0;
-let lastTapY = 0;
+// ===== إدارة النقرات =====
+let clickTimer = null;
+let clickCount = 0;
+
+canvas.addEventListener('click', (e) => {
+  if (selectionMode) return;
+  if (hasDragged) {
+    hasDragged = false;
+    return;
+  }
+
+  clickCount++;
+
+  if (clickCount === 1) {
+    clickTimer = setTimeout(() => {
+      handleSingleClick(e);
+      clickCount = 0;
+    }, 280);
+  } else if (clickCount === 2) {
+    clearTimeout(clickTimer);
+    clickCount = 0;
+    handleDoubleClick(e);
+  }
+});
+
+// ===== معالجة النقرة المفردة =====
+function handleSingleClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left + offsetX;
+  const clickY = e.clientY - rect.top + offsetY;
+
+  for (const booking of approvedBookings) {
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      if (booking.userLink && booking.userLink.trim()) {
+        let url = booking.userLink.trim();
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        window.open(url, '_blank', 'noopener');
+      } else {
+        const currentLang = localStorage.getItem('lang') || 'ar';
+        showToast(currentLang === 'ar' 
+          ? `📸 صاحب الصورة: ${booking.userName || 'زائر'}` 
+          : `📸 Photo owner: ${booking.userName || 'Guest'}`);
+      }
+      return;
+    }
+  }
+
+  if (!hoveredCell) return;
+  const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
+  
+  if (isCellBooked(hoveredCell.x, hoveredCell.y)) {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    showToast(currentLang === 'ar' 
+      ? '⚠️ هذا المربع محجوز بالفعل' 
+      : '⚠️ This square is already booked');
+    return;
+  }
+  
+  openBookingModal(startCell);
+}
+
+// ===== معالجة النقرة المزدوجة =====
+async function handleDoubleClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left + offsetX;
+  const clickY = e.clientY - rect.top + offsetY;
+
+  for (const booking of approvedBookings) {
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      
+      if (hasLiked(booking.id)) {
+        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
+        return;
+      }
+
+      try {
+        const newLikes = (booking.likes || 0) + 1;
+        await updateDoc(doc(db, "bookings", booking.id), {
+          likes: newLikes
+        });
+        
+        saveLike(booking.id);
+        booking.likes = newLikes;
+        
+        drawGrid();
+        updateLeaderboard();
+        showLikeNotification(booking, newLikes);
+        
+      } catch (error) {
+        console.error('خطأ في الإعجاب:', error);
+      }
+      
+      return;
+    }
+  }
+}
+
+// ===== الضغط المطول =====
+let longPressTimer = null;
+let longPressActive = false;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) {
@@ -728,37 +858,31 @@ canvas.addEventListener('touchstart', (e) => {
   }
 
   if (e.touches.length === 1) {
-    const now = Date.now();
-    const tapX = e.touches[0].clientX;
-    const tapY = e.touches[0].clientY;
+    const touch = e.touches[0];
+    longPressActive = false;
+    
+    longPressTimer = setTimeout(() => {
+      longPressActive = true;
+      handleLongPress(touch.clientX, touch.clientY);
+    }, 600);
 
-    // كشف النقر المزدوج
-    if (now - lastTapTime < 300 && 
-        Math.abs(tapX - lastTapX) < 30 && 
-        Math.abs(tapY - lastTapY) < 30) {
-      // نقر مزدوج - إعجاب
-      handleLikeTap(tapX, tapY);
-      lastTapTime = 0;
-      return;
-    }
-
-    lastTapTime = now;
-    lastTapX = tapX;
-    lastTapY = tapY;
-
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
     lastMoveTime = Date.now();
     velocityX = 0;
     velocityY = 0;
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
-    const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+    const x = Math.floor((touch.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+    const y = Math.floor((touch.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
       hoveredCell = { x, y };
       drawGrid();
     }
   } else if (e.touches.length === 2) {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
     lastTouchDist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
@@ -766,8 +890,83 @@ canvas.addEventListener('touchstart', (e) => {
   }
 }, { passive: true });
 
+// ===== معالجة الضغط المطول =====
+function handleLongPress(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = clientX - rect.left + offsetX;
+  const clickY = clientY - rect.top + offsetY;
+
+  for (const booking of approvedBookings) {
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      showOwnerCard(booking);
+      return;
+    }
+  }
+}
+
+// ===== عرض بطاقة صاحب الصورة =====
+function showOwnerCard(booking) {
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  
+  const oldCard = document.getElementById('ownerCard');
+  if (oldCard) oldCard.remove();
+  
+  const card = document.createElement('div');
+  card.id = 'ownerCard';
+  card.className = 'owner-card';
+  card.innerHTML = `
+    <div class="owner-card-content">
+      <img src="${booking.selfieUrl || ''}" alt="صورة" class="owner-card-img" onerror="this.style.display='none'">
+      <div class="owner-card-info">
+        <h3>${booking.userName || (currentLang === 'ar' ? 'زائر' : 'Guest')}</h3>
+        ${booking.userNote ? `<p class="owner-note">"${booking.userNote}"</p>` : ''}
+        <div class="owner-stats">
+          <span>📐 ${booking.quantity || 1} ${currentLang === 'ar' ? 'مربع' : 'squares'}</span>
+          <span>❤️ ${booking.likes || 0}</span>
+        </div>
+        ${booking.userLink ? `
+          <a href="${booking.userLink.startsWith('http') ? booking.userLink : 'https://' + booking.userLink}" 
+             target="_blank" 
+             class="owner-link">
+            🔗 ${currentLang === 'ar' ? 'زيارة الحساب' : 'Visit Profile'}
+          </a>
+        ` : ''}
+      </div>
+      <button class="owner-card-close" onclick="document.getElementById('ownerCard').remove()">✕</button>
+    </div>
+  `;
+  document.body.appendChild(card);
+  
+  setTimeout(() => {
+    if (card.parentNode) {
+      card.classList.remove('show');
+      setTimeout(() => card.remove(), 300);
+    }
+  }, 5000);
+  
+  setTimeout(() => card.classList.add('show'), 50);
+}
+
+window.showOwnerCard = showOwnerCard;
+
+// ===== اللمس =====
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTouchDist = 0;
+
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
+
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
 
   if (selectionMode && isSelecting && e.touches.length === 1) {
     const rect = canvas.getBoundingClientRect();
@@ -817,6 +1016,11 @@ canvas.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 canvas.addEventListener('touchend', () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  
   if (selectionMode && isSelecting) {
     isSelecting = false;
     return;
@@ -826,140 +1030,6 @@ canvas.addEventListener('touchend', () => {
     startInertia();
   }
 }, { passive: true });
-
-// ===== معالجة الإعجاب (لمس مزدوج) =====
-async function handleLikeTap(tapX, tapY) {
-  const rect = canvas.getBoundingClientRect();
-  const clickX = tapX - rect.left + offsetX;
-  const clickY = tapY - rect.top + offsetY;
-
-  for (const booking of approvedBookings) {
-    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
-    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
-    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
-    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
-
-    if (clickX >= startX && clickX <= startX + width &&
-        clickY >= startY && clickY <= startY + height) {
-      
-      const currentLang = localStorage.getItem('lang') || 'ar';
-      
-      if (hasLiked(booking.id)) {
-        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
-        return;
-      }
-
-      try {
-        const newLikes = (booking.likes || 0) + 1;
-        await updateDoc(doc(db, "bookings", booking.id), {
-          likes: newLikes
-        });
-        
-        saveLike(booking.id);
-        booking.likes = newLikes;
-        
-        drawGrid();
-        updateLeaderboard();
-        showToast(currentLang === 'ar' ? '❤️ شكراً لإعجابك!' : '❤️ Thanks for your like!');
-        
-      } catch (error) {
-        console.error('خطأ في الإعجاب:', error);
-      }
-      
-      return;
-    }
-  }
-}
-
-// ===== النقر على الشبكة =====
-canvas.addEventListener('click', (e) => {
-  if (selectionMode) return;
-  if (hasDragged) {
-    hasDragged = false;
-    return;
-  }
-
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left + offsetX;
-  const clickY = e.clientY - rect.top + offsetY;
-
-  for (const booking of approvedBookings) {
-    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
-    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
-    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
-    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
-
-    if (clickX >= startX && clickX <= startX + width &&
-        clickY >= startY && clickY <= startY + height) {
-      if (booking.userLink && booking.userLink.trim()) {
-        let url = booking.userLink.trim();
-        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-        window.open(url, '_blank', 'noopener');
-      }
-      return;
-    }
-  }
-
-  if (!hoveredCell) return;
-  const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
-  
-  if (isCellBooked(hoveredCell.x, hoveredCell.y)) {
-    const currentLang = localStorage.getItem('lang') || 'ar';
-    alert(currentLang === 'ar' 
-      ? '⚠️ هذا المربع محجوز بالفعل' 
-      : '⚠️ This square is already booked');
-    return;
-  }
-  
-  openBookingModal(startCell);
-});
-
-// ===== النقر المزدوج للإعجاب (كمبيوتر) =====
-canvas.addEventListener('dblclick', async (e) => {
-  if (selectionMode) return;
-  if (hasDragged) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left + offsetX;
-  const clickY = e.clientY - rect.top + offsetY;
-
-  for (const booking of approvedBookings) {
-    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
-    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
-    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
-    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
-
-    if (clickX >= startX && clickX <= startX + width &&
-        clickY >= startY && clickY <= startY + height) {
-      
-      const currentLang = localStorage.getItem('lang') || 'ar';
-      
-      if (hasLiked(booking.id)) {
-        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
-        return;
-      }
-
-      try {
-        const newLikes = (booking.likes || 0) + 1;
-        await updateDoc(doc(db, "bookings", booking.id), {
-          likes: newLikes
-        });
-        
-        saveLike(booking.id);
-        booking.likes = newLikes;
-        
-        drawGrid();
-        updateLeaderboard();
-        showToast(currentLang === 'ar' ? '❤️ شكراً لإعجابك!' : '❤️ Thanks for your like!');
-        
-      } catch (error) {
-        console.error('خطأ في الإعجاب:', error);
-      }
-      
-      return;
-    }
-  }
-});
 
 // ===== تحديث عدد المربعات المختارة =====
 function updateSelectedCount() {
@@ -1272,6 +1342,7 @@ const translations = {
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
     hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
     hintLike: '❤️ انقر مرتين على أي صورة لإعجابها',
+    hintLongPress: '👇 اضغط ضغطة مطولة على أي صورة لعرض معلومات صاحبها',
     selectModeBtn: '🖱️ تحديد المربعات',
     selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
@@ -1302,13 +1373,13 @@ const translations = {
     howStep3Title: 'ادفع بـ 1$',
     howStep3Desc: 'ادفع عبر شام كاش أو USDT وارفع الإيصال',
     guideTitle: '🎮 كيف تتفاعل مع الصور؟',
-    guideClickTitle: 'انقر على الصورة',
+    guideClickTitle: 'انقر مرة واحدة',
     guideClickDesc: 'انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها (إذا كان الرابط موجوداً)',
     guideLikeTitle: 'انقر مرتين للإعجاب',
     guideLikeDesc: 'انقر مرتين (Double Click) على أي صورة لإعجابها. ستظهر عدد الإعجابات على الصورة',
-    guideTopTitle: 'الأكثر إعجاباً',
-    guideTopDesc: 'الصور الأكثر إعجاباً تظهر في لوحة الصدارة أسفل الصفحة',
-    referralText: '🎁 ادعُ أصدقاءك واحصل على مربع مجاني!',
+    guideLongPressTitle: 'اضغط ضغطة مطولة',
+    guideLongPressDesc: 'اضغط ضغطة مطولة (Long Press) على أي صورة لعرض معلومات صاحبها بشكل احترافي',
+    referralText: '🎁 ادعُ 5 من أصدقائك واحصل على مربع مجاني!',
     referralBtn: '📋 نسخ رابط الإحالة',
     leaderboardTitle: '🏆 لوحة الصدارة',
     lbRecent: '📸 آخر الحجوزات',
@@ -1336,6 +1407,7 @@ const translations = {
     hint: '💡 Scroll inside the grid to explore the million squares',
     hintLink: '🔗 Click any booked photo to visit the owner\'s account',
     hintLike: '❤️ Double-click any photo to like it',
+    hintLongPress: '👇 Long-press any photo to see the owner\'s info',
     selectModeBtn: '🖱️ Select Squares',
     selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
@@ -1366,13 +1438,13 @@ const translations = {
     howStep3Title: 'Pay $1',
     howStep3Desc: 'Pay via Sham Cash or USDT and upload the receipt',
     guideTitle: '🎮 How to Interact with Photos?',
-    guideClickTitle: 'Click on Photo',
+    guideClickTitle: 'Click Once',
     guideClickDesc: 'Click any booked photo to visit the owner\'s account (if link exists)',
     guideLikeTitle: 'Double-Click to Like',
     guideLikeDesc: 'Double-click any photo to like it. The like count will appear on the photo',
-    guideTopTitle: 'Most Liked',
-    guideTopDesc: 'The most liked photos appear in the leaderboard at the bottom',
-    referralText: '🎁 Invite friends and get a free square!',
+    guideLongPressTitle: 'Long Press',
+    guideLongPressDesc: 'Long-press any photo to see the owner\'s info professionally',
+    referralText: '🎁 Invite 5 friends and get a free square!',
     referralBtn: '📋 Copy Referral Link',
     leaderboardTitle: '🏆 Leaderboard',
     lbRecent: '📸 Recent Bookings',
@@ -1465,9 +1537,25 @@ async function trackVisit() {
   }
 }
 
+// ===== تحسين الأداء =====
+function preloadImages() {
+  approvedBookings.slice(0, 20).forEach(booking => {
+    if (booking.selfieUrl && !imageCache[booking.id]) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        imageCache[booking.id] = img;
+        drawGrid();
+      };
+      img.src = booking.selfieUrl;
+    }
+  });
+}
+
 // ===== التشغيل =====
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 loadBookings();
 trackVisit();
 setInterval(loadBookings, 30000);
+setTimeout(preloadImages, 3000);
