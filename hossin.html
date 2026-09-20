@@ -303,7 +303,7 @@
     .ref-reward {
       color: var(--green);
       font-weight: 900;
-      font-size: 16px;
+      font-size: 14px;
     }
 
     .ref-reward.pending {
@@ -498,6 +498,17 @@
     .reject-btn { background: #9a3a3a; }
     .delete-btn { background: #555; }
 
+    .like-count-badge {
+      display: inline-block;
+      background: #ff3366;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: 900;
+      margin-right: 5px;
+    }
+
     .empty-msg {
       text-align: center;
       color: var(--text-muted);
@@ -642,9 +653,13 @@
         <span class="num red" id="rejectedCount">0</span>
         <span class="lbl">مرفوضة</span>
       </div>
-      <div class="stat-box gold-top" style="grid-column: span 2;">
+      <div class="stat-box gold-top">
         <span class="num gold" id="totalRevenue">$0</span>
         <span class="lbl">إجمالي المبالغ</span>
+      </div>
+      <div class="stat-box gold-top">
+        <span class="num red" id="totalLikes">0</span>
+        <span class="lbl">إجمالي الإعجابات</span>
       </div>
     </div>
 
@@ -712,7 +727,7 @@
     const auth = getAuth(app);
 
     const ADMIN_EMAIL = "hossinmansourh@gmail.com";
-    const REWARD_THRESHOLD = 5; // عدد الإحالات للحصول على مربع مجاني
+    const REWARD_THRESHOLD = 5;
 
     let allBookings = [];
     let currentTab = 'pending';
@@ -747,7 +762,6 @@
       if (e.key === 'Enter') document.getElementById('loginBtn').click();
     });
 
-    // ===== مراقبة حالة الدخول =====
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById('loginBox').style.display = 'none';
@@ -762,25 +776,21 @@
       }
     });
 
-    // ===== الخروج =====
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       if (confirm('هل تريد الخروج؟')) {
         await signOut(auth);
       }
     });
 
-    // ===== زر التحديث =====
     document.getElementById('refreshBtn').addEventListener('click', () => {
       loadAllData();
     });
 
-    // ===== تحميل كل البيانات =====
     async function loadAllData() {
       await loadBookings();
       await loadVisits();
     }
 
-    // ===== تحميل الحجوزات =====
     async function loadBookings() {
       try {
         const q = query(collection(db, "bookings"), orderBy("timestamp", "desc"));
@@ -794,7 +804,6 @@
       }
     }
 
-    // ===== تحميل الزيارات =====
     async function loadVisits() {
       try {
         const snapshot = await getDocs(collection(db, "visits"));
@@ -817,7 +826,6 @@
       }
     }
 
-    // ===== إحصائيات الحجوزات =====
     function updateBookingStats() {
       const pending = allBookings.filter(b => b.status === 'pending').length;
       const approved = allBookings.filter(b => b.status === 'approved').length;
@@ -825,17 +833,18 @@
       const totalRevenue = allBookings
         .filter(b => b.status === 'approved')
         .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+      const totalLikes = allBookings
+        .reduce((sum, b) => sum + (b.likes || 0), 0);
 
       document.getElementById('totalBookings').textContent = allBookings.length.toLocaleString('en-US');
       document.getElementById('pendingCount').textContent = pending.toLocaleString('en-US');
       document.getElementById('approvedCount').textContent = approved.toLocaleString('en-US');
       document.getElementById('rejectedCount').textContent = rejected.toLocaleString('en-US');
       document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
+      document.getElementById('totalLikes').textContent = totalLikes.toLocaleString('en-US');
     }
 
-    // ===== تحديث جدول المُحيلين =====
     function updateReferrers() {
-      // تجميع الإحالات حسب referredBy
       const referrersMap = {};
       
       allBookings.forEach(b => {
@@ -847,7 +856,6 @@
         }
       });
 
-      // تحويل إلى مصفوفة وترتيب
       const referrers = Object.entries(referrersMap)
         .map(([code, count]) => ({ code, count }))
         .sort((a, b) => b.count - a.count);
@@ -862,8 +870,8 @@
       tbody.innerHTML = referrers.map(r => {
         const eligible = r.count >= REWARD_THRESHOLD;
         const rewardHTML = eligible 
-          ? `<span class="ref-reward">🎁 مستحق (${r.count} إحالة)</span>`
-          : `<span class="ref-reward pending">${r.count} / ${REWARD_THRESHOLD}</span>`;
+          ? `<span class="ref-reward">🎁 مستحق</span>`
+          : `<span class="ref-reward pending">${r.count}/${REWARD_THRESHOLD}</span>`;
         
         const refLink = window.location.origin + '/million-selfies-v2/?ref=' + r.code;
         
@@ -880,7 +888,6 @@
       }).join('');
     }
 
-    // ===== نسخ رابط المُحيل =====
     window.copyReferrerLink = function(link) {
       navigator.clipboard.writeText(link).then(() => {
         alert('✅ تم نسخ الرابط');
@@ -889,7 +896,6 @@
       });
     };
 
-    // ===== عرض الحجوزات =====
     function renderBookings() {
       const list = document.getElementById('bookingsList');
       let filtered = allBookings;
@@ -944,7 +950,10 @@
               <p><strong>السعر:</strong> $${b.totalPrice || 0}</p>
               <p><strong>الدفع:</strong> ${b.paymentMethod || '-'}</p>
               ${b.referredBy ? `<p><strong>أحاله:</strong> <span class="ref-code">${b.referredBy}</span></p>` : ''}
-              <p><strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
+              <p>
+                <strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span>
+                ${b.likes && b.likes > 0 ? `<span class="like-count-badge">❤️ ${b.likes}</span>` : ''}
+              </p>
             </div>
             <div class="booking-actions">
               ${b.status !== 'approved' ? `<button class="action-btn approve-btn" onclick="approveBooking('${b.id}')">✅ قبول</button>` : ''}
@@ -956,7 +965,6 @@
       }).join('');
     }
 
-    // ===== عرض الصورة =====
     window.showImage = (url) => {
       if (!url || url === '' || url === 'undefined') return;
       const modal = document.getElementById('imageModal');
@@ -990,7 +998,6 @@
       }
     });
 
-    // ===== قبول الطلب =====
     window.approveBooking = async (id) => {
       if (!confirm('هل تريد قبول هذا الطلب؟')) return;
       try {
@@ -1005,7 +1012,6 @@
       }
     };
 
-    // ===== رفض الطلب =====
     window.rejectBooking = async (id) => {
       if (!confirm('هل تريد رفض هذا الطلب؟')) return;
       try {
@@ -1020,7 +1026,6 @@
       }
     };
 
-    // ===== حذف الطلب =====
     window.deleteBooking = async (id) => {
       if (!confirm('هل تريد حذف هذا الطلب نهائياً؟')) return;
       try {
@@ -1032,7 +1037,6 @@
       }
     };
 
-    // ===== التبويبات =====
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1042,7 +1046,6 @@
       });
     });
 
-    // ===== البحث =====
     document.getElementById('searchBox').addEventListener('input', (e) => {
       searchQuery = e.target.value;
       renderBookings();
