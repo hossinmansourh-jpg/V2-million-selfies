@@ -466,26 +466,20 @@ async function updateLeaderboard() {
     if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
     const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
-    const lastBooking = approvedBookings[0];
-    const lastTime = lastBooking ? Math.floor((Date.now() - (lastBooking.timestamp || 0)) / 60000) : null;
-    
-    const statsEl = document.getElementById('liveStats');
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
-          <span class="count">${totalBooked.toLocaleString('en-US')}</span>
-        </div>
-        <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
-          <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
-        </div>
-        <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'آخر حجز' : 'Last Booking'}</span>
-          <span class="count">${lastTime !== null ? (lastTime < 1 ? (currentLang === 'ar' ? 'الآن' : 'Now') : (currentLang === 'ar' ? `منذ ${lastTime} دقيقة` : `${lastTime}m ago`)) : (currentLang === 'ar' ? 'لا يوجد' : 'None')}</span>
-        </div>
-      `;
-    }
+
+const statsEl = document.getElementById('liveStats');
+if (statsEl) {
+  statsEl.innerHTML = `
+    <div class="lb-item">
+      <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
+      <span class="count">${totalBooked.toLocaleString('en-US')}</span>
+    </div>
+    <div class="lb-item">
+      <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
+      <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
+    </div>
+  `;
+}
 
     const topLiked = [...approvedBookings]
       .filter(b => b.likes && b.likes > 0)
