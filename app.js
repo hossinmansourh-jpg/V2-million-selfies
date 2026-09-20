@@ -1,6 +1,6 @@
 // ===== استيراد Firebase =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 // ===== إعدادات Firebase =====
 const firebaseConfig = {
@@ -44,6 +44,38 @@ let selectionMode = false;
 let previewImage = null;
 let previewImageUrl = null;
 
+// ===== إدارة الإعجابات =====
+function getMyLikes() {
+  const likes = localStorage.getItem('my_likes');
+  return likes ? JSON.parse(likes) : [];
+}
+
+function saveLike(bookingId) {
+  const likes = getMyLikes();
+  if (!likes.includes(bookingId)) {
+    likes.push(bookingId);
+    localStorage.setItem('my_likes', JSON.stringify(likes));
+  }
+}
+
+function hasLiked(bookingId) {
+  return getMyLikes().includes(bookingId);
+}
+
+// ===== إظهار إشعار (Toast) =====
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
 // ===== نظام الإحالة =====
 function generateReferralCode() {
   return 'USER' + Math.random().toString(36).substr(2, 8).toUpperCase();
@@ -74,11 +106,11 @@ window.copyReferralLink = function() {
   
   navigator.clipboard.writeText(url).then(() => {
     const currentLang = localStorage.getItem('lang') || 'ar';
-    alert(currentLang === 'ar' 
+    showToast(currentLang === 'ar' 
       ? '✅ تم نسخ رابط الإحالة! شاركه مع أصدقائك.' 
       : '✅ Referral link copied! Share it with your friends.');
   }).catch(() => {
-    alert('❌ فشل نسخ الرابط');
+    showToast('❌ فشل نسخ الرابط');
   });
 };
 
@@ -252,7 +284,6 @@ function drawScrollbars() {
   const scrollbarColor = '#d4a017';
   const scrollbarBgColor = 'rgba(42, 42, 53, 0.5)';
 
-  // الشريط العمودي
   const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
   const vTrackY = scrollbarMargin;
   const vTrackHeight = canvas.height - (scrollbarMargin * 2);
@@ -268,7 +299,6 @@ function drawScrollbars() {
   ctx.fillStyle = scrollbarColor;
   ctx.fillRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight);
 
-  // الشريط الأفقي
   const hTrackX = scrollbarMargin;
   const hTrackY = canvas.height - scrollbarThickness - scrollbarMargin;
   const hTrackWidth = canvas.width - (scrollbarMargin * 2);
@@ -285,7 +315,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات =====
+// ===== رسم الحجوزات (مع عداد الإعجابات) =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -301,6 +331,7 @@ function drawBookings() {
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, width, height);
 
+    // رسم الصورة
     if (booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -317,6 +348,25 @@ function drawBookings() {
         imageCache[booking.id] = img;
         img.src = booking.selfieUrl;
       }
+    }
+
+    // رسم عداد الإعجابات على الصورة
+    if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
+      const liked = hasLiked(booking.id);
+      const badgeX = startX + width - 40;
+      const badgeY = startY + height - 26;
+      
+      ctx.fillStyle = liked ? 'rgba(255, 51, 102, 0.9)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, 36, 22, 11);
+      ctx.fill();
+      
+      ctx.fillStyle = liked ? '#fff' : '#f5b301';
+      ctx.font = 'bold 12px Cairo, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`❤️${booking.likes}`, badgeX + 18, badgeY + 11);
+      ctx.textBaseline = 'alphabetic';
     }
   });
 }
@@ -375,25 +425,28 @@ function updateStats() {
 // ===== تحديث لوحة الصدارة =====
 async function updateLeaderboard() {
   try {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    
+    // آخر الحجوزات
     const recent = approvedBookings.slice(0, 5);
     const recentHTML = recent.map(b => `
       <div class="lb-item">
         <img src="${b.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
         <span class="name">${b.userName || 'زائر'}</span>
-        <span class="count">${b.quantity || 1} مربع</span>
+        <span class="count">${b.quantity || 1} ${currentLang === 'ar' ? 'مربع' : 'sq'}</span>
       </div>
     `).join('');
     
     const recentEl = document.getElementById('recentBookings');
-    if (recentEl) recentEl.innerHTML = recentHTML || '<p style="color:#666;font-size:13px;">لا توجد حجوزات بعد</p>';
+    if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
+    // الإحصائيات
     const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const lastBooking = approvedBookings[0];
     const lastTime = lastBooking ? Math.floor((Date.now() - (lastBooking.timestamp || 0)) / 60000) : null;
     
     const statsEl = document.getElementById('liveStats');
     if (statsEl) {
-      const currentLang = localStorage.getItem('lang') || 'ar';
       statsEl.innerHTML = `
         <div class="lb-item">
           <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
@@ -409,6 +462,24 @@ async function updateLeaderboard() {
         </div>
       `;
     }
+
+    // الأكثر إعجاباً
+    const topLiked = [...approvedBookings]
+      .filter(b => b.likes && b.likes > 0)
+      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+      .slice(0, 5);
+    
+    const topLikedHTML = topLiked.map(b => `
+      <div class="lb-item">
+        <img src="${b.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
+        <span class="name">${b.userName || 'زائر'}</span>
+        <span class="count">❤️ ${b.likes || 0}</span>
+      </div>
+    `).join('');
+    
+    const topLikedEl = document.getElementById('topLiked');
+    if (topLikedEl) topLikedEl.innerHTML = topLikedHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد إعجابات بعد' : 'No likes yet'}</p>`;
+
   } catch (error) {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
@@ -630,6 +701,9 @@ canvas.addEventListener('wheel', (e) => {
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
+let lastTapTime = 0;
+let lastTapX = 0;
+let lastTapY = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) {
@@ -654,6 +728,24 @@ canvas.addEventListener('touchstart', (e) => {
   }
 
   if (e.touches.length === 1) {
+    const now = Date.now();
+    const tapX = e.touches[0].clientX;
+    const tapY = e.touches[0].clientY;
+
+    // كشف النقر المزدوج
+    if (now - lastTapTime < 300 && 
+        Math.abs(tapX - lastTapX) < 30 && 
+        Math.abs(tapY - lastTapY) < 30) {
+      // نقر مزدوج - إعجاب
+      handleLikeTap(tapX, tapY);
+      lastTapTime = 0;
+      return;
+    }
+
+    lastTapTime = now;
+    lastTapX = tapX;
+    lastTapY = tapY;
+
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     lastMoveTime = Date.now();
@@ -735,6 +827,50 @@ canvas.addEventListener('touchend', () => {
   }
 }, { passive: true });
 
+// ===== معالجة الإعجاب (لمس مزدوج) =====
+async function handleLikeTap(tapX, tapY) {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = tapX - rect.left + offsetX;
+  const clickY = tapY - rect.top + offsetY;
+
+  for (const booking of approvedBookings) {
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      
+      if (hasLiked(booking.id)) {
+        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
+        return;
+      }
+
+      try {
+        const newLikes = (booking.likes || 0) + 1;
+        await updateDoc(doc(db, "bookings", booking.id), {
+          likes: newLikes
+        });
+        
+        saveLike(booking.id);
+        booking.likes = newLikes;
+        
+        drawGrid();
+        updateLeaderboard();
+        showToast(currentLang === 'ar' ? '❤️ شكراً لإعجابك!' : '❤️ Thanks for your like!');
+        
+      } catch (error) {
+        console.error('خطأ في الإعجاب:', error);
+      }
+      
+      return;
+    }
+  }
+}
+
 // ===== النقر على الشبكة =====
 canvas.addEventListener('click', (e) => {
   if (selectionMode) return;
@@ -776,6 +912,53 @@ canvas.addEventListener('click', (e) => {
   }
   
   openBookingModal(startCell);
+});
+
+// ===== النقر المزدوج للإعجاب (كمبيوتر) =====
+canvas.addEventListener('dblclick', async (e) => {
+  if (selectionMode) return;
+  if (hasDragged) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left + offsetX;
+  const clickY = e.clientY - rect.top + offsetY;
+
+  for (const booking of approvedBookings) {
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      
+      if (hasLiked(booking.id)) {
+        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
+        return;
+      }
+
+      try {
+        const newLikes = (booking.likes || 0) + 1;
+        await updateDoc(doc(db, "bookings", booking.id), {
+          likes: newLikes
+        });
+        
+        saveLike(booking.id);
+        booking.likes = newLikes;
+        
+        drawGrid();
+        updateLeaderboard();
+        showToast(currentLang === 'ar' ? '❤️ شكراً لإعجابك!' : '❤️ Thanks for your like!');
+        
+      } catch (error) {
+        console.error('خطأ في الإعجاب:', error);
+      }
+      
+      return;
+    }
+  }
 });
 
 // ===== تحديث عدد المربعات المختارة =====
@@ -995,7 +1178,8 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       createdAt: Timestamp.now(),
       timestamp: Date.now(),
       referralCode: getMyReferralCode(),
-      referredBy: getReferredBy() || null
+      referredBy: getReferredBy() || null,
+      likes: 0
     };
 
     await addDoc(collection(db, "bookings"), bookingData);
@@ -1087,6 +1271,7 @@ const translations = {
     legendHint: 'انقر على أي مربع للحجز',
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
     hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
+    hintLike: '❤️ انقر مرتين على أي صورة لإعجابها',
     selectModeBtn: '🖱️ تحديد المربعات',
     selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
@@ -1116,11 +1301,19 @@ const translations = {
     howStep2Desc: 'ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)',
     howStep3Title: 'ادفع بـ 1$',
     howStep3Desc: 'ادفع عبر شام كاش أو USDT وارفع الإيصال',
+    guideTitle: '🎮 كيف تتفاعل مع الصور؟',
+    guideClickTitle: 'انقر على الصورة',
+    guideClickDesc: 'انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها (إذا كان الرابط موجوداً)',
+    guideLikeTitle: 'انقر مرتين للإعجاب',
+    guideLikeDesc: 'انقر مرتين (Double Click) على أي صورة لإعجابها. ستظهر عدد الإعجابات على الصورة',
+    guideTopTitle: 'الأكثر إعجاباً',
+    guideTopDesc: 'الصور الأكثر إعجاباً تظهر في لوحة الصدارة أسفل الصفحة',
     referralText: '🎁 ادعُ أصدقاءك واحصل على مربع مجاني!',
     referralBtn: '📋 نسخ رابط الإحالة',
     leaderboardTitle: '🏆 لوحة الصدارة',
     lbRecent: '📸 آخر الحجوزات',
     lbStats: '📊 إحصائيات حية',
+    lbTopLiked: '❤️ الأكثر إعجاباً',
     onboardingTitle: '📌 كيف تحجز؟',
     onboardingStep1: 'اضغط واسحب لتحديد المربعات التي تريدها',
     onboardingStep2: 'اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز',
@@ -1142,6 +1335,7 @@ const translations = {
     legendHint: 'Click any square to book',
     hint: '💡 Scroll inside the grid to explore the million squares',
     hintLink: '🔗 Click any booked photo to visit the owner\'s account',
+    hintLike: '❤️ Double-click any photo to like it',
     selectModeBtn: '🖱️ Select Squares',
     selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
@@ -1171,11 +1365,19 @@ const translations = {
     howStep2Desc: 'Upload a clear selfie and add your profile link (optional)',
     howStep3Title: 'Pay $1',
     howStep3Desc: 'Pay via Sham Cash or USDT and upload the receipt',
+    guideTitle: '🎮 How to Interact with Photos?',
+    guideClickTitle: 'Click on Photo',
+    guideClickDesc: 'Click any booked photo to visit the owner\'s account (if link exists)',
+    guideLikeTitle: 'Double-Click to Like',
+    guideLikeDesc: 'Double-click any photo to like it. The like count will appear on the photo',
+    guideTopTitle: 'Most Liked',
+    guideTopDesc: 'The most liked photos appear in the leaderboard at the bottom',
     referralText: '🎁 Invite friends and get a free square!',
     referralBtn: '📋 Copy Referral Link',
     leaderboardTitle: '🏆 Leaderboard',
     lbRecent: '📸 Recent Bookings',
     lbStats: '📊 Live Stats',
+    lbTopLiked: '❤️ Most Liked',
     onboardingTitle: '📌 How to Book?',
     onboardingStep1: 'Click and drag to select the squares you want',
     onboardingStep2: 'Click "✅ Finish Selection" to open the booking form',
