@@ -245,6 +245,96 @@
       font-weight: 700;
     }
 
+    /* ===== جدول المُحيلين ===== */
+    .referrers-table {
+      background: var(--bg-gray);
+      border: 1px solid var(--bg-light);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .referrers-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .referrers-table th {
+      background: var(--bg-dark);
+      color: var(--gold);
+      padding: 12px 15px;
+      text-align: right;
+      font-weight: 900;
+      font-size: 14px;
+      font-family: 'Cairo', sans-serif;
+      border-bottom: 2px solid var(--gold);
+    }
+
+    .referrers-table td {
+      padding: 12px 15px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--bg-light);
+    }
+
+    .referrers-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .referrers-table tr:hover td {
+      background: rgba(212, 160, 23, 0.05);
+    }
+
+    .ref-code {
+      color: var(--gold-light);
+      font-family: monospace;
+      font-size: 13px;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .ref-count {
+      color: var(--blue);
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .ref-reward {
+      color: var(--green);
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .ref-reward.pending {
+      color: #8a6a1a;
+    }
+
+    .copy-btn {
+      background: var(--bg-dark);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: var(--gold);
+      color: var(--bg-dark);
+    }
+
+    .empty-row {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 30px;
+      font-weight: 700;
+    }
+
     /* ===== التبويبات ===== */
     .tabs {
       display: flex;
@@ -312,7 +402,6 @@
       align-items: flex-start;
     }
 
-    /* ===== صور الطلب ===== */
     .booking-images {
       display: flex;
       gap: 10px;
@@ -482,6 +571,8 @@
       .booking-card { padding: 14px; }
       .booking-img { width: 70px; height: 70px; }
       .header-btn { padding: 8px 14px; font-size: 13px; }
+      .referrers-table th,
+      .referrers-table td { padding: 8px 10px; font-size: 12px; }
     }
   </style>
 </head>
@@ -557,6 +648,26 @@
       </div>
     </div>
 
+    <!-- أكثر المُحيلين -->
+    <div class="section-heading">
+      🏆 أكثر المُحيلين (نظام الإحالة)
+    </div>
+    <div class="referrers-table">
+      <table>
+        <thead>
+          <tr>
+            <th>رمز المُحيل</th>
+            <th>عدد الإحالات</th>
+            <th>المكافأة</th>
+            <th>الرابط</th>
+          </tr>
+        </thead>
+        <tbody id="referrersTableBody">
+          <tr><td colspan="4" class="empty-row">لا توجد إحالات بعد</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- إدارة الطلبات -->
     <div class="section-heading">
       🗂️ إدارة الطلبات
@@ -601,6 +712,7 @@
     const auth = getAuth(app);
 
     const ADMIN_EMAIL = "hossinmansourh@gmail.com";
+    const REWARD_THRESHOLD = 5; // عدد الإحالات للحصول على مربع مجاني
 
     let allBookings = [];
     let currentTab = 'pending';
@@ -631,7 +743,6 @@
       }
     });
 
-    // ===== Enter للدخول =====
     document.getElementById('passwordInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') document.getElementById('loginBtn').click();
     });
@@ -677,6 +788,7 @@
         allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         updateBookingStats();
         renderBookings();
+        updateReferrers();
       } catch (error) {
         console.error("خطأ في تحميل الحجوزات:", error);
       }
@@ -721,6 +833,62 @@
       document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
     }
 
+    // ===== تحديث جدول المُحيلين =====
+    function updateReferrers() {
+      // تجميع الإحالات حسب referredBy
+      const referrersMap = {};
+      
+      allBookings.forEach(b => {
+        if (b.referredBy) {
+          if (!referrersMap[b.referredBy]) {
+            referrersMap[b.referredBy] = 0;
+          }
+          referrersMap[b.referredBy]++;
+        }
+      });
+
+      // تحويل إلى مصفوفة وترتيب
+      const referrers = Object.entries(referrersMap)
+        .map(([code, count]) => ({ code, count }))
+        .sort((a, b) => b.count - a.count);
+
+      const tbody = document.getElementById('referrersTableBody');
+
+      if (referrers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">لا توجد إحالات بعد</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = referrers.map(r => {
+        const eligible = r.count >= REWARD_THRESHOLD;
+        const rewardHTML = eligible 
+          ? `<span class="ref-reward">🎁 مستحق (${r.count} إحالة)</span>`
+          : `<span class="ref-reward pending">${r.count} / ${REWARD_THRESHOLD}</span>`;
+        
+        const refLink = window.location.origin + '/million-selfies-v2/?ref=' + r.code;
+        
+        return `
+          <tr>
+            <td><span class="ref-code">${r.code}</span></td>
+            <td><span class="ref-count">${r.count}</span></td>
+            <td>${rewardHTML}</td>
+            <td>
+              <button class="copy-btn" onclick="copyReferrerLink('${refLink}')">📋 نسخ</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===== نسخ رابط المُحيل =====
+    window.copyReferrerLink = function(link) {
+      navigator.clipboard.writeText(link).then(() => {
+        alert('✅ تم نسخ الرابط');
+      }).catch(() => {
+        alert('❌ فشل النسخ');
+      });
+    };
+
     // ===== عرض الحجوزات =====
     function renderBookings() {
       const list = document.getElementById('bookingsList');
@@ -735,7 +903,8 @@
         filtered = filtered.filter(b =>
           (b.userName || '').toLowerCase().includes(q) ||
           (b.userPhone || '').includes(q) ||
-          (b.startCell || '').toString().includes(q)
+          (b.startCell || '').toString().includes(q) ||
+          (b.referralCode || '').toLowerCase().includes(q)
         );
       }
 
@@ -774,6 +943,7 @@
               <p><strong>المربعات:</strong> ${b.quantity || 0} (يبدأ من ${b.startCell || 0})</p>
               <p><strong>السعر:</strong> $${b.totalPrice || 0}</p>
               <p><strong>الدفع:</strong> ${b.paymentMethod || '-'}</p>
+              ${b.referredBy ? `<p><strong>أحاله:</strong> <span class="ref-code">${b.referredBy}</span></p>` : ''}
               <p><strong>الحالة:</strong> <span class="status-badge ${statusClass}">${statusText}</span></p>
             </div>
             <div class="booking-actions">
@@ -786,19 +956,16 @@
       }).join('');
     }
 
-    // ===== عرض الصورة بحجم كبير =====
+    // ===== عرض الصورة =====
     window.showImage = (url) => {
       if (!url || url === '' || url === 'undefined') return;
       const modal = document.getElementById('imageModal');
       const img = document.getElementById('modalImage');
       img.src = url;
       modal.classList.add('active');
-      
-      // إضافة حالة في السجل حتى يعمل زر الرجوع على إغلاق الصورة فقط
       history.pushState({ imageOpen: true }, '');
     };
 
-    // ===== زر إغلاق الصورة =====
     document.getElementById('imageCloseBtn').addEventListener('click', () => {
       const modal = document.getElementById('imageModal');
       modal.classList.remove('active');
@@ -807,7 +974,6 @@
       }
     });
 
-    // ===== إغلاق نافذة الصورة عند النقر خارجها =====
     document.getElementById('imageModal').addEventListener('click', (e) => {
       if (e.target.id === 'imageModal') {
         e.target.classList.remove('active');
@@ -817,7 +983,6 @@
       }
     });
 
-    // ===== إغلاق نافذة الصورة عند زر الرجوع في الهاتف =====
     window.addEventListener('popstate', () => {
       const modal = document.getElementById('imageModal');
       if (modal.classList.contains('active')) {
