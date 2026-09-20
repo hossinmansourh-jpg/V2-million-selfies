@@ -44,6 +44,89 @@ let selectionMode = false;
 let previewImage = null;
 let previewImageUrl = null;
 
+// ===== نظام الإحالة =====
+function generateReferralCode() {
+  return 'USER' + Math.random().toString(36).substr(2, 8).toUpperCase();
+}
+
+function getMyReferralCode() {
+  let code = localStorage.getItem('my_referral_code');
+  if (!code) {
+    code = generateReferralCode();
+    localStorage.setItem('my_referral_code', code);
+  }
+  return code;
+}
+
+function getReferredBy() {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if (ref) {
+    localStorage.setItem('referred_by', ref);
+  }
+  return ref || localStorage.getItem('referred_by') || null;
+}
+
+// ===== نسخ رابط الإحالة =====
+window.copyReferralLink = function() {
+  const code = getMyReferralCode();
+  const url = window.location.origin + window.location.pathname + '?ref=' + code;
+  
+  navigator.clipboard.writeText(url).then(() => {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    alert(currentLang === 'ar' 
+      ? '✅ تم نسخ رابط الإحالة! شاركه مع أصدقائك.' 
+      : '✅ Referral link copied! Share it with your friends.');
+  }).catch(() => {
+    alert('❌ فشل نسخ الرابط');
+  });
+};
+
+// ===== تحويل الصورة إلى JPG =====
+function convertToJPG(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSize = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          } else {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctxTemp = canvas.getContext('2d');
+        ctxTemp.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const newFile = new File([blob], 'image.jpg', { type: 'image/jpeg' });
+            resolve(newFile);
+          } else {
+            reject(new Error('فشل تحويل الصورة'));
+          }
+        }, 'image/jpeg', 0.85);
+      };
+      img.onerror = () => reject(new Error('فشل تحميل الصورة'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+    reader.readAsDataURL(file);
+  });
+}
+
 // ===== إعداد Canvas =====
 function resizeCanvas() {
   const container = canvas.parentElement;
@@ -158,6 +241,7 @@ function drawGrid() {
 
   drawScrollbars();
 }
+
 // ===== رسم أشرطة التمرير =====
 function drawScrollbars() {
   const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
@@ -168,50 +252,39 @@ function drawScrollbars() {
   const scrollbarColor = '#d4a017';
   const scrollbarBgColor = 'rgba(42, 42, 53, 0.5)';
 
-  // ===== شريط التمرير العمودي (على اليمين) =====
+  // الشريط العمودي
   const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
   const vTrackY = scrollbarMargin;
   const vTrackHeight = canvas.height - (scrollbarMargin * 2);
 
-  // خلفية الشريط العمودي
   ctx.fillStyle = scrollbarBgColor;
-  ctx.beginPath();
-  ctx.roundRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight, 3);
-  ctx.fill();
+  ctx.fillRect(vTrackX, vTrackY, scrollbarThickness, vTrackHeight);
 
-  // مقبض الشريط العمودي
   const vHandleHeight = Math.max(50, (canvas.height / totalHeight) * vTrackHeight);
   const vScrollableHeight = vTrackHeight - vHandleHeight;
   const vMaxOffset = Math.max(1, totalHeight - canvas.height);
   const vHandleY = vTrackY + (offsetY / vMaxOffset) * vScrollableHeight;
 
   ctx.fillStyle = scrollbarColor;
-  ctx.beginPath();
-  ctx.roundRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight, 3);
-  ctx.fill();
+  ctx.fillRect(vTrackX, vHandleY, scrollbarThickness, vHandleHeight);
 
-  // ===== شريط التمرير الأفقي (في الأسفل) =====
+  // الشريط الأفقي
   const hTrackX = scrollbarMargin;
   const hTrackY = canvas.height - scrollbarThickness - scrollbarMargin;
   const hTrackWidth = canvas.width - (scrollbarMargin * 2);
 
-  // خلفية الشريط الأفقي
   ctx.fillStyle = scrollbarBgColor;
-  ctx.beginPath();
-  ctx.roundRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness, 3);
-  ctx.fill();
+  ctx.fillRect(hTrackX, hTrackY, hTrackWidth, scrollbarThickness);
 
-  // مقبض الشريط الأفقي
   const hHandleWidth = Math.max(50, (canvas.width / totalWidth) * hTrackWidth);
   const hScrollableWidth = hTrackWidth - hHandleWidth;
   const hMaxOffset = Math.max(1, totalWidth - canvas.width);
   const hHandleX = hTrackX + (offsetX / hMaxOffset) * hScrollableWidth;
 
   ctx.fillStyle = scrollbarColor;
-  ctx.beginPath();
-  ctx.roundRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness, 3);
-  ctx.fill();
+  ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
+
 // ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
@@ -279,6 +352,7 @@ async function loadBookings() {
     allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     updateStats();
     drawGrid();
+    await updateLeaderboard();
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
   }
@@ -296,6 +370,48 @@ function updateStats() {
   document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('en-US');
   document.getElementById('progressFill').style.width = progress + '%';
   document.getElementById('progressText').textContent = progress + '%';
+}
+
+// ===== تحديث لوحة الصدارة =====
+async function updateLeaderboard() {
+  try {
+    const recent = approvedBookings.slice(0, 5);
+    const recentHTML = recent.map(b => `
+      <div class="lb-item">
+        <img src="${b.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
+        <span class="name">${b.userName || 'زائر'}</span>
+        <span class="count">${b.quantity || 1} مربع</span>
+      </div>
+    `).join('');
+    
+    const recentEl = document.getElementById('recentBookings');
+    if (recentEl) recentEl.innerHTML = recentHTML || '<p style="color:#666;font-size:13px;">لا توجد حجوزات بعد</p>';
+
+    const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
+    const lastBooking = approvedBookings[0];
+    const lastTime = lastBooking ? Math.floor((Date.now() - (lastBooking.timestamp || 0)) / 60000) : null;
+    
+    const statsEl = document.getElementById('liveStats');
+    if (statsEl) {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      statsEl.innerHTML = `
+        <div class="lb-item">
+          <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
+          <span class="count">${totalBooked.toLocaleString('en-US')}</span>
+        </div>
+        <div class="lb-item">
+          <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
+          <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
+        </div>
+        <div class="lb-item">
+          <span class="name">${currentLang === 'ar' ? 'آخر حجز' : 'Last Booking'}</span>
+          <span class="count">${lastTime !== null ? (lastTime < 1 ? (currentLang === 'ar' ? 'الآن' : 'Now') : (currentLang === 'ar' ? `منذ ${lastTime} دقيقة` : `${lastTime}m ago`)) : (currentLang === 'ar' ? 'لا يوجد' : 'None')}</span>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('خطأ في تحديث لوحة الصدارة:', error);
+  }
 }
 
 // ===== متغيرات السحب =====
@@ -390,6 +506,13 @@ function toggleSelectionMode() {
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   drawGrid();
 }
+
+// ===== نافذة التوجيه =====
+function closeOnboarding() {
+  document.getElementById('onboardingModal').classList.add('hidden');
+  localStorage.setItem('onboarding_seen', 'true');
+}
+window.closeOnboarding = closeOnboarding;
 
 // ===== التفاعل مع الفأرة =====
 canvas.addEventListener('mousemove', (e) => {
@@ -820,18 +943,16 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     quantity = cols * rows;
   } else {
     startCell = parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
-    quantity = parseInt(document.getElementById('quantityInput').value) || 1;
-    cols = Math.ceil(Math.sqrt(quantity));
-    rows = Math.ceil(quantity / cols);
+    quantity = 1;
+    cols = 1;
+    rows = 1;
 
-    for (let i = 0; i < quantity; i++) {
-      const cx = (startCell + i) % GRID_SIZE;
-      const cy = Math.floor((startCell + i) / GRID_SIZE);
-      if (isCellBooked(cx, cy)) {
-        msg.textContent = '❌ المربعات المختارة تحتوي على مربعات محجوزة.';
-        msg.className = 'form-message error';
-        return;
-      }
+    const cx = startCell % GRID_SIZE;
+    const cy = Math.floor(startCell / GRID_SIZE);
+    if (isCellBooked(cx, cy)) {
+      msg.textContent = '❌ هذا المربع محجوز بالفعل.';
+      msg.className = 'form-message error';
+      return;
     }
   }
 
@@ -872,7 +993,9 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       termsAcceptedAt: Timestamp.now(),
       termsVersion: '1.0',
       createdAt: Timestamp.now(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      referralCode: getMyReferralCode(),
+      referredBy: getReferredBy() || null
     };
 
     await addDoc(collection(db, "bookings"), bookingData);
@@ -907,8 +1030,16 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
 
 // ===== رفع الصور على ImgBB =====
 async function uploadToImgBB(file) {
+  let processedFile;
+  try {
+    processedFile = await convertToJPG(file);
+  } catch (error) {
+    console.error('فشل تحويل الصورة:', error);
+    processedFile = file;
+  }
+
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append('image', processedFile);
 
   const response = await fetch('https://api.imgbb.com/1/upload?key=b2d98272187f15bc84d99356a2936fc6', {
     method: 'POST',
@@ -932,6 +1063,10 @@ document.getElementById('zoomOut').addEventListener('click', () => {
 });
 
 document.getElementById('selectModeBtn').addEventListener('click', function() {
+  const seen = localStorage.getItem('onboarding_seen');
+  if (!seen && !selectionMode) {
+    document.getElementById('onboardingModal').classList.remove('hidden');
+  }
   toggleSelectionMode();
 });
 
@@ -951,6 +1086,7 @@ const translations = {
     legendBooked: 'محجوز',
     legendHint: 'انقر على أي مربع للحجز',
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
+    hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
     selectModeBtn: '🖱️ تحديد المربعات',
     selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
@@ -958,6 +1094,7 @@ const translations = {
     nameLabel: 'الاسم',
     phoneLabel: 'رقم الهاتف (اختياري)',
     linkLabel: 'رابط حسابك (اختياري)',
+    linkNote: '📌 سيتمكن الزوار من النقر على صورتك للانتقال إلى حسابك',
     noteLabel: 'ملاحظة (اختياري)',
     selfieLabel: 'صورة السيلفي',
     receiptLabel: 'إيصال الدفع',
@@ -971,7 +1108,24 @@ const translations = {
     refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.',
     totalLabel: 'الإجمالي:',
     submitBtn: 'إرسال الطلب',
-    contactUs: 'تواصل معنا'
+    contactUs: 'تواصل معنا',
+    howTitle: '🎯 كيف يعمل الموقع؟',
+    howStep1Title: 'اختر مربعك',
+    howStep1Desc: 'اضغط على "تحديد المربعات" واسحب لتحديد منطقتك',
+    howStep2Title: 'ارفع صورتك',
+    howStep2Desc: 'ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)',
+    howStep3Title: 'ادفع بـ 1$',
+    howStep3Desc: 'ادفع عبر شام كاش أو USDT وارفع الإيصال',
+    referralText: '🎁 ادعُ أصدقاءك واحصل على مربع مجاني!',
+    referralBtn: '📋 نسخ رابط الإحالة',
+    leaderboardTitle: '🏆 لوحة الصدارة',
+    lbRecent: '📸 آخر الحجوزات',
+    lbStats: '📊 إحصائيات حية',
+    onboardingTitle: '📌 كيف تحجز؟',
+    onboardingStep1: 'اضغط واسحب لتحديد المربعات التي تريدها',
+    onboardingStep2: 'اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز',
+    onboardingStep3: 'ارفع صورتك، املأ البيانات، وادفع',
+    onboardingBtn: 'فهمت، لنبدأ!'
   },
   en: {
     badge: '🚀 Historic Digital Challenge',
@@ -987,6 +1141,7 @@ const translations = {
     legendBooked: 'Booked',
     legendHint: 'Click any square to book',
     hint: '💡 Scroll inside the grid to explore the million squares',
+    hintLink: '🔗 Click any booked photo to visit the owner\'s account',
     selectModeBtn: '🖱️ Select Squares',
     selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
@@ -994,6 +1149,7 @@ const translations = {
     nameLabel: 'Name',
     phoneLabel: 'Phone (optional)',
     linkLabel: 'Your Profile Link (optional)',
+    linkNote: '📌 Visitors can click your photo to visit your account',
     noteLabel: 'Note (optional)',
     selfieLabel: 'Selfie Image',
     receiptLabel: 'Payment Receipt',
@@ -1007,7 +1163,24 @@ const translations = {
     refundNotice: '💡 If your image is rejected, please contact us via WhatsApp or Telegram for a refund.',
     totalLabel: 'Total:',
     submitBtn: 'Submit Request',
-    contactUs: 'Contact Us'
+    contactUs: 'Contact Us',
+    howTitle: '🎯 How It Works?',
+    howStep1Title: 'Choose Your Square',
+    howStep1Desc: 'Click "Select Squares" and drag to select your area',
+    howStep2Title: 'Upload Your Photo',
+    howStep2Desc: 'Upload a clear selfie and add your profile link (optional)',
+    howStep3Title: 'Pay $1',
+    howStep3Desc: 'Pay via Sham Cash or USDT and upload the receipt',
+    referralText: '🎁 Invite friends and get a free square!',
+    referralBtn: '📋 Copy Referral Link',
+    leaderboardTitle: '🏆 Leaderboard',
+    lbRecent: '📸 Recent Bookings',
+    lbStats: '📊 Live Stats',
+    onboardingTitle: '📌 How to Book?',
+    onboardingStep1: 'Click and drag to select the squares you want',
+    onboardingStep2: 'Click "✅ Finish Selection" to open the booking form',
+    onboardingStep3: 'Upload your photo, fill the form, and pay',
+    onboardingBtn: 'Got it, let\'s start!'
   }
 };
 
@@ -1027,12 +1200,10 @@ function applyLanguage(lang) {
     }
   });
   
-  // تحديث نصوص التحديد إذا كانت موجودة
   if (selectionStart && selectionEnd) {
     updateSelectedCount();
   }
   
-  // تحديث زر وضع التحديد
   const btn = document.getElementById('selectModeBtn');
   if (btn) {
     if (selectionMode) {
@@ -1043,6 +1214,7 @@ function applyLanguage(lang) {
   }
   
   updateStats();
+  updateLeaderboard();
 }
 
 // ===== تبديل اللغة =====
@@ -1062,11 +1234,9 @@ function setLanguage(lang) {
   drawGrid();
 }
 
-// ===== ربط أزرار اللغة =====
 document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
 document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
 
-// تحميل اللغة المحفوظة
 const savedLang = localStorage.getItem('lang') || 'ar';
 setLanguage(savedLang);
 
