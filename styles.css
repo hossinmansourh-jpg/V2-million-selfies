@@ -517,6 +517,7 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 11px;
+  will-change: transform;
 }
 
 /* ===== قسم النصائح ===== */
@@ -552,6 +553,19 @@ body {
   font-weight: 700;
   background: rgba(255, 51, 102, 0.08);
   border: 1px dashed rgba(255, 51, 102, 0.4);
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-top: 12px;
+  display: inline-block;
+  max-width: 90%;
+}
+
+.hint-longpress {
+  color: #4ade80;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px dashed rgba(74, 222, 128, 0.4);
   border-radius: 8px;
   padding: 10px 15px;
   margin-top: 12px;
@@ -964,6 +978,187 @@ body {
 .toast-notification.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+/* ===== إشعار الإعجاب ===== */
+.like-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background: linear-gradient(135deg, #ff3366, #ff6699);
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 8px 30px rgba(255, 51, 102, 0.4);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  max-width: 90%;
+  pointer-events: none;
+}
+
+.like-notification.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.like-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.like-notification-content img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+}
+
+.like-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.like-heart {
+  font-size: 20px;
+  animation: heartBeat 0.6s infinite;
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+/* ===== بطاقة صاحب الصورة ===== */
+.owner-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: var(--bg-gray);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.3s ease;
+  max-width: 90%;
+  min-width: 300px;
+}
+
+.owner-card.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.owner-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.owner-card-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 30px rgba(212, 160, 23, 0.4);
+}
+
+.owner-card-info {
+  text-align: center;
+  width: 100%;
+}
+
+.owner-card-info h3 {
+  color: var(--gold);
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.owner-note {
+  color: var(--text-muted);
+  font-family: 'Cairo', sans-serif;
+  font-size: 14px;
+  font-style: italic;
+  margin-bottom: 12px;
+  font-weight: 700;
+  background: var(--bg-dark);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-right: 3px solid var(--gold);
+}
+
+.owner-stats {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.owner-stats span {
+  background: var(--bg-dark);
+  color: var(--gold-light);
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  border: 1px solid var(--bg-light);
+}
+
+.owner-link {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--bg-dark);
+  padding: 10px 25px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.owner-link:hover {
+  background: var(--gold-light);
+  transform: scale(1.05);
+}
+
+.owner-card-close {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 35px;
+  height: 35px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.owner-card-close:hover {
+  background: #c44;
 }
 
 /* ===== الهاتف ===== */
