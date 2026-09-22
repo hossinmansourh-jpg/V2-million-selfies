@@ -31,10 +31,10 @@
     <h2 class="how-title" data-i18n="howTitle">🎯 كيف يعمل الموقع؟</h2>
     <div class="how-steps">
       <div class="how-step">
-        <div class="how-icon">👆</div>
+        <div class="how-icon">🖱️</div>
         <div class="how-num">1</div>
-        <h3 data-i18n="howStep1Title">انقر على مربع</h3>
-        <p data-i18n="howStep1Desc">اختر مكانك على الشبكة بنقرة واحدة</p>
+        <h3 data-i18n="howStep1Title">اختر مربعك</h3>
+        <p data-i18n="howStep1Desc">اضغط على "تحديد المربعات" واسحب لتحديد منطقتك</p>
       </div>
       <div class="how-step">
         <div class="how-icon">📸</div>
@@ -131,11 +131,10 @@
       <span class="legend-hint" data-i18n="legendHint">انقر على أي مربع للحجز</span>
     </div>
 
-    <!-- نصيحة بدلاً من زر التحديد -->
+    <!-- زر التحديد -->
     <div class="selection-controls">
-      <span class="selection-hint" data-i18n="selectionHint">
-        👆 انقر على أي مربع فارغ لبدء الحجز
-      </span>
+      <button id="selectModeBtn" class="select-mode-btn" data-i18n="selectModeBtn">🖱️ تحديد المربعات</button>
+      <span id="selectedCountDisplay" class="selected-count" data-i18n="selectedCount">المربعات المختارة: 0</span>
     </div>
 
     <div class="grid-wrapper">
@@ -226,10 +225,11 @@
       <h2 data-i18n="bookingTitle">حجز المربعات</h2>
 
       <div class="form-group">
-        <label data-i18n="quantityLabel">عدد المربعات (1-400)</label>
-        <input type="number" id="quantityInput" min="1" max="400" value="1">
+        <label data-i18n="quantityLabel">عدد المربعات</label>
+        <input type="number" id="quantityInput" readonly value="1" 
+               style="background: var(--bg-dark); cursor: not-allowed; text-align: center; font-size: 20px; font-weight: 900; color: var(--gold); border: 2px solid var(--gold);">
         <p class="link-note" data-i18n="quantityNote">
-          📌 سيتم الحجز بدءاً من المربع الذي اخترته
+          📌 يتم تحديد العدد تلقائياً من الشبكة
         </p>
       </div>
 
@@ -316,8 +316,8 @@
       <button class="close-btn" onclick="closeOnboarding()">✕</button>
       <h2 data-i18n="onboardingTitle">📌 كيف تحجز؟</h2>
       <ol class="onboarding-steps">
-        <li data-i18n="onboardingStep1">انقر على أي مربع فارغ في الشبكة</li>
-        <li data-i18n="onboardingStep2">حدد عدد المربعات التي تريدها</li>
+        <li data-i18n="onboardingStep1">اضغط على "تحديد المربعات" واسحب لتحديد منطقتك</li>
+        <li data-i18n="onboardingStep2">اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز</li>
         <li data-i18n="onboardingStep3">ارفع صورتك، املأ البيانات، وادفع</li>
       </ol>
       <button class="submit-btn" onclick="closeOnboarding()" data-i18n="onboardingBtn">فهمت، لنبدأ!</button>
