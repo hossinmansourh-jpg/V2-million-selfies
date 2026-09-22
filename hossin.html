@@ -397,6 +397,7 @@
     .approve-btn { background: #3a9a3a; }
     .reject-btn { background: #9a3a3a; }
     .delete-btn { background: #555; }
+    .card-btn { background: linear-gradient(135deg, #d4a017, #f5b301); color: var(--bg-dark); }
 
     .empty-msg {
       text-align: center;
@@ -712,14 +713,12 @@
         const snapshot = await getDocs(q);
         allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         
-        // إشعارات الحجوزات الجديدة
         if (!isFirstLoad && allBookings.length > lastBookingsCount && lastBookingsCount > 0) {
           const newCount = allBookings.length - lastBookingsCount;
           showAdminNotification(`📩 لديك ${newCount} طلب جديد!`, 'new-booking');
         }
         lastBookingsCount = allBookings.length;
 
-        // إشعارات الإعجابات الجديدة
         const totalLikes = allBookings.reduce((sum, b) => sum + (b.likes || 0), 0);
         if (!isFirstLoad && totalLikes > lastLikesCount && lastLikesCount > 0) {
           const newLikes = totalLikes - lastLikesCount;
@@ -891,6 +890,7 @@
             <div class="booking-actions">
               ${b.status !== 'approved' ? `<button class="action-btn approve-btn" onclick="approveBooking('${b.id}')">✅ قبول</button>` : ''}
               ${b.status !== 'rejected' ? `<button class="action-btn reject-btn" onclick="rejectBooking('${b.id}')">❌ رفض</button>` : ''}
+              <button class="action-btn card-btn" onclick="openCard('${b.id}')">📸 بطاقة</button>
               <button class="action-btn delete-btn" onclick="deleteBooking('${b.id}')">🗑️ حذف</button>
             </div>
           </div>
@@ -931,6 +931,25 @@
       }
     });
 
+    // ===== فتح بطاقة الإنجاز =====
+    window.openCard = function(id) {
+      const booking = allBookings.find(b => b.id === id);
+      if (!booking) {
+        alert('لم يتم العثور على الحجز');
+        return;
+      }
+      
+      const params = new URLSearchParams({
+        userName: booking.userName || 'زائر',
+        startCell: booking.startCell || 0,
+        quantity: booking.quantity || 1,
+        selfieUrl: booking.selfieUrl || '',
+        referralCode: booking.referralCode || ''
+      });
+      
+      window.open('card.html?' + params.toString(), '_blank');
+    };
+
     window.approveBooking = async (id) => {
       if (!confirm('هل تريد قبول هذا الطلب؟')) return;
       try {
@@ -939,6 +958,19 @@
           approvedAt: Date.now()
         });
         await loadBookings();
+        
+        // فتح بطاقة المشاركة في تبويب جديد
+        const booking = allBookings.find(b => b.id === id);
+        if (booking) {
+          const params = new URLSearchParams({
+            userName: booking.userName || 'زائر',
+            startCell: booking.startCell || 0,
+            quantity: booking.quantity || 1,
+            selfieUrl: booking.selfieUrl || '',
+            referralCode: booking.referralCode || ''
+          });
+          window.open('card.html?' + params.toString(), '_blank');
+        }
       } catch (error) {
         console.error(error);
         alert('حدث خطأ');
