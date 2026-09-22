@@ -34,7 +34,7 @@ let hoveredCell = null;
 let selectedQuantity = 1;
 let imageCache = {};
 
-// متغيرات التحديد (للحفظ فقط - بدون وضع التحديد)
+// متغيرات التحديد
 let selectionStart = null;
 let selectionEnd = null;
 let isSelecting = false;
@@ -44,7 +44,9 @@ let selectionMode = false;
 let previewImage = null;
 let previewImageUrl = null;
 
-// متغيرات حفظ الحجز (لحل مشكلة الـ 7 مربعات)
+// متغيرات حفظ التحديد
+let savedSelectionStart = null;
+let savedSelectionEnd = null;
 let savedStartCell = 0;
 let savedQuantity = 1;
 let savedCols = 1;
@@ -223,11 +225,55 @@ function drawGrid() {
 
   drawBookings();
 
-  if (previewImage && hoveredCell) {
-    const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
-    const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
-    const width = CELL_PIXEL_SIZE * selectedQuantity;
-    const height = CELL_PIXEL_SIZE;
+  // رسم منطقة التحديد
+  if (isSelecting && selectionStart && selectionEnd) {
+    const x1 = Math.min(selectionStart.x, selectionEnd.x);
+    const y1 = Math.min(selectionStart.y, selectionEnd.y);
+    const x2 = Math.max(selectionStart.x, selectionEnd.x);
+    const y2 = Math.max(selectionStart.y, selectionEnd.y);
+
+    const px = x1 * CELL_PIXEL_SIZE - offsetX;
+    const py = y1 * CELL_PIXEL_SIZE - offsetY;
+    const width = (x2 - x1 + 1) * CELL_PIXEL_SIZE;
+    const height = (y2 - y1 + 1) * CELL_PIXEL_SIZE;
+
+    const validSelection = isSelectionValid(x1, y1, x2, y2);
+
+    if (validSelection) {
+      ctx.fillStyle = 'rgba(212, 160, 23, 0.2)';
+      ctx.strokeStyle = '#f5b301';
+      ctx.shadowColor = '#f5b301';
+    } else {
+      ctx.fillStyle = 'rgba(154, 58, 58, 0.3)';
+      ctx.strokeStyle = '#ff3333';
+      ctx.shadowColor = '#ff3333';
+    }
+
+    ctx.fillRect(px, py, width, height);
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.strokeRect(px + 1, py + 1, width - 2, height - 2);
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+
+    const count = (x2 - x1 + 1) * (y2 - y1 + 1);
+    ctx.fillStyle = validSelection ? '#f5b301' : '#ff3333';
+    ctx.font = 'bold 16px Cairo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${count}`, px + width / 2, py - 10);
+  }
+
+  // معاينة الصورة
+  if (previewImage && hoveredCell && selectionStart && selectionEnd) {
+    const x1 = Math.min(selectionStart.x, selectionEnd.x);
+    const y1 = Math.min(selectionStart.y, selectionEnd.y);
+    const x2 = Math.max(selectionStart.x, selectionEnd.x);
+    const y2 = Math.max(selectionStart.y, selectionEnd.y);
+
+    const px = x1 * CELL_PIXEL_SIZE - offsetX;
+    const py = y1 * CELL_PIXEL_SIZE - offsetY;
+    const width = (x2 - x1 + 1) * CELL_PIXEL_SIZE;
+    const height = (y2 - y1 + 1) * CELL_PIXEL_SIZE;
 
     ctx.save();
     ctx.beginPath();
@@ -245,7 +291,8 @@ function drawGrid() {
     ctx.setLineDash([]);
   }
 
-  if (hoveredCell && !isDragging && !inertiaFrame) {
+  // مؤشر الخلية
+  if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
     ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
@@ -369,6 +416,16 @@ function isCellBooked(cellX, cellY) {
   });
 }
 
+// ===== التحقق من صحة التحديد =====
+function isSelectionValid(x1, y1, x2, y2) {
+  for (let y = y1; y <= y2; y++) {
+    for (let x = x1; x <= x2; x++) {
+      if (isCellBooked(x, y)) return false;
+    }
+  }
+  return true;
+}
+
 // ===== تحميل الحجوزات =====
 async function loadBookings() {
   try {
@@ -399,59 +456,151 @@ function updateStats() {
   document.getElementById('progressText').textContent = progress + '%';
 }
 
-// ===== تحديث لوحة الصدارة =====
-async function updateLeaderboard() {
-  try {
-    const currentLang = localStorage.getItem('lang') || 'ar';
-    
-    const recent = approvedBookings.slice(0, 5);
-    const recentHTML = recent.map(b => `
-      <div class="lb-item">
-        <img src="${b.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
-        <span class="name">${b.userName || 'زائر'}</span>
-        <span class="count">${b.quantity || 1} ${currentLang === 'ar' ? 'مربع' : 'sq'}</span>
-      </div>
-    `).join('');
-    
-    const recentEl = document.getElementById('recentBookings');
-    if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
+// ===== تحديث عدد المربعات المختارة =====
+function updateSelectedCount() {
+  if (!selectionStart || !selectionEnd) return;
+  const x1 = Math.min(selectionStart.x, selectionEnd.x);
+  const y1 = Math.min(selectionStart.y, selectionEnd.y);
+  const x2 = Math.max(selectionStart.x, selectionEnd.x);
+  const y2 = Math.max(selectionStart.y, selectionEnd.y);
+  const count = (x2 - x1 + 1) * (y2 - y1 + 1);
 
-    const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
-    
-    const statsEl = document.getElementById('liveStats');
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
-          <span class="count">${totalBooked.toLocaleString('en-US')}</span>
-        </div>
-        <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
-          <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
-        </div>
-      `;
+  const valid = isSelectionValid(x1, y1, x2, y2);
+  const currentLang = localStorage.getItem('lang') || 'ar';
+
+  const display = document.getElementById('selectedCountDisplay');
+  if (display) {
+    if (valid) {
+      display.textContent = currentLang === 'ar' 
+        ? `المربعات المختارة: ${count}` 
+        : `Selected squares: ${count}`;
+      display.style.color = '#f5b301';
+    } else {
+      display.textContent = currentLang === 'ar' 
+        ? `⚠️ المنطقة تحتوي على مربعات محجوزة` 
+        : `⚠️ Area contains booked squares`;
+      display.style.color = '#ff3333';
     }
-
-    const topLiked = [...approvedBookings]
-      .filter(b => b.likes && b.likes > 0)
-      .sort((a, b) => (b.likes || 0) - (a.likes || 0))
-      .slice(0, 5);
-    
-    const topLikedHTML = topLiked.map(b => `
-      <div class="lb-item">
-        <img src="${b.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
-        <span class="name">${b.userName || 'زائر'}</span>
-        <span class="count">❤️ ${b.likes || 0}</span>
-      </div>
-    `).join('');
-    
-    const topLikedEl = document.getElementById('topLiked');
-    if (topLikedEl) topLikedEl.innerHTML = topLikedHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد إعجابات بعد' : 'No likes yet'}</p>`;
-
-  } catch (error) {
-    console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
 }
+
+// ===== تبديل وضع التحديد =====
+function toggleSelectionMode() {
+  const btn = document.getElementById('selectModeBtn');
+  const currentLang = localStorage.getItem('lang') || 'ar';
+
+  if (selectionMode && selectionStart && selectionEnd) {
+    const x1 = Math.min(selectionStart.x, selectionEnd.x);
+    const y1 = Math.min(selectionStart.y, selectionEnd.y);
+    const x2 = Math.max(selectionStart.x, selectionEnd.x);
+    const y2 = Math.max(selectionStart.y, selectionEnd.y);
+
+    if (!isSelectionValid(x1, y1, x2, y2)) {
+      alert(currentLang === 'ar' 
+        ? '⚠️ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.'
+        : '⚠️ Selected area contains booked squares. Choose an empty area.');
+      return;
+    }
+
+    const startCell = y1 * GRID_SIZE + x1;
+    const quantity = (x2 - x1 + 1) * (y2 - y1 + 1);
+
+    // حفظ التحديد
+    savedSelectionStart = { ...selectionStart };
+    savedSelectionEnd = { ...selectionEnd };
+    savedStartCell = startCell;
+    savedCols = x2 - x1 + 1;
+    savedRows = y2 - y1 + 1;
+    savedQuantity = quantity;
+
+    selectionMode = false;
+    if (btn) {
+      btn.classList.remove('active');
+      btn.textContent = currentLang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
+    }
+    canvas.style.cursor = 'crosshair';
+
+    openBookingModal(startCell);
+    document.getElementById('quantityInput').value = quantity;
+    document.getElementById('totalPrice').textContent = (quantity * CELL_PRICE) + ' $';
+    selectedQuantity = quantity;
+
+    drawGrid();
+    return;
+  }
+
+  selectionMode = !selectionMode;
+
+  if (btn) {
+    btn.classList.toggle('active', selectionMode);
+    btn.textContent = selectionMode 
+      ? (currentLang === 'ar' ? '✅ إنهاء التحديد' : '✅ Finish Selection')
+      : (currentLang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares');
+  }
+
+  selectionStart = null;
+  selectionEnd = null;
+  isSelecting = false;
+
+  canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
+  drawGrid();
+}
+
+// ===== نافذة التوجيه =====
+function closeOnboarding() {
+  document.getElementById('onboardingModal').classList.add('hidden');
+  localStorage.setItem('onboarding_seen', 'true');
+}
+window.closeOnboarding = closeOnboarding;
+
+// ===== زر وضع التحديد =====
+document.getElementById('selectModeBtn').addEventListener('click', function() {
+  const seen = localStorage.getItem('onboarding_seen');
+  if (!seen && !selectionMode) {
+    document.getElementById('onboardingModal').classList.remove('hidden');
+  }
+  toggleSelectionMode();
+});
+
+// ===== فتح نافذة الحجز =====
+function openBookingModal(startCell) {
+  document.getElementById('bookingModal').classList.remove('hidden');
+  document.getElementById('bookingModal').dataset.startCell = startCell;
+  
+  // إذا لم يتم تحديد منطقة، نضع القيم الافتراضية
+  if (!savedSelectionStart || !savedSelectionEnd) {
+    savedStartCell = startCell;
+    savedQuantity = 1;
+    savedCols = 1;
+    savedRows = 1;
+    document.getElementById('quantityInput').value = 1;
+    document.getElementById('totalPrice').textContent = '1 $';
+    selectedQuantity = 1;
+  } else {
+    document.getElementById('quantityInput').value = savedQuantity;
+    document.getElementById('totalPrice').textContent = (savedQuantity * CELL_PRICE) + ' $';
+    selectedQuantity = savedQuantity;
+  }
+  
+  updatePaymentInfo();
+}
+
+// ===== إغلاق النافذة =====
+document.getElementById('closeModal').addEventListener('click', () => {
+  document.getElementById('bookingModal').classList.add('hidden');
+  document.getElementById('generateCardBtn').style.display = 'none';
+  previewImage = null;
+  previewImageUrl = null;
+  selectionStart = null;
+  selectionEnd = null;
+  savedSelectionStart = null;
+  savedSelectionEnd = null;
+  savedStartCell = 0;
+  savedQuantity = 1;
+  savedCols = 1;
+  savedRows = 1;
+  drawGrid();
+});
 
 // ===== متغيرات السحب =====
 let isDragging = false;
@@ -490,16 +639,22 @@ function startInertia() {
   inertiaFrame = requestAnimationFrame(animate);
 }
 
-// ===== نافذة التوجيه =====
-function closeOnboarding() {
-  document.getElementById('onboardingModal').classList.add('hidden');
-  localStorage.setItem('onboarding_seen', 'true');
-}
-window.closeOnboarding = closeOnboarding;
-
 // ===== التفاعل مع الفأرة =====
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
+
+  if (selectionMode) {
+    if (isSelecting) {
+      const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+      const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+      if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        selectionEnd = { x, y };
+        updateSelectedCount();
+        drawGrid();
+      }
+    }
+    return;
+  }
 
   if (isDragging) {
     const now = Date.now();
@@ -534,6 +689,20 @@ canvas.addEventListener('mousedown', (e) => {
     inertiaFrame = null;
   }
 
+  if (selectionMode) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+    const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+      isSelecting = true;
+      selectionStart = { x, y };
+      selectionEnd = { x, y };
+      updateSelectedCount();
+      drawGrid();
+    }
+    return;
+  }
+
   isDragging = true;
   hasDragged = false;
   dragStartX = e.clientX;
@@ -545,8 +714,12 @@ canvas.addEventListener('mousedown', (e) => {
 });
 
 canvas.addEventListener('mouseup', () => {
+  if (selectionMode && isSelecting) {
+    isSelecting = false;
+    return;
+  }
   isDragging = false;
-  canvas.style.cursor = 'crosshair';
+  canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
     startInertia();
   }
@@ -555,7 +728,7 @@ canvas.addEventListener('mouseup', () => {
 canvas.addEventListener('mouseleave', () => {
   isDragging = false;
   hoveredCell = null;
-  canvas.style.cursor = 'crosshair';
+  canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   drawGrid();
 });
 
@@ -582,6 +755,7 @@ let clickTimer = null;
 let clickCount = 0;
 
 canvas.addEventListener('click', (e) => {
+  if (selectionMode) return;
   if (hasDragged) {
     hasDragged = false;
     return;
@@ -630,7 +804,9 @@ function handleSingleClick(e) {
     }
   }
 
-  // فتح نافذة الحجز إذا كان المربع فارغاً
+  // فتح نافذة الحجز
+  if (selectionMode) return;
+  
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
   
@@ -641,6 +817,14 @@ function handleSingleClick(e) {
       : '⚠️ This square is already booked');
     return;
   }
+  
+  // فتح النموذج لمربع واحد
+  savedSelectionStart = null;
+  savedSelectionEnd = null;
+  savedStartCell = startCell;
+  savedQuantity = 1;
+  savedCols = 1;
+  savedRows = 1;
   
   openBookingModal(startCell);
 }
@@ -699,6 +883,22 @@ canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) {
     cancelAnimationFrame(inertiaFrame);
     inertiaFrame = null;
+  }
+
+  if (selectionMode) {
+    if (e.touches.length === 1) {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+      const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+      if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        isSelecting = true;
+        selectionStart = { x, y };
+        selectionEnd = { x, y };
+        updateSelectedCount();
+        drawGrid();
+      }
+    }
+    return;
   }
 
   if (e.touches.length === 1) {
@@ -805,6 +1005,18 @@ canvas.addEventListener('touchmove', (e) => {
     longPressTimer = null;
   }
 
+  if (selectionMode && isSelecting && e.touches.length === 1) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+    const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+      selectionEnd = { x, y };
+      updateSelectedCount();
+      drawGrid();
+    }
+    return;
+  }
+
   if (e.touches.length === 1) {
     const now = Date.now();
     const dx = e.touches[0].clientX - touchStartX;
@@ -846,52 +1058,16 @@ canvas.addEventListener('touchend', () => {
     longPressTimer = null;
   }
   
+  if (selectionMode && isSelecting) {
+    isSelecting = false;
+    return;
+  }
+  
   lastTouchDist = 0;
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
     startInertia();
   }
 }, { passive: true });
-
-// ===== فتح نافذة الحجز =====
-function openBookingModal(startCell) {
-  // حفظ المربع المختار
-  savedStartCell = startCell;
-  savedQuantity = 1;
-  savedCols = 1;
-  savedRows = 1;
-  
-  document.getElementById('bookingModal').classList.remove('hidden');
-  document.getElementById('bookingModal').dataset.startCell = startCell;
-  document.getElementById('quantityInput').value = 1;
-  document.getElementById('totalPrice').textContent = '1 $';
-  selectedQuantity = 1;
-  
-  updatePaymentInfo();
-}
-
-// ===== إغلاق النافذة =====
-document.getElementById('closeModal').addEventListener('click', () => {
-  document.getElementById('bookingModal').classList.add('hidden');
-  document.getElementById('generateCardBtn').style.display = 'none';
-  previewImage = null;
-  previewImageUrl = null;
-  savedStartCell = 0;
-  savedQuantity = 1;
-  savedCols = 1;
-  savedRows = 1;
-  drawGrid();
-});
-
-// ===== تحديث السعر =====
-document.getElementById('quantityInput').addEventListener('input', (e) => {
-  let qty = parseInt(e.target.value) || 1;
-  if (qty < 1) qty = 1;
-  if (qty > 400) qty = 400;
-  selectedQuantity = qty;
-  const total = selectedQuantity * CELL_PRICE;
-  document.getElementById('totalPrice').textContent = total + ' $';
-  drawGrid();
-});
 
 // ===== معلومات الدفع =====
 document.getElementById('paymentMethod').addEventListener('change', updatePaymentInfo);
@@ -973,26 +1149,45 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     return;
   }
 
-  // ===== قراءة العدد من الحقل =====
-  let startCell = savedStartCell || parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
-  let quantity = parseInt(document.getElementById('quantityInput').value) || 1;
-  
-  if (quantity < 1) quantity = 1;
-  if (quantity > 400) quantity = 400;
+  let startCell, quantity, cols, rows;
 
-  // ===== حساب شكل الشبكة =====
-  const cols = Math.min(quantity, 20);
-  const rows = Math.ceil(quantity / cols);
+  if (savedSelectionStart && savedSelectionEnd) {
+    // حالة التحديد
+    const x1 = Math.min(savedSelectionStart.x, savedSelectionEnd.x);
+    const y1 = Math.min(savedSelectionStart.y, savedSelectionEnd.y);
+    const x2 = Math.max(savedSelectionStart.x, savedSelectionEnd.x);
+    const y2 = Math.max(savedSelectionStart.y, savedSelectionEnd.y);
 
-  // ===== التحقق من عدم وجود مربعات محجوزة =====
-  for (let i = 0; i < quantity; i++) {
-    const cx = (startCell + i) % GRID_SIZE;
-    const cy = Math.floor((startCell + i) / GRID_SIZE);
-    if (isCellBooked(cx, cy)) {
-      msg.textContent = '❌ بعض المربعات المختارة محجوزة. اختر مكاناً آخر أو عدداً أقل.';
+    if (!isSelectionValid(x1, y1, x2, y2)) {
+      msg.textContent = '❌ المنطقة المختارة تحتوي على مربعات محجوزة.';
       msg.className = 'form-message error';
       return;
     }
+
+    startCell = y1 * GRID_SIZE + x1;
+    cols = x2 - x1 + 1;
+    rows = y2 - y1 + 1;
+    quantity = cols * rows;
+  } else {
+    // حالة المربع الواحد
+    startCell = savedStartCell || parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
+    quantity = 1;
+    cols = 1;
+    rows = 1;
+
+    const cx = startCell % GRID_SIZE;
+    const cy = Math.floor(startCell / GRID_SIZE);
+    if (isCellBooked(cx, cy)) {
+      msg.textContent = '❌ هذا المربع محجوز بالفعل.';
+      msg.className = 'form-message error';
+      return;
+    }
+  }
+
+  if (quantity > 400) {
+    msg.textContent = 'الحد الأقصى 400 مربع';
+    msg.className = 'form-message error';
+    return;
   }
 
   btn.disabled = true;
@@ -1066,6 +1261,8 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
+      savedSelectionStart = null;
+      savedSelectionEnd = null;
       savedStartCell = 0;
       drawGrid();
     }, 3000);
@@ -1083,7 +1280,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
 document.getElementById('generateCardBtn').addEventListener('click', async () => {
   const selfiePreview = document.getElementById('selfiePreview');
   const startCell = savedStartCell || parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
-  const quantity = parseInt(document.getElementById('quantityInput').value) || 1;
+  const quantity = savedQuantity || 1;
   const userName = document.getElementById('nameInput').value || 'زائر';
   
   if (!selfiePreview.src || selfiePreview.src.startsWith('data:image/svg')) {
@@ -1493,10 +1690,11 @@ const translations = {
     hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
     hintLike: '❤️ انقر مرتين على أي صورة لإعجابها',
     hintLongPress: '👇 اضغط ضغطة مطولة على أي صورة لعرض معلومات صاحبها',
-    selectionHint: '👆 انقر على أي مربع فارغ لبدء الحجز',
+    selectModeBtn: '🖱️ تحديد المربعات',
+    selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
-    quantityLabel: 'عدد المربعات (1-400)',
-    quantityNote: '📌 سيتم الحجز بدءاً من المربع الذي اخترته',
+    quantityLabel: 'عدد المربعات',
+    quantityNote: '📌 يتم تحديد العدد تلقائياً من الشبكة',
     nameLabel: 'الاسم',
     phoneLabel: 'رقم الهاتف (اختياري)',
     linkLabel: 'رابط حسابك (اختياري)',
@@ -1516,8 +1714,8 @@ const translations = {
     submitBtn: 'إرسال الطلب',
     contactUs: 'تواصل معنا',
     howTitle: '🎯 كيف يعمل الموقع؟',
-    howStep1Title: 'انقر على مربع',
-    howStep1Desc: 'اختر مكانك على الشبكة بنقرة واحدة',
+    howStep1Title: 'اختر مربعك',
+    howStep1Desc: 'اضغط على "تحديد المربعات" واسحب لتحديد منطقتك',
     howStep2Title: 'ارفع صورتك',
     howStep2Desc: 'ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)',
     howStep3Title: 'ادفع بـ 1$',
@@ -1536,8 +1734,8 @@ const translations = {
     lbStats: '📊 إحصائيات حية',
     lbTopLiked: '❤️ الأكثر إعجاباً',
     onboardingTitle: '📌 كيف تحجز؟',
-    onboardingStep1: 'انقر على أي مربع فارغ في الشبكة',
-    onboardingStep2: 'حدد عدد المربعات التي تريدها',
+    onboardingStep1: 'اضغط على "تحديد المربعات" واسحب لتحديد منطقتك',
+    onboardingStep2: 'اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز',
     onboardingStep3: 'ارفع صورتك، املأ البيانات، وادفع',
     onboardingBtn: 'فهمت، لنبدأ!',
     generateCard: 'توليد بطاقة الإنجاز',
@@ -1564,10 +1762,11 @@ const translations = {
     hintLink: '🔗 Click any booked photo to visit the owner\'s account',
     hintLike: '❤️ Double-click any photo to like it',
     hintLongPress: '👇 Long-press any photo to see the owner\'s info',
-    selectionHint: '👆 Click any empty square to start booking',
+    selectModeBtn: '🖱️ Select Squares',
+    selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
-    quantityLabel: 'Number of Squares (1-400)',
-    quantityNote: '📌 Booking will start from the square you selected',
+    quantityLabel: 'Number of Squares',
+    quantityNote: '📌 The number is set automatically from the grid',
     nameLabel: 'Name',
     phoneLabel: 'Phone (optional)',
     linkLabel: 'Your Profile Link (optional)',
@@ -1587,8 +1786,8 @@ const translations = {
     submitBtn: 'Submit Request',
     contactUs: 'Contact Us',
     howTitle: '🎯 How It Works?',
-    howStep1Title: 'Click a Square',
-    howStep1Desc: 'Choose your spot on the grid with one click',
+    howStep1Title: 'Choose Your Square',
+    howStep1Desc: 'Click "Select Squares" and drag to select your area',
     howStep2Title: 'Upload Your Photo',
     howStep2Desc: 'Upload a clear selfie and add your profile link (optional)',
     howStep3Title: 'Pay $1',
@@ -1607,8 +1806,8 @@ const translations = {
     lbStats: '📊 Live Stats',
     lbTopLiked: '❤️ Most Liked',
     onboardingTitle: '📌 How to Book?',
-    onboardingStep1: 'Click any empty square on the grid',
-    onboardingStep2: 'Choose how many squares you want',
+    onboardingStep1: 'Click "Select Squares" and drag to select your area',
+    onboardingStep2: 'Click "✅ Finish Selection" to open the booking form',
     onboardingStep3: 'Upload your photo, fill the form, and pay',
     onboardingBtn: 'Got it, let\'s start!',
     generateCard: 'Generate Achievement Card',
@@ -1635,6 +1834,19 @@ function applyLanguage(lang) {
       }
     }
   });
+  
+  if (selectionStart && selectionEnd) {
+    updateSelectedCount();
+  }
+  
+  const btn = document.getElementById('selectModeBtn');
+  if (btn) {
+    if (selectionMode) {
+      btn.textContent = lang === 'ar' ? '✅ إنهاء التحديد' : '✅ Finish Selection';
+    } else {
+      btn.textContent = lang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
+    }
+  }
   
   updateStats();
   updateLeaderboard();
