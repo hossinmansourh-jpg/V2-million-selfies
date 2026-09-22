@@ -217,7 +217,6 @@ function drawGrid() {
 
   drawBookings();
 
-  // رسم منطقة التحديد
   if (isSelecting && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -255,7 +254,6 @@ function drawGrid() {
     ctx.fillText(`${count}`, px + width / 2, py - 10);
   }
 
-  // رسم معاينة الصورة
   if (previewImage && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -283,7 +281,6 @@ function drawGrid() {
     ctx.setLineDash([]);
   }
 
-  // مؤشر الخلية
   if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
@@ -376,7 +373,6 @@ function drawBookings() {
       }
     }
 
-    // عداد الإعجابات
     if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
@@ -466,20 +462,20 @@ async function updateLeaderboard() {
     if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
     const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
-
-const statsEl = document.getElementById('liveStats');
-if (statsEl) {
-  statsEl.innerHTML = `
-    <div class="lb-item">
-      <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
-      <span class="count">${totalBooked.toLocaleString('en-US')}</span>
-    </div>
-    <div class="lb-item">
-      <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
-      <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
-    </div>
-  `;
-}
+    
+    const statsEl = document.getElementById('liveStats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div class="lb-item">
+          <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
+          <span class="count">${totalBooked.toLocaleString('en-US')}</span>
+        </div>
+        <div class="lb-item">
+          <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
+          <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
+        </div>
+      `;
+    }
 
     const topLiked = [...approvedBookings]
       .filter(b => b.likes && b.likes > 0)
@@ -713,7 +709,6 @@ canvas.addEventListener('wheel', (e) => {
   offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
   drawGrid();
 }, { passive: false });
-
 // ===== إدارة النقرات =====
 let clickTimer = null;
 let clickCount = 0;
@@ -1072,6 +1067,7 @@ function openBookingModal(startCell) {
 // ===== إغلاق النافذة =====
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
+  document.getElementById('generateCardBtn').style.display = 'none';
   selectionStart = null;
   selectionEnd = null;
   previewImage = null;
@@ -1251,6 +1247,23 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     msg.textContent = '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
     msg.className = 'form-message success';
     btn.textContent = 'تم الإرسال';
+    btn.disabled = true;
+
+    // إظهار زر توليد البطاقة
+    document.getElementById('generateCardBtn').style.display = 'flex';
+
+    // توليد بطاقة المشاركة تلقائياً
+    const cardData = {
+      userName: document.getElementById('nameInput').value || 'زائر',
+      startCell: startCell,
+      quantity: quantity,
+      selfieUrl: selfieUrl,
+      referralCode: getMyReferralCode()
+    };
+    
+    setTimeout(() => {
+      showShareCard(cardData);
+    }, 1500);
 
     selectionStart = null;
     selectionEnd = null;
@@ -1261,6 +1274,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
 
     setTimeout(() => {
       document.getElementById('bookingModal').classList.add('hidden');
+      document.getElementById('generateCardBtn').style.display = 'none';
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
@@ -1274,6 +1288,27 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     btn.disabled = false;
     btn.textContent = 'إرسال الطلب';
   }
+});
+
+// ===== زر توليد البطاقة =====
+document.getElementById('generateCardBtn').addEventListener('click', async () => {
+  const selfiePreview = document.getElementById('selfiePreview');
+  const startCell = parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
+  const quantity = parseInt(document.getElementById('quantityInput').value) || 1;
+  const userName = document.getElementById('nameInput').value || 'زائر';
+  
+  if (!selfiePreview.src || selfiePreview.src.startsWith('data:image/svg')) {
+    alert('يجب رفع صورة أولاً');
+    return;
+  }
+  
+  await showShareCard({
+    userName,
+    startCell,
+    quantity,
+    selfieUrl: selfiePreview.src,
+    referralCode: getMyReferralCode()
+  });
 });
 
 // ===== رفع الصور على ImgBB =====
@@ -1317,6 +1352,356 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
   }
   toggleSelectionMode();
 });
+
+// ============================================
+// ===== نظام بطاقة المشاركة الرقمية =====
+// ============================================
+
+let generatedCardBlob = null;
+let generatedCardDataURL = null;
+
+// ===== رسم مستطيل بحواف مدورة =====
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+// ===== تحميل صورة =====
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ===== رسم زخارف الزوايا =====
+function drawCornerDecorations(ctx, WIDTH, HEIGHT) {
+  const size = 80;
+  const margin = 30;
+
+  ctx.strokeStyle = '#f5b301';
+  ctx.lineWidth = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(margin + size, margin + 10);
+  ctx.lineTo(margin + 10, margin + 10);
+  ctx.lineTo(margin + 10, margin + size);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(WIDTH - margin - size, margin + 10);
+  ctx.lineTo(WIDTH - margin - 10, margin + 10);
+  ctx.lineTo(WIDTH - margin - 10, margin + size);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(margin + size, HEIGHT - margin - 10);
+  ctx.lineTo(margin + 10, HEIGHT - margin - 10);
+  ctx.lineTo(margin + 10, HEIGHT - margin - size);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(WIDTH - margin - size, HEIGHT - margin - 10);
+  ctx.lineTo(WIDTH - margin - 10, HEIGHT - margin - 10);
+  ctx.lineTo(WIDTH - margin - 10, HEIGHT - margin - size);
+  ctx.stroke();
+}
+
+// ===== توليد QR Code =====
+async function generateQRCode(ctx, text, x, y, size) {
+  return new Promise((resolve) => {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&bgcolor=ffffff&color=0a0a0f&margin=0`;
+
+    const qrImg = new Image();
+    qrImg.crossOrigin = 'anonymous';
+    
+    qrImg.onload = () => {
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, x - 10, y - 10, size + 20, size + 20, 15);
+      ctx.fill();
+      
+      ctx.drawImage(qrImg, x, y, size, size);
+      resolve();
+    };
+    
+    qrImg.onerror = () => {
+      ctx.fillStyle = '#2a2a35';
+      roundRect(ctx, x, y, size, size, 10);
+      ctx.fill();
+      resolve();
+    };
+    
+    qrImg.src = qrUrl;
+  });
+}
+
+// ===== توليد البطاقة =====
+async function generateShareCard(bookingData) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const WIDTH = 1080;
+      const HEIGHT = 1920;
+
+      const cardCanvas = document.createElement('canvas');
+      cardCanvas.width = WIDTH;
+      cardCanvas.height = HEIGHT;
+      const ctx2 = cardCanvas.getContext('2d');
+
+      const bgGradient = ctx2.createLinearGradient(0, 0, 0, HEIGHT);
+      bgGradient.addColorStop(0, '#0a0a0f');
+      bgGradient.addColorStop(0.5, '#14141c');
+      bgGradient.addColorStop(1, '#0a0a0f');
+      ctx2.fillStyle = bgGradient;
+      ctx2.fillRect(0, 0, WIDTH, HEIGHT);
+
+      ctx2.strokeStyle = '#d4a017';
+      ctx2.lineWidth = 8;
+      ctx2.strokeRect(30, 30, WIDTH - 60, HEIGHT - 60);
+
+      ctx2.strokeStyle = '#f5b301';
+      ctx2.lineWidth = 2;
+      ctx2.strokeRect(50, 50, WIDTH - 100, HEIGHT - 100);
+
+      drawCornerDecorations(ctx2, WIDTH, HEIGHT);
+
+      ctx2.textAlign = 'center';
+      ctx2.direction = 'rtl';
+
+      ctx2.font = 'bold 80px Cairo, sans-serif';
+      ctx2.fillStyle = '#f5b301';
+      ctx2.fillText('🎨', WIDTH / 2, 180);
+
+      ctx2.font = 'bold 52px Cairo, sans-serif';
+      ctx2.fillStyle = '#d4a017';
+      ctx2.fillText('جدارية مليون صورة سيلفي', WIDTH / 2, 260);
+
+      ctx2.font = 'bold 28px Cairo, sans-serif';
+      ctx2.fillStyle = '#a0a0b0';
+      ctx2.fillText('Million Selfies Wall', WIDTH / 2, 310);
+
+      ctx2.strokeStyle = '#d4a017';
+      ctx2.lineWidth = 2;
+      ctx2.beginPath();
+      ctx2.moveTo(200, 350);
+      ctx2.lineTo(WIDTH - 200, 350);
+      ctx2.stroke();
+
+      const photoSize = 500;
+      const photoX = (WIDTH - photoSize) / 2;
+      const photoY = 420;
+
+      ctx2.fillStyle = '#d4a017';
+      roundRect(ctx2, photoX - 15, photoY - 15, photoSize + 30, photoSize + 30, 30);
+      ctx2.fill();
+
+      ctx2.shadowColor = '#f5b301';
+      ctx2.shadowBlur = 40;
+      ctx2.fillStyle = '#f5b301';
+      roundRect(ctx2, photoX - 10, photoY - 10, photoSize + 20, photoSize + 20, 25);
+      ctx2.fill();
+      ctx2.shadowBlur = 0;
+
+      if (bookingData.selfieUrl) {
+        try {
+          const img = await loadImage(bookingData.selfieUrl);
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+
+          ctx2.save();
+          roundRect(ctx2, photoX, photoY, photoSize, photoSize, 20);
+          ctx2.clip();
+          ctx2.drawImage(img, sx, sy, size, size, photoX, photoY, photoSize, photoSize);
+          ctx2.restore();
+        } catch (error) {
+          console.error('فشل تحميل صورة السيلفي:', error);
+          ctx2.fillStyle = '#2a2a35';
+          roundRect(ctx2, photoX, photoY, photoSize, photoSize, 20);
+          ctx2.fill();
+        }
+      }
+
+      ctx2.font = 'bold 60px Cairo, sans-serif';
+      ctx2.fillStyle = '#f5b301';
+      ctx2.fillText('أنا الآن جزء من', WIDTH / 2, 1050);
+      ctx2.fillText('التاريخ الرقمي! 🚀', WIDTH / 2, 1130);
+
+      const dataY = 1250;
+      const dataBoxWidth = 700;
+      const dataBoxX = (WIDTH - dataBoxWidth) / 2;
+
+      ctx2.fillStyle = 'rgba(42, 42, 53, 0.8)';
+      roundRect(ctx2, dataBoxX, dataY, dataBoxWidth, 260, 20);
+      ctx2.fill();
+
+      ctx2.strokeStyle = '#d4a017';
+      ctx2.lineWidth = 2;
+      roundRect(ctx2, dataBoxX, dataY, dataBoxWidth, 260, 20);
+      ctx2.stroke();
+
+      ctx2.font = 'bold 32px Cairo, sans-serif';
+      ctx2.fillStyle = '#a0a0b0';
+      ctx2.fillText('الاسم', WIDTH / 2, dataY + 55);
+
+      ctx2.font = 'bold 42px Cairo, sans-serif';
+      ctx2.fillStyle = '#ffffff';
+      ctx2.fillText(bookingData.userName || 'زائر', WIDTH / 2, dataY + 110);
+
+      ctx2.font = 'bold 28px Cairo, sans-serif';
+      ctx2.fillStyle = '#a0a0b0';
+      ctx2.fillText(`📍 المربع رقم: ${bookingData.startCell}`, WIDTH / 2 - 150, dataY + 170);
+      ctx2.fillText(`📐 ${bookingData.quantity} مربع`, WIDTH / 2 + 150, dataY + 170);
+
+      if (bookingData.referralCode) {
+        ctx2.font = 'bold 22px Cairo, sans-serif';
+        ctx2.fillStyle = '#f5b301';
+        ctx2.fillText(`🎁 رمز الإحالة: ${bookingData.referralCode}`, WIDTH / 2, dataY + 225);
+      }
+
+      const qrSize = 200;
+      const qrX = (WIDTH - qrSize) / 2;
+      const qrY = 1560;
+
+      const userLink = window.location.origin + window.location.pathname + '?cell=' + bookingData.startCell;
+
+      await generateQRCode(ctx2, userLink, qrX, qrY, qrSize);
+
+      ctx2.font = 'bold 24px Cairo, sans-serif';
+      ctx2.fillStyle = '#a0a0b0';
+      ctx2.fillText('امسح الرمز لزيارة صورتي', WIDTH / 2, qrY + qrSize + 40);
+
+      const ctaY = HEIGHT - 100;
+
+      ctx2.font = 'bold 36px Cairo, sans-serif';
+      ctx2.fillStyle = '#d4a017';
+      ctx2.fillText('احجز مربعك الآن بـ 1$ فقط!', WIDTH / 2, ctaY);
+
+      ctx2.font = 'bold 22px Cairo, sans-serif';
+      ctx2.fillStyle = '#a0a0b0';
+      ctx2.fillText('hossinmansourh-jpg.github.io/million-selfies-v2', WIDTH / 2, ctaY + 45);
+
+      generatedCardDataURL = cardCanvas.toDataURL('image/png', 1.0);
+      
+      cardCanvas.toBlob((blob) => {
+        generatedCardBlob = blob;
+        resolve(generatedCardDataURL);
+      }, 'image/png', 1.0);
+
+    } catch (error) {
+      console.error('فشل توليد البطاقة:', error);
+      reject(error);
+    }
+  });
+}
+
+// ===== عرض نافذة البطاقة =====
+async function showShareCard(bookingData) {
+  try {
+    const modal = document.getElementById('shareCardModal');
+    const preview = document.getElementById('shareCardPreview');
+    
+    preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="533"><rect fill="%2314141c" width="300" height="533"/><text x="150" y="266" fill="%23f5b301" text-anchor="middle" font-size="20" font-family="Cairo">⏳ جاري توليد البطاقة...</text></svg>';
+    modal.classList.add('active');
+
+    const dataURL = await generateShareCard(bookingData);
+    preview.src = dataURL;
+
+  } catch (error) {
+    console.error('فشل عرض البطاقة:', error);
+    alert('حدث خطأ أثناء توليد البطاقة');
+  }
+}
+
+// ===== إغلاق النافذة =====
+function closeShareCard() {
+  document.getElementById('shareCardModal').classList.remove('active');
+}
+window.closeShareCard = closeShareCard;
+
+// ===== تنزيل البطاقة =====
+function downloadShareCard() {
+  if (!generatedCardDataURL) {
+    alert('البطاقة غير جاهزة بعد');
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.download = `million-selfies-card-${Date.now()}.png`;
+  link.href = generatedCardDataURL;
+  link.click();
+
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  showToast(currentLang === 'ar' 
+    ? '✅ تم تنزيل البطاقة!' 
+    : '✅ Card downloaded!');
+}
+window.downloadShareCard = downloadShareCard;
+
+// ===== مشاركة البطاقة =====
+async function shareCard() {
+  if (!generatedCardBlob) {
+    alert('البطاقة غير جاهزة بعد');
+    return;
+  }
+
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const shareText = currentLang === 'ar'
+    ? '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀'
+    : '🎨 I\'m now part of the Million Selfies Wall! Book your square now for $1 🚀';
+
+  const shareUrl = window.location.origin + window.location.pathname;
+  const shareFile = new File([generatedCardBlob], 'million-selfies-card.png', { type: 'image/png' });
+
+  if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+    try {
+      await navigator.share({
+        files: [shareFile],
+        title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
+        text: shareText,
+        url: shareUrl
+      });
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('فشل المشاركة:', error);
+        fallbackShare(shareUrl, shareText);
+      }
+    }
+  } else {
+    fallbackShare(shareUrl, shareText);
+  }
+}
+window.shareCard = shareCard;
+
+// ===== مشاركة احتياطية =====
+function fallbackShare(url, text) {
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  
+  if (navigator.share) {
+    navigator.share({
+      title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
+      text: text,
+      url: url
+    }).catch(() => {
+      navigator.clipboard.writeText(`${text}\n${url}`);
+      showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
+    });
+  } else {
+    navigator.clipboard.writeText(`${text}\n${url}`);
+    showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
+  }
+}
 
 // ===== الترجمات =====
 const translations = {
@@ -1383,7 +1768,13 @@ const translations = {
     onboardingStep1: 'اضغط واسحب لتحديد المربعات التي تريدها',
     onboardingStep2: 'اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز',
     onboardingStep3: 'ارفع صورتك، املأ البيانات، وادفع',
-    onboardingBtn: 'فهمت، لنبدأ!'
+    onboardingBtn: 'فهمت، لنبدأ!',
+    generateCard: 'توليد بطاقة الإنجاز',
+    shareCardTitle: '🎉 مبروك! بطاقتك جاهزة',
+    shareCardSubtitle: 'شاركها مع أصدقائك على إنستغرام وتيك توك',
+    downloadCard: 'تنزيل بطاقة الإنجاز',
+    shareNow: 'مشاركة مباشرة',
+    closeBtn: 'إغلاق'
   },
   en: {
     badge: '🚀 Historic Digital Challenge',
@@ -1448,7 +1839,13 @@ const translations = {
     onboardingStep1: 'Click and drag to select the squares you want',
     onboardingStep2: 'Click "✅ Finish Selection" to open the booking form',
     onboardingStep3: 'Upload your photo, fill the form, and pay',
-    onboardingBtn: 'Got it, let\'s start!'
+    onboardingBtn: 'Got it, let\'s start!',
+    generateCard: 'Generate Achievement Card',
+    shareCardTitle: '🎉 Congratulations! Your card is ready',
+    shareCardSubtitle: 'Share it with your friends on Instagram and TikTok',
+    downloadCard: 'Download Achievement Card',
+    shareNow: 'Share Now',
+    closeBtn: 'Close'
   }
 };
 
