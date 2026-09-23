@@ -466,10 +466,14 @@ body {
   border: 2px solid var(--bg-light);
 }
 
-.legend-box.booked {
-  background: var(--gold);
+/* 🆕 صندوق Legend للشخصي (أزرق) */
+.legend-box.personal {
+  background: rgba(74, 158, 255, 0.5);
+  border: 2px solid rgba(74, 158, 255, 0.95);
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
 }
 
+/* 🆕 صندوق Legend للتجاري (تهشير ذهبي) */
 .legend-box.business {
   background: 
     repeating-linear-gradient(
@@ -820,6 +824,7 @@ body {
   color: var(--gold-light);
   font-weight: 900;
 }
+
 /* ===== Modal ===== */
 .modal {
   position: fixed;
@@ -1558,6 +1563,7 @@ body {
   transform: scale(1.02);
   box-shadow: 0 8px 25px rgba(212, 160, 23, 0.4);
 }
+
 /* ===== نافذة بطاقة المشاركة ===== */
 .share-card-modal {
   position: fixed;
