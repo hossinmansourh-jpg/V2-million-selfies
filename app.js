@@ -19,6 +19,7 @@ const db = getFirestore(app);
 const GRID_SIZE = 1000;
 const TOTAL_CELLS = 1000000;
 const CELL_PRICE = 1;
+const MAX_SQUARES = 400;
 let CELL_PIXEL_SIZE = 50;
 
 // ===== Canvas =====
@@ -556,6 +557,13 @@ function toggleSelectionMode() {
     const startCell = y1 * GRID_SIZE + x1;
     const quantity = (x2 - x1 + 1) * (y2 - y1 + 1);
 
+    if (quantity > MAX_SQUARES) {
+      alert(currentLang === 'ar'
+        ? `⚠️ الحد الأقصى ${MAX_SQUARES} مربع. اختر منطقة أصغر.`
+        : `⚠️ Maximum is ${MAX_SQUARES} squares. Choose a smaller area.`);
+      return;
+    }
+
     selectionMode = false;
     if (btn) {
       btn.classList.remove('active');
@@ -564,7 +572,6 @@ function toggleSelectionMode() {
     canvas.style.cursor = 'crosshair';
 
     openBookingModal(startCell);
-    document.getElementById('quantityInput').value = quantity;
     selectedQuantity = quantity;
     document.getElementById('totalPrice').textContent = (quantity * CELL_PRICE) + ' $';
 
@@ -1047,10 +1054,12 @@ function updateSelectedCount() {
     }
   }
 
+  // 🔒 تحديث حقل العرض فقط (read-only)
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) {
-    qtyInput.value = Math.min(count, 400);
-    selectedQuantity = Math.min(count, 400);
+    const finalCount = Math.min(count, MAX_SQUARES);
+    qtyInput.value = finalCount;
+    selectedQuantity = finalCount;
     const total = selectedQuantity * CELL_PRICE;
     const priceDisplay = document.getElementById('totalPrice');
     if (priceDisplay) priceDisplay.textContent = total + ' $';
@@ -1061,6 +1070,18 @@ function updateSelectedCount() {
 function openBookingModal(startCell) {
   document.getElementById('bookingModal').classList.remove('hidden');
   document.getElementById('bookingModal').dataset.startCell = startCell;
+  
+  // 🔒 جعل حقل عدد المربعات للعرض فقط
+  const qtyInput = document.getElementById('quantityInput');
+  if (qtyInput) {
+    qtyInput.readOnly = true;
+    qtyInput.style.background = '#1a1a22';
+    qtyInput.style.cursor = 'not-allowed';
+    qtyInput.style.color = '#f5b301';
+    qtyInput.style.fontWeight = 'bold';
+    qtyInput.title = 'يتم تحديد العدد تلقائياً من الشبكة';
+  }
+  
   updatePaymentInfo();
 }
 
@@ -1075,16 +1096,8 @@ document.getElementById('closeModal').addEventListener('click', () => {
   drawGrid();
 });
 
-// ===== تحديث السعر =====
-document.getElementById('quantityInput').addEventListener('input', (e) => {
-  let qty = parseInt(e.target.value) || 1;
-  if (qty < 1) qty = 1;
-  if (qty > 400) qty = 400;
-  selectedQuantity = qty;
-  const total = selectedQuantity * CELL_PRICE;
-  document.getElementById('totalPrice').textContent = total + ' $';
-  drawGrid();
-});
+// ===== ❌ تم حذف مستمع input الذي كان يسمح بالتعديل اليدوي =====
+// (كان: document.getElementById('quantityInput').addEventListener('input', ...))
 
 // ===== معلومات الدفع =====
 document.getElementById('paymentMethod').addEventListener('change', updatePaymentInfo);
@@ -1199,8 +1212,8 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     }
   }
 
-  if (quantity > 400) {
-    msg.textContent = 'الحد الأقصى 400 مربع';
+  if (quantity > MAX_SQUARES) {
+    msg.textContent = `الحد الأقصى ${MAX_SQUARES} مربع`;
     msg.className = 'form-message error';
     return;
   }
@@ -1249,10 +1262,8 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     btn.textContent = 'تم الإرسال';
     btn.disabled = true;
 
-    // إظهار زر توليد البطاقة
     document.getElementById('generateCardBtn').style.display = 'flex';
 
-    // توليد بطاقة المشاركة تلقائياً
     const cardData = {
       userName: document.getElementById('nameInput').value || 'زائر',
       startCell: startCell,
@@ -1310,7 +1321,6 @@ document.getElementById('generateCardBtn').addEventListener('click', async () =>
     referralCode: getMyReferralCode()
   });
 });
-
 // ===== رفع الصور على ImgBB =====
 async function uploadToImgBB(file) {
   let processedFile;
@@ -1702,6 +1712,43 @@ function fallbackShare(url, text) {
     showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
   }
 }
+
+// ===== 🔒 حماية حقل عدد المربعات من التعديل =====
+(function protectQuantityInput() {
+  const protect = () => {
+    const qtyInput = document.getElementById('quantityInput');
+    if (!qtyInput) return;
+
+    qtyInput.readOnly = true;
+    qtyInput.style.background = '#1a1a22';
+    qtyInput.style.cursor = 'not-allowed';
+    qtyInput.style.color = '#f5b301';
+    qtyInput.style.fontWeight = 'bold';
+    qtyInput.title = 'يتم تحديد العدد تلقائياً من الشبكة';
+
+    // منع اللصق
+    qtyInput.addEventListener('paste', e => e.preventDefault());
+    // منع الإفلات
+    qtyInput.addEventListener('drop', e => e.preventDefault());
+    // منع الكتابة (مع السماح بالتنقل)
+    qtyInput.addEventListener('keydown', e => {
+      const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                       'Tab', 'Home', 'End', 'Escape', 'Enter'];
+      if (!allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+      }
+    });
+  };
+
+  protect();
+
+  // إعادة التطبيق عند أي تغيير على النافذة
+  const observer = new MutationObserver(protect);
+  const modal = document.getElementById('bookingModal');
+  if (modal) {
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
 
 // ===== الترجمات =====
 const translations = {
