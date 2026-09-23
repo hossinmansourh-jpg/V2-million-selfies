@@ -225,8 +225,12 @@ function drawGrid() {
 
   drawBookings();
 
-  // رسم منطقة التحديد
-  if (isSelecting && selectionStart && selectionEnd) {
+  // ⚠️ رسم منطقة التحديد (يظهر دائماً إذا كانت هناك إحداثيات)
+  const shouldDrawSelection = selectionStart && selectionEnd && 
+                              typeof selectionStart.x === 'number' && 
+                              typeof selectionEnd.x === 'number';
+  
+  if (shouldDrawSelection) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
@@ -264,7 +268,7 @@ function drawGrid() {
   }
 
   // معاينة الصورة
-  if (previewImage && hoveredCell && selectionStart && selectionEnd) {
+  if (previewImage && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
@@ -489,7 +493,13 @@ function toggleSelectionMode() {
   const btn = document.getElementById('selectModeBtn');
   const currentLang = localStorage.getItem('lang') || 'ar';
 
-  if (selectionMode && selectionStart && selectionEnd) {
+  // التحقق من وجود تحديد حقيقي
+  const hasSelection = selectionStart && selectionEnd && 
+                       typeof selectionStart.x === 'number' && 
+                       typeof selectionEnd.x === 'number';
+
+  // إذا كنا في وضع التحديد ولدينا منطقة محددة → افتح نموذج الحجز
+  if (selectionMode && hasSelection) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
     const x2 = Math.max(selectionStart.x, selectionEnd.x);
@@ -505,14 +515,15 @@ function toggleSelectionMode() {
     const startCell = y1 * GRID_SIZE + x1;
     const quantity = (x2 - x1 + 1) * (y2 - y1 + 1);
 
-    // حفظ التحديد
-    savedSelectionStart = { ...selectionStart };
-    savedSelectionEnd = { ...selectionEnd };
+    // حفظ التحديد قبل إيقاف الوضع
+    savedSelectionStart = { x: x1, y: y1 };
+    savedSelectionEnd = { x: x2, y: y2 };
     savedStartCell = startCell;
     savedCols = x2 - x1 + 1;
     savedRows = y2 - y1 + 1;
     savedQuantity = quantity;
 
+    // إيقاف وضع التحديد
     selectionMode = false;
     if (btn) {
       btn.classList.remove('active');
@@ -520,15 +531,35 @@ function toggleSelectionMode() {
     }
     canvas.style.cursor = 'crosshair';
 
-    openBookingModal(startCell);
+    // فتح النموذج
+    document.getElementById('bookingModal').classList.remove('hidden');
+    document.getElementById('bookingModal').dataset.startCell = startCell;
     document.getElementById('quantityInput').value = quantity;
     document.getElementById('totalPrice').textContent = (quantity * CELL_PRICE) + ' $';
     selectedQuantity = quantity;
+    updatePaymentInfo();
 
+    // الاحتفاظ بالتحديد للرسم
+    selectionStart = { x: x1, y: y1 };
+    selectionEnd = { x: x2, y: y2 };
+    isSelecting = true;
+
+    // رسم الشبكة
     drawGrid();
+
+    // تحديث العداد
+    const display = document.getElementById('selectedCountDisplay');
+    if (display) {
+      display.textContent = currentLang === 'ar' 
+        ? `المربعات المختارة: ${quantity}` 
+        : `Selected squares: ${quantity}`;
+      display.style.color = '#f5b301';
+    }
+
     return;
   }
 
+  // الوضع العادي: تبديل وضع التحديد
   selectionMode = !selectionMode;
 
   if (btn) {
@@ -541,6 +572,15 @@ function toggleSelectionMode() {
   selectionStart = null;
   selectionEnd = null;
   isSelecting = false;
+
+  // إعادة تعيين العداد
+  const display = document.getElementById('selectedCountDisplay');
+  if (display) {
+    display.textContent = currentLang === 'ar' 
+      ? `المربعات المختارة: 0` 
+      : `Selected squares: 0`;
+    display.style.color = '#f5b301';
+  }
 
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
   drawGrid();
@@ -599,6 +639,17 @@ document.getElementById('closeModal').addEventListener('click', () => {
   savedQuantity = 1;
   savedCols = 1;
   savedRows = 1;
+  
+  // إعادة تعيين العداد
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const display = document.getElementById('selectedCountDisplay');
+  if (display) {
+    display.textContent = currentLang === 'ar' 
+      ? `المربعات المختارة: 0` 
+      : `Selected squares: 0`;
+    display.style.color = '#f5b301';
+  }
+  
   drawGrid();
 });
 
@@ -825,6 +876,21 @@ function handleSingleClick(e) {
   savedQuantity = 1;
   savedCols = 1;
   savedRows = 1;
+  
+  // إعادة تعيين التحديد المرئي
+  selectionStart = null;
+  selectionEnd = null;
+  isSelecting = false;
+  
+  // إعادة تعيين العداد
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const display = document.getElementById('selectedCountDisplay');
+  if (display) {
+    display.textContent = currentLang === 'ar' 
+      ? `المربعات المختارة: 0` 
+      : `Selected squares: 0`;
+    display.style.color = '#f5b301';
+  }
   
   openBookingModal(startCell);
 }
@@ -1261,9 +1327,25 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
+      
+      // إعادة تعيين كل شيء
       savedSelectionStart = null;
       savedSelectionEnd = null;
       savedStartCell = 0;
+      selectionStart = null;
+      selectionEnd = null;
+      isSelecting = false;
+      
+      // إعادة تعيين العداد
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      const display = document.getElementById('selectedCountDisplay');
+      if (display) {
+        display.textContent = currentLang === 'ar' 
+          ? `المربعات المختارة: 0` 
+          : `Selected squares: 0`;
+        display.style.color = '#f5b301';
+      }
+      
       drawGrid();
     }, 3000);
 
