@@ -201,7 +201,7 @@ function resizeCanvas() {
   drawGrid();
 }
 
-// ===== رسم التهشير الذهبي المتقاطع (للحجوزات التجارية) =====
+// ===== رسم التهشير الذهبي المتقاطع =====
 function drawBusinessHatch(x, y, width, height) {
   ctx.save();
   
@@ -210,7 +210,7 @@ function drawBusinessHatch(x, y, width, height) {
   ctx.clip();
   
   const step = 12;
-  ctx.strokeStyle = 'rgba(212, 160, 23, 0.7)';
+  ctx.strokeStyle = 'rgba(212, 160, 23, 0.85)';
   ctx.lineWidth = 1.5;
   
   for (let i = -height; i < width; i += step) {
@@ -396,7 +396,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات (مع إطار ملون واضح) =====
+// ===== 🆕 رسم الحجوزات (Pending vs Approved) =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -407,27 +407,25 @@ function drawBookings() {
     if (startX + width < 0 || startX > canvas.width || startY + height < 0 || startY > canvas.height) return;
 
     const isBusiness = booking.isBusiness === true;
+    const isPending = booking.status === 'pending';
+    const isApproved = booking.status === 'approved';
 
-    // ==========================================
-    // 🎨 1. طبقة الخلفية (تظهر خلف الصورة)
-    // ==========================================
-    if (isBusiness) {
-      ctx.fillStyle = 'rgba(212, 160, 23, 0.25)';
-      ctx.fillRect(startX, startY, width, height);
-      drawBusinessHatch(startX, startY, width, height);
-    } else {
-      ctx.fillStyle = 'rgba(74, 158, 255, 0.15)';
-      ctx.fillRect(startX, startY, width, height);
+    // ===== 1. الخلفية (فقط للحجوزات Pending) =====
+    if (isPending) {
+      if (isBusiness) {
+        ctx.fillStyle = 'rgba(212, 160, 23, 0.35)';
+        ctx.fillRect(startX, startY, width, height);
+        drawBusinessHatch(startX, startY, width, height);
+      } else {
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.5)';
+        ctx.fillRect(startX, startY, width, height);
+      }
     }
 
-    // ==========================================
-    // 🖼️ 2. الصورة (فوق الخلفية)
-    // ==========================================
-    if (booking.selfieUrl) {
+    // ===== 2. الصورة (فقط للحجوزات المعتمدة) =====
+    if (isApproved && booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
-        ctx.globalAlpha = isBusiness ? 0.75 : 1;
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
-        ctx.globalAlpha = 1;
       } else if (!imageCache[booking.id]) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -435,70 +433,75 @@ function drawBookings() {
           imageCache[booking.id] = img;
           drawGrid();
         };
-        img.onerror = () => {
-          console.error('فشل تحميل الصورة:', booking.selfieUrl);
-        };
+        img.onerror = () => console.error('فشل تحميل الصورة:', booking.selfieUrl);
         imageCache[booking.id] = img;
         img.src = booking.selfieUrl;
       }
     }
 
-    // ==========================================
-    // 🎯 3. الإطار الملون الواضح (فوق كل شيء)
-    // ==========================================
-    if (isBusiness) {
-      drawGlowingBorder(startX, startY, width, height);
-      
-      ctx.strokeStyle = 'rgba(245, 179, 1, 0.9)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(startX + 3, startY + 3, width - 6, height - 6);
-    } else {
-      ctx.save();
-      
-      ctx.shadowColor = 'rgba(74, 158, 255, 0.6)';
-      ctx.shadowBlur = 8;
-      
-      ctx.strokeStyle = 'rgba(74, 158, 255, 0.85)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(startX + 1, startY + 1, width - 2, height - 2);
-      
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(74, 158, 255, 0.4)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(startX + 3, startY + 3, width - 6, height - 6);
-      
-      ctx.restore();
+    // ===== 3. الإطار (يختلف حسب الحالة) =====
+    if (isPending) {
+      if (isBusiness) {
+        drawGlowingBorder(startX, startY, width, height);
+        ctx.strokeStyle = 'rgba(245, 179, 1, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(startX + 2, startY + 2, width - 4, height - 4);
+      } else {
+        ctx.save();
+        ctx.shadowColor = 'rgba(74, 158, 255, 0.8)';
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = 'rgba(74, 158, 255, 0.95)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(startX + 1, startY + 1, width - 2, height - 2);
+        ctx.restore();
+      }
+    } else if (isApproved) {
+      if (isBusiness) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(212, 160, 23, 0.5)';
+        ctx.shadowBlur = 6;
+        ctx.strokeStyle = 'rgba(212, 160, 23, 0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX + 0.5, startY + 0.5, width - 1, height - 1);
+        ctx.restore();
+      } else {
+        ctx.strokeStyle = 'rgba(74, 158, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX + 0.5, startY + 0.5, width - 1, height - 1);
+      }
     }
 
-    // ==========================================
-    // 🏢 4. شارة تجارية صغيرة في الزاوية
-    // ==========================================
-    if (isBusiness && width > 40 && height > 40) {
+    // ===== 4. شارة ⏳ للـ Pending =====
+    if (isPending && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
       const badgeY = startY + 6;
       
       ctx.save();
-      ctx.shadowColor = '#f5b301';
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = 'rgba(212, 160, 23, 0.95)';
+      if (isBusiness) {
+        ctx.shadowColor = '#f5b301';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = 'rgba(212, 160, 23, 0.95)';
+      } else {
+        ctx.shadowColor = 'rgba(74, 158, 255, 0.8)';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = 'rgba(74, 158, 255, 0.9)';
+      }
       ctx.beginPath();
       ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
       
-      ctx.fillStyle = '#0a0a0f';
+      ctx.fillStyle = isBusiness ? '#0a0a0f' : '#ffffff';
       ctx.font = `bold ${Math.round(badgeSize * 0.6)}px Cairo, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('🏢', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 1);
+      ctx.fillText('⏳', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 1);
       ctx.textBaseline = 'alphabetic';
     }
 
-    // ==========================================
-    // ❤️ 5. شارة الإعجابات
-    // ==========================================
-    if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
+    // ===== 5. شارة الإعجابات (فقط للمعتمد) =====
+    if (isApproved && booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
       const badgeY = startY + height - 26;
@@ -517,6 +520,7 @@ function drawBookings() {
     }
   });
 }
+
 // ===== التحقق من حجز المربع =====
 function isCellBooked(cellX, cellY) {
   return allBookings.some(b => {
@@ -538,13 +542,13 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== تحميل الحجوزات =====
+// ===== 🆕 تحميل الحجوزات (مع Pending) =====
 async function loadBookings() {
   try {
     const snapshot = await getDocs(collection(db, "bookings"));
     const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
-    approvedBookings = allBookings.filter(b => b.status === 'approved');
+    approvedBookings = allDocs.filter(b => b.status === 'approved' || b.status === 'pending');
     allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     updateStats();
     drawGrid();
@@ -556,9 +560,9 @@ async function loadBookings() {
 
 // ===== تحديث الإحصائيات =====
 function updateStats() {
-  const bookedCells = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
+  const bookedCells = allBookings.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.quantity || 0), 0);
   const availableCells = TOTAL_CELLS - bookedCells;
-  const selfiesCount = approvedBookings.length;
+  const selfiesCount = allBookings.filter(b => b.status === 'approved').length;
   const progress = ((bookedCells / TOTAL_CELLS) * 100).toFixed(2);
 
   document.getElementById('statBooked').textContent = bookedCells.toLocaleString('en-US');
@@ -573,7 +577,8 @@ async function updateLeaderboard() {
   try {
     const currentLang = localStorage.getItem('lang') || 'ar';
     
-    const recent = approvedBookings.slice(0, 5);
+    const approvedOnly = allBookings.filter(b => b.status === 'approved');
+    const recent = approvedOnly.slice(0, 5);
     const recentHTML = recent.map(b => {
       const isBusiness = b.isBusiness === true;
       return `
@@ -591,8 +596,8 @@ async function updateLeaderboard() {
     const recentEl = document.getElementById('recentBookings');
     if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
-    const totalBooked = approvedBookings.reduce((sum, b) => sum + (b.quantity || 0), 0);
-    const businessCount = approvedBookings.filter(b => b.isBusiness === true).length;
+    const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
+    const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     
     const statsEl = document.getElementById('liveStats');
     if (statsEl) {
@@ -603,7 +608,7 @@ async function updateLeaderboard() {
         </div>
         <div class="lb-item">
           <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
-          <span class="count">${approvedBookings.length.toLocaleString('en-US')}</span>
+          <span class="count">${approvedOnly.length.toLocaleString('en-US')}</span>
         </div>
         <div class="lb-item">
           <span class="name">${currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts'}</span>
@@ -612,7 +617,7 @@ async function updateLeaderboard() {
       `;
     }
 
-    const topLiked = [...approvedBookings]
+    const topLiked = [...approvedOnly]
       .filter(b => b.likes && b.likes > 0)
       .sort((a, b) => (b.likes || 0) - (a.likes || 0))
       .slice(0, 5);
@@ -638,6 +643,7 @@ async function updateLeaderboard() {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
 }
+
 // ===== متغيرات السحب =====
 let isDragging = false;
 let dragStartX = 0;
@@ -891,6 +897,8 @@ function handleSingleClick(e) {
   const clickY = e.clientY - rect.top + offsetY;
 
   for (const booking of approvedBookings) {
+    if (booking.status !== 'approved') continue;
+    
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
@@ -924,6 +932,25 @@ function handleSingleClick(e) {
     }
   }
 
+  // التحقق من المربعات المعلقة
+  for (const booking of approvedBookings) {
+    if (booking.status !== 'pending') continue;
+    
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+
+    if (clickX >= startX && clickX <= startX + width &&
+        clickY >= startY && clickY <= startY + height) {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      showToast(currentLang === 'ar' 
+        ? '⏳ هذا المربع محجوز مؤقتاً - قيد المراجعة' 
+        : '⏳ This square is temporarily booked - under review');
+      return;
+    }
+  }
+
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
   
@@ -945,6 +972,8 @@ async function handleDoubleClick(e) {
   const clickY = e.clientY - rect.top + offsetY;
 
   for (const booking of approvedBookings) {
+    if (booking.status !== 'approved') continue;
+    
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
@@ -1048,6 +1077,8 @@ function handleLongPress(clientX, clientY) {
   const clickY = clientY - rect.top + offsetY;
 
   for (const booking of approvedBookings) {
+    if (booking.status !== 'approved') continue;
+    
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
@@ -1395,6 +1426,7 @@ document.getElementById('receiptInput').addEventListener('change', (e) => {
     reader.readAsDataURL(file);
   }
 });
+
 // ===== إرسال الطلب =====
 document.getElementById('submitBooking').addEventListener('click', async () => {
   const btn = document.getElementById('submitBooking');
@@ -1638,7 +1670,6 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
 let generatedCardBlob = null;
 let generatedCardDataURL = null;
 
-// ===== رسم مستطيل بحواف مدورة =====
 function roundRect(ctx, x, y, width, height, radius) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -1653,7 +1684,6 @@ function roundRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
-// ===== تحميل صورة =====
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -1664,7 +1694,6 @@ function loadImage(url) {
   });
 }
 
-// ===== رسم زخارف الزوايا =====
 function drawCornerDecorations(ctx, WIDTH, HEIGHT) {
   const size = 80;
   const margin = 30;
@@ -1697,7 +1726,6 @@ function drawCornerDecorations(ctx, WIDTH, HEIGHT) {
   ctx.stroke();
 }
 
-// ===== توليد QR Code =====
 async function generateQRCode(ctx, text, x, y, size) {
   return new Promise((resolve) => {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&bgcolor=ffffff&color=0a0a0f&margin=0`;
@@ -1725,7 +1753,6 @@ async function generateQRCode(ctx, text, x, y, size) {
   });
 }
 
-// ===== توليد البطاقة =====
 async function generateShareCard(bookingData) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1923,7 +1950,6 @@ async function generateShareCard(bookingData) {
   });
 }
 
-// ===== عرض نافذة البطاقة =====
 async function showShareCard(bookingData) {
   try {
     document.querySelectorAll('.modal').forEach(m => {
@@ -1949,7 +1975,6 @@ async function showShareCard(bookingData) {
   }
 }
 
-// ===== إغلاق نافذة البطاقة =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
   
@@ -1969,7 +1994,6 @@ function closeShareCard() {
 }
 window.closeShareCard = closeShareCard;
 
-// ===== تنزيل البطاقة =====
 function downloadShareCard() {
   if (!generatedCardDataURL) {
     alert('البطاقة غير جاهزة بعد');
@@ -1977,9 +2001,7 @@ function downloadShareCard() {
   }
 
   const link = document.createElement('a');
-  const prefix = generatedCardDataURL && document.querySelector('.share-card-title')?.textContent?.includes('شركة') 
-    ? 'business-card' 
-    : 'million-selfies-card';
+  const prefix = 'million-selfies-card';
   link.download = `${prefix}-${Date.now()}.png`;
   link.href = generatedCardDataURL;
   link.click();
@@ -1991,7 +2013,6 @@ function downloadShareCard() {
 }
 window.downloadShareCard = downloadShareCard;
 
-// ===== مشاركة البطاقة =====
 async function shareCard() {
   if (!generatedCardBlob) {
     alert('البطاقة غير جاهزة بعد');
@@ -2026,7 +2047,6 @@ async function shareCard() {
 }
 window.shareCard = shareCard;
 
-// ===== مشاركة احتياطية =====
 function fallbackShare(url, text) {
   const currentLang = localStorage.getItem('lang') || 'ar';
   
@@ -2092,6 +2112,7 @@ const translations = {
     wallTitle: 'لوحة الجدارية التفاعلية',
     legendEmpty: 'مربع فارغ',
     legendBooked: 'محجوز',
+    legendPersonal: 'شخصي',
     legendBusiness: 'تجاري',
     legendHint: 'انقر على أي مربع للحجز',
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
@@ -2172,6 +2193,7 @@ const translations = {
     wallTitle: 'Interactive Wall',
     legendEmpty: 'Empty',
     legendBooked: 'Booked',
+    legendPersonal: 'Personal',
     legendBusiness: 'Business',
     legendHint: 'Click any square to book',
     hint: '💡 Scroll inside the grid to explore the million squares',
@@ -2242,7 +2264,6 @@ const translations = {
   }
 };
 
-// ===== تطبيق اللغة =====
 function applyLanguage(lang) {
   const t = translations[lang];
   if (!t) return;
@@ -2282,7 +2303,6 @@ function applyLanguage(lang) {
   updateLeaderboard();
 }
 
-// ===== تبديل اللغة =====
 function setLanguage(lang) {
   const html = document.documentElement;
   html.lang = lang;
@@ -2305,7 +2325,6 @@ document.getElementById('langEn').addEventListener('click', () => setLanguage('e
 const savedLang = localStorage.getItem('lang') || 'ar';
 setLanguage(savedLang);
 
-// ===== تتبع الزيارات =====
 async function trackVisit() {
   const lastVisit = localStorage.getItem('last_visit_time');
   const now = Date.now();
@@ -2328,9 +2347,8 @@ async function trackVisit() {
   }
 }
 
-// ===== تحسين الأداء =====
 function preloadImages() {
-  approvedBookings.slice(0, 20).forEach(booking => {
+  allBookings.filter(b => b.status === 'approved').slice(0, 20).forEach(booking => {
     if (booking.selfieUrl && !imageCache[booking.id]) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -2351,10 +2369,10 @@ trackVisit();
 setInterval(loadBookings, 30000);
 setTimeout(preloadImages, 3000);
 
-// ===== حلقة رسم مستمرة للأعمال التجارية (للإطار النابض) =====
+// ===== حلقة رسم مستمرة (للإطار النابض) =====
 setInterval(() => {
-  const hasBusiness = approvedBookings.some(b => b.isBusiness === true);
-  if (hasBusiness && !isDragging && !inertiaFrame && !isSelecting) {
+  const hasPending = allBookings.some(b => b.status === 'pending' && b.isBusiness === true);
+  if (hasPending && !isDragging && !inertiaFrame && !isSelecting) {
     drawGrid();
   }
 }, 800);
