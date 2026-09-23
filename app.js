@@ -18,17 +18,16 @@ const db = getFirestore(app);
 // ===== الإعدادات =====
 const GRID_SIZE = 1000;
 const TOTAL_CELLS = 1000000;
-const CELL_PRICE = 1;              // سعر المربع الشخصي
-const BUSINESS_CELL_PRICE = 5;     // 🆕 سعر المربع التجاري
+const CELL_PRICE = 1;
+const BUSINESS_CELL_PRICE = 5;
 const MAX_SQUARES = 400;
-const REFERRAL_TARGET = 10;        // 🆕 تم تغييرها من 5 إلى 10
+const REFERRAL_TARGET = 10;
 
 let CELL_PIXEL_SIZE = 50;
-let ZOOM_STEP = 3;                 // 🆕 خطوة التكبير (كانت 5، الآن 3 = أبطأ)
-let ZOOM_STEP_TOUCH = 3;           // 🆕 خطوة التكبير باللمس
+let ZOOM_STEP = 3;
+let ZOOM_STEP_TOUCH = 3;
 
-// 🆕 متغيرات نوع الحجز
-let selectedBookingType = 'personal'; // 'personal' أو 'business'
+let selectedBookingType = 'personal';
 let currentCellPrice = CELL_PRICE;
 
 // ===== Canvas =====
@@ -44,13 +43,11 @@ let hoveredCell = null;
 let selectedQuantity = 1;
 let imageCache = {};
 
-// متغيرات التحديد
 let selectionStart = null;
 let selectionEnd = null;
 let isSelecting = false;
 let selectionMode = false;
 
-// متغيرات المعاينة
 let previewImage = null;
 let previewImageUrl = null;
 
@@ -204,21 +201,18 @@ function resizeCanvas() {
   drawGrid();
 }
 
-// 🆕 ===== رسم التهشير الذهبي المتقاطع (للحجوزات التجارية) =====
+// ===== رسم التهشير الذهبي المتقاطع (للحجوزات التجارية) =====
 function drawBusinessHatch(x, y, width, height) {
   ctx.save();
   
-  // قص المنطقة
   ctx.beginPath();
   ctx.rect(x, y, width, height);
   ctx.clip();
   
-  // خطوط متقاطعة 45 درجة
   const step = 12;
   ctx.strokeStyle = 'rgba(212, 160, 23, 0.7)';
   ctx.lineWidth = 1.5;
   
-  // خطوط من الأسفل-يسار إلى الأعلى-يمين
   for (let i = -height; i < width; i += step) {
     ctx.beginPath();
     ctx.moveTo(x + i, y + height);
@@ -226,7 +220,6 @@ function drawBusinessHatch(x, y, width, height) {
     ctx.stroke();
   }
   
-  // خطوط معاكسة (للمسات متقاطعة)
   for (let i = -height; i < width; i += step) {
     ctx.beginPath();
     ctx.moveTo(x + i, y);
@@ -237,10 +230,10 @@ function drawBusinessHatch(x, y, width, height) {
   ctx.restore();
 }
 
-// 🆕 ===== رسم إطار ذهبي نابض =====
+// ===== رسم إطار ذهبي نابض =====
 function drawGlowingBorder(x, y, width, height, intensity = 1) {
   const now = Date.now();
-  const pulse = (Math.sin(now / 500) + 1) / 2; // 0 إلى 1
+  const pulse = (Math.sin(now / 500) + 1) / 2;
   const blurAmount = 8 + (pulse * 12) * intensity;
   
   ctx.save();
@@ -250,7 +243,6 @@ function drawGlowingBorder(x, y, width, height, intensity = 1) {
   ctx.lineWidth = 2.5;
   ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
   
-  // طبقة ثانية للإضاءة الإضافية
   ctx.shadowBlur = blurAmount * 1.5;
   ctx.strokeStyle = `rgba(212, 160, 23, ${0.4 + pulse * 0.4})`;
   ctx.lineWidth = 1.5;
@@ -404,7 +396,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات (مع دعم التجاري) =====
+// ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -416,20 +408,15 @@ function drawBookings() {
 
     const isBusiness = booking.isBusiness === true;
 
-    // 🆕 الخلفية الأساسية (تختلف بين شخصي وتجاري)
     if (isBusiness) {
-      // خلفية ذهبية فاهية
       ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
       ctx.fillRect(startX, startY, width, height);
-      
-      // 🆕 التهشير الذهبي المتقاطع
       drawBusinessHatch(startX, startY, width, height);
     } else {
       ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
       ctx.fillRect(startX, startY, width, height);
     }
 
-    // الصورة
     if (booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.globalAlpha = isBusiness ? 0.85 : 1;
@@ -450,7 +437,6 @@ function drawBookings() {
       }
     }
 
-    // 🆕 الإطار (عادي أو نابض)
     if (isBusiness) {
       drawGlowingBorder(startX, startY, width, height);
     } else {
@@ -459,7 +445,6 @@ function drawBookings() {
       ctx.strokeRect(startX, startY, width, height);
     }
 
-    // 🆕 شارة تجارية صغيرة في الزاوية (عندما يكون المربع كبيراً كفاية)
     if (isBusiness && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
@@ -482,7 +467,6 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // شارة الإعجابات
     if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
@@ -727,6 +711,7 @@ function toggleSelectionMode() {
 function closeOnboarding() {
   document.getElementById('onboardingModal').classList.add('hidden');
   localStorage.setItem('onboarding_seen', 'true');
+  document.body.style.overflow = '';
 }
 window.closeOnboarding = closeOnboarding;
 
@@ -823,12 +808,11 @@ canvas.addEventListener('mouseleave', () => {
   drawGrid();
 });
 
-// ===== عجلة الفأرة (🆕 سرعة بطيئة) =====
+// ===== عجلة الفأرة =====
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   const oldSize = CELL_PIXEL_SIZE;
   
-  // 🆕 خطوة أبطأ: كانت 5، الآن 3
   if (e.deltaY < 0) {
     CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + ZOOM_STEP, 200);
   } else {
@@ -885,7 +869,6 @@ function handleSingleClick(e) {
     if (clickX >= startX && clickX <= startX + width &&
         clickY >= startY && clickY <= startY + height) {
       
-      // 🆕 إذا كان تجارياً ولديه CTA → أولوية للزر
       if (booking.isBusiness === true && booking.ctaButton && booking.userLink) {
         let url = booking.userLink.trim();
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -1048,7 +1031,7 @@ function handleLongPress(clientX, clientY) {
   }
 }
 
-// ===== عرض بطاقة صاحب الصورة (مع دعم التجاري) =====
+// ===== عرض بطاقة صاحب الصورة =====
 function showOwnerCard(booking) {
   const currentLang = localStorage.getItem('lang') || 'ar';
   const isBusiness = booking.isBusiness === true;
@@ -1064,26 +1047,22 @@ function showOwnerCard(booking) {
   card.id = 'ownerCard';
   card.className = `owner-card ${isBusiness ? 'business-owner' : ''}`;
   
-  // 🆕 اسم صاحب الصورة / الشركة
   const nameHTML = isBusiness 
     ? `${displayName} <span class="business-tag">🏢 شركة</span>`
     : displayName;
   
-  // 🆕 زر CTA تجاري أو رابط عادي
   let linkHTML = '';
   if (booking.userLink) {
     let url = booking.userLink.trim();
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
     
     if (isBusiness && booking.ctaButton) {
-      // زر تجاري مخصص
       linkHTML = `
         <a href="${url}" target="_blank" class="owner-link business-cta">
           🚀 ${booking.ctaButton}
         </a>
       `;
     } else {
-      // زر عادي
       linkHTML = `
         <a href="${url}" target="_blank" class="owner-link">
           🔗 ${currentLang === 'ar' ? 'زيارة الحساب' : 'Visit Profile'}
@@ -1091,7 +1070,6 @@ function showOwnerCard(booking) {
       `;
     }
   } else if (isBusiness && booking.ctaButton) {
-    // CTA بدون رابط - عرض زر معطل
     linkHTML = `
       <span class="owner-link business-cta" style="opacity:0.6;cursor:default;">
         ${booking.ctaButton}
@@ -1172,14 +1150,12 @@ canvas.addEventListener('touchmove', (e) => {
     offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
     drawGrid();
   } else if (e.touches.length === 2) {
-    // 🆕 تكبير اللمس - سرعة بطيئة
     const dist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
     if (lastTouchDist > 0) {
       const oldSize = CELL_PIXEL_SIZE;
-      // 🆕 خطوة أبطأ
       if (dist > lastTouchDist + 5) {
         CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + ZOOM_STEP_TOUCH, 200);
       } else if (dist < lastTouchDist - 5) {
@@ -1247,7 +1223,7 @@ function updateSelectedCount() {
   }
 }
 
-// 🆕 ===== تحديث السعر الإجمالي حسب نوع الحجز =====
+// ===== تحديث السعر الإجمالي =====
 function updatePriceDisplay() {
   const total = selectedQuantity * currentCellPrice;
   const priceDisplay = document.getElementById('totalPrice');
@@ -1257,7 +1233,6 @@ function updatePriceDisplay() {
     priceDisplay.textContent = total + ' $';
   }
   
-  // 🆕 إضافة تنسيق خاص للحجز التجاري
   if (priceWrapper) {
     if (selectedBookingType === 'business') {
       priceWrapper.classList.add('business-price');
@@ -1272,7 +1247,8 @@ function openBookingModal(startCell) {
   document.getElementById('bookingModal').classList.remove('hidden');
   document.getElementById('bookingModal').dataset.startCell = startCell;
   
-  // 🔒 جعل حقل عدد المربعات للعرض فقط
+  document.body.style.overflow = 'hidden';
+  
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) {
     qtyInput.readOnly = true;
@@ -1291,6 +1267,9 @@ function openBookingModal(startCell) {
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
   document.getElementById('generateCardBtn').style.display = 'none';
+  
+  document.body.style.overflow = '';
+  
   selectionStart = null;
   selectionEnd = null;
   previewImage = null;
@@ -1314,7 +1293,7 @@ function updatePaymentInfo() {
   } else {
     info.innerHTML = `
       <p>💰 حوّل USDT (TRC20) إلى:</p>
-      <code style="display:block;word-break:break-all;margin:10px 0;color:#f5b301">TGRAeYyz8off9oiqPVcph5YkZJuVL6Cngy</code>
+      <code style="display:block;word-break:break-all;margin:10px 0;color:#f5b301">TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy</code>
       <button onclick="navigator.clipboard.writeText('TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy')" 
               style="padding:8px 16px;background:#d4a017;border:none;border-radius:6px;cursor:pointer">
         📋 نسخ العنوان
@@ -1324,25 +1303,22 @@ function updatePaymentInfo() {
   }
 }
 
-// 🆕 ===== معالجة اختيار نوع الحجز =====
+// ===== معالجة اختيار نوع الحجز =====
 document.querySelectorAll('input[name="bookingType"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
     selectedBookingType = e.target.value;
     
-    // تحديث السعر
     if (selectedBookingType === 'business') {
       currentCellPrice = BUSINESS_CELL_PRICE;
     } else {
       currentCellPrice = CELL_PRICE;
     }
     
-    // تحديث الواجهة (active state)
     document.querySelectorAll('.booking-type-option').forEach(opt => {
       opt.classList.remove('active');
     });
     e.target.closest('.booking-type-option').classList.add('active');
     
-    // 🆕 إظهار/إخفاء الحقول التجارية
     const businessFields = document.getElementById('businessFields');
     if (businessFields) {
       if (selectedBookingType === 'business') {
@@ -1352,7 +1328,6 @@ document.querySelectorAll('input[name="bookingType"]').forEach(radio => {
       }
     }
     
-    // تحديث السعر المعروض
     updatePriceDisplay();
   });
 });
@@ -1390,7 +1365,6 @@ document.getElementById('receiptInput').addEventListener('change', (e) => {
     reader.readAsDataURL(file);
   }
 });
-
 // ===== إرسال الطلب =====
 document.getElementById('submitBooking').addEventListener('click', async () => {
   const btn = document.getElementById('submitBooking');
@@ -1411,7 +1385,6 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     return;
   }
 
-  // 🆕 التحقق من الحقول التجارية
   const isBusiness = selectedBookingType === 'business';
   let brandName = '';
   let ctaButton = '';
@@ -1478,22 +1451,20 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     const cellIndices = [];
     for (let i = 0; i < quantity; i++) cellIndices.push(startCell + i);
 
-    // 🆕 حساب السعر حسب النوع
     const unitPrice = isBusiness ? BUSINESS_CELL_PRICE : CELL_PRICE;
     const totalPrice = quantity * unitPrice;
 
-    // 🆕 كائن الحجز مع حقول التجاري
     const bookingData = {
       startCell,
       cellIndices,
       gridShape: { rows, cols },
       quantity,
       totalPrice,
-      unitPrice,                                          // 🆕
-      bookingType: isBusiness ? 'business' : 'personal',   // 🆕
-      isBusiness: isBusiness,                              // 🆕
-      brandName: isBusiness ? brandName : '',              // 🆕
-      ctaButton: isBusiness ? ctaButton : '',              // 🆕
+      unitPrice,
+      bookingType: isBusiness ? 'business' : 'personal',
+      isBusiness: isBusiness,
+      brandName: isBusiness ? brandName : '',
+      ctaButton: isBusiness ? ctaButton : '',
       paymentMethod: document.getElementById('paymentMethod').value,
       uid: 'guest_' + Date.now(),
       userName: document.getElementById('nameInput').value || (isBusiness ? brandName : 'زائر'),
@@ -1528,9 +1499,9 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       quantity: quantity,
       selfieUrl: selfieUrl,
       referralCode: getMyReferralCode(),
-      isBusiness: isBusiness,                              // 🆕
-      brandName: isBusiness ? brandName : '',              // 🆕
-      ctaButton: isBusiness ? ctaButton : ''               // 🆕
+      isBusiness: isBusiness,
+      brandName: isBusiness ? brandName : '',
+      ctaButton: isBusiness ? ctaButton : ''
     };
     
     setTimeout(() => {
@@ -1586,6 +1557,7 @@ document.getElementById('generateCardBtn').addEventListener('click', async () =>
     ctaButton: isBusiness ? document.getElementById('ctaButtonInput').value : ''
   });
 });
+
 // ===== رفع الصور على ImgBB =====
 async function uploadToImgBB(file) {
   let processedFile;
@@ -1624,6 +1596,7 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
   const seen = localStorage.getItem('onboarding_seen');
   if (!seen && !selectionMode) {
     document.getElementById('onboardingModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
   toggleSelectionMode();
 });
@@ -1722,7 +1695,7 @@ async function generateQRCode(ctx, text, x, y, size) {
   });
 }
 
-// ===== توليد البطاقة (مع دعم التجاري) =====
+// ===== توليد البطاقة =====
 async function generateShareCard(bookingData) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1742,7 +1715,6 @@ async function generateShareCard(bookingData) {
       ctx2.fillStyle = bgGradient;
       ctx2.fillRect(0, 0, WIDTH, HEIGHT);
 
-      // 🆕 إطار ذهبي إضافي للبطاقة التجارية
       if (isBusiness) {
         ctx2.shadowColor = '#f5b301';
         ctx2.shadowBlur = 40;
@@ -1765,7 +1737,6 @@ async function generateShareCard(bookingData) {
       ctx2.textAlign = 'center';
       ctx2.direction = 'rtl';
 
-      // 🆕 الأيقونة تتغير حسب النوع
       ctx2.font = 'bold 80px Cairo, sans-serif';
       ctx2.fillStyle = '#f5b301';
       ctx2.fillText(isBusiness ? '🏢' : '🎨', WIDTH / 2, 180);
@@ -1778,10 +1749,8 @@ async function generateShareCard(bookingData) {
       ctx2.fillStyle = '#a0a0b0';
       ctx2.fillText('Million Selfies Wall', WIDTH / 2, 310);
 
-      // 🆕 شارة تجارية
       if (isBusiness) {
         ctx2.font = 'bold 24px Cairo, sans-serif';
-        ctx2.fillStyle = '#0a0a0f';
         const badgeText = '🏢 حساب تجاري معتمد';
         const badgeWidth = ctx2.measureText(badgeText).width + 40;
         const badgeX = (WIDTH - badgeWidth) / 2;
@@ -1839,7 +1808,6 @@ async function generateShareCard(bookingData) {
       ctx2.font = 'bold 60px Cairo, sans-serif';
       ctx2.fillStyle = '#f5b301';
       
-      // 🆕 نص مختلف للتجاري
       const titleY = isBusiness ? 1100 : 1050;
       if (isBusiness) {
         ctx2.fillText('علامة تجارية على', WIDTH / 2, titleY);
@@ -1862,7 +1830,6 @@ async function generateShareCard(bookingData) {
       roundRect(ctx2, dataBoxX, dataY, dataBoxWidth, 260, 20);
       ctx2.stroke();
 
-      // 🆕 العنوان يتغير حسب النوع
       ctx2.font = 'bold 32px Cairo, sans-serif';
       ctx2.fillStyle = '#a0a0b0';
       ctx2.fillText(isBusiness ? 'اسم العلامة التجارية' : 'الاسم', WIDTH / 2, dataY + 55);
@@ -1879,7 +1846,6 @@ async function generateShareCard(bookingData) {
       ctx2.fillText(`📍 المربع رقم: ${bookingData.startCell}`, WIDTH / 2 - 150, dataY + 170);
       ctx2.fillText(`📐 ${bookingData.quantity} مربع`, WIDTH / 2 + 150, dataY + 170);
 
-      // 🆕 السعر حسب النوع
       if (bookingData.referralCode) {
         ctx2.font = 'bold 22px Cairo, sans-serif';
         ctx2.fillStyle = '#f5b301';
@@ -1903,7 +1869,6 @@ async function generateShareCard(bookingData) {
       ctx2.font = 'bold 36px Cairo, sans-serif';
       ctx2.fillStyle = '#d4a017';
       
-      // 🆕 نص مختلف للتجاري
       if (isBusiness) {
         ctx2.fillText('انضم كشركة بـ 5$ فقط!', WIDTH / 2, ctaY);
       } else {
@@ -1931,11 +1896,19 @@ async function generateShareCard(bookingData) {
 // ===== عرض نافذة البطاقة =====
 async function showShareCard(bookingData) {
   try {
+    document.querySelectorAll('.modal').forEach(m => {
+      if (!m.classList.contains('hidden')) {
+        m.classList.add('hidden');
+      }
+    });
+    
     const modal = document.getElementById('shareCardModal');
     const preview = document.getElementById('shareCardPreview');
     
     preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="533"><rect fill="%2314141c" width="300" height="533"/><text x="150" y="266" fill="%23f5b301" text-anchor="middle" font-size="20" font-family="Cairo">⏳ جاري توليد البطاقة...</text></svg>';
     modal.classList.add('active');
+    
+    document.body.style.overflow = 'hidden';
 
     const dataURL = await generateShareCard(bookingData);
     preview.src = dataURL;
@@ -1946,9 +1919,23 @@ async function showShareCard(bookingData) {
   }
 }
 
-// ===== إغلاق النافذة =====
+// ===== إغلاق نافذة البطاقة =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
+  
+  document.body.style.overflow = '';
+  
+  const onboardingModal = document.getElementById('onboardingModal');
+  if (onboardingModal && !onboardingModal.classList.contains('hidden')) {
+    onboardingModal.classList.add('hidden');
+    localStorage.setItem('onboarding_seen', 'true');
+  }
+  
+  const bookingModal = document.getElementById('bookingModal');
+  if (bookingModal && !bookingModal.classList.contains('hidden')) {
+    bookingModal.classList.add('hidden');
+    document.getElementById('generateCardBtn').style.display = 'none';
+  }
 }
 window.closeShareCard = closeShareCard;
 
@@ -1960,7 +1947,10 @@ function downloadShareCard() {
   }
 
   const link = document.createElement('a');
-  link.download = `million-selfies-card-${Date.now()}.png`;
+  const prefix = generatedCardDataURL && document.querySelector('.share-card-title')?.textContent?.includes('شركة') 
+    ? 'business-card' 
+    : 'million-selfies-card';
+  link.download = `${prefix}-${Date.now()}.png`;
   link.href = generatedCardDataURL;
   link.click();
 
@@ -2025,7 +2015,7 @@ function fallbackShare(url, text) {
   }
 }
 
-// ===== 🔒 حماية حقل عدد المربعات من التعديل =====
+// ===== حماية حقل عدد المربعات =====
 (function protectQuantityInput() {
   const protect = () => {
     const qtyInput = document.getElementById('quantityInput');
@@ -2072,7 +2062,7 @@ const translations = {
     wallTitle: 'لوحة الجدارية التفاعلية',
     legendEmpty: 'مربع فارغ',
     legendBooked: 'محجوز',
-    legendBusiness: 'تجاري',                        // 🆕
+    legendBusiness: 'تجاري',
     legendHint: 'انقر على أي مربع للحجز',
     hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
     hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
@@ -2081,14 +2071,14 @@ const translations = {
     selectModeBtn: '🖱️ تحديد المربعات',
     selectedCount: 'المربعات المختارة: 0',
     bookingTitle: 'حجز المربعات',
-    bookingTypeLabel: 'نوع الحجز',                  // 🆕
-    bookingTypePersonal: 'حجز شخصي',                // 🆕
-    bookingTypeBusiness: 'حجز تجاري / شركات',       // 🆕
-    brandNameLabel: 'اسم العلامة التجارية / الشركة', // 🆕
-    brandNamePlaceholder: 'مثال: مطعم الشام',       // 🆕
-    ctaButtonLabel: 'نص زر الدعوة للاتخاذ إجراء',   // 🆕
-    ctaButtonPlaceholder: 'اتصل بنا / تصفح المتجر', // 🆕
-    ctaButtonNote: '📌 سيظهر هذا النص كزر على مربعك في الجدارية', // 🆕
+    bookingTypeLabel: 'نوع الحجز',
+    bookingTypePersonal: 'حجز شخصي',
+    bookingTypeBusiness: 'حجز تجاري / شركات',
+    brandNameLabel: 'اسم العلامة التجارية / الشركة',
+    brandNamePlaceholder: 'مثال: مطعم الشام',
+    ctaButtonLabel: 'نص زر الدعوة للاتخاذ إجراء',
+    ctaButtonPlaceholder: 'اتصل بنا / تصفح المتجر',
+    ctaButtonNote: '📌 سيظهر هذا النص كزر على مربعك في الجدارية',
     quantityLabel: 'عدد المربعات (1-400)',
     nameLabel: 'الاسم',
     phoneLabel: 'رقم الهاتف (اختياري)',
@@ -2152,7 +2142,7 @@ const translations = {
     wallTitle: 'Interactive Wall',
     legendEmpty: 'Empty',
     legendBooked: 'Booked',
-    legendBusiness: 'Business',                     // 🆕
+    legendBusiness: 'Business',
     legendHint: 'Click any square to book',
     hint: '💡 Scroll inside the grid to explore the million squares',
     hintLink: '🔗 Click any booked photo to visit the owner\'s account',
@@ -2161,14 +2151,14 @@ const translations = {
     selectModeBtn: '🖱️ Select Squares',
     selectedCount: 'Selected squares: 0',
     bookingTitle: 'Book Squares',
-    bookingTypeLabel: 'Booking Type',                // 🆕
-    bookingTypePersonal: 'Personal Booking',         // 🆕
-    bookingTypeBusiness: 'Business / Company',       // 🆕
-    brandNameLabel: 'Brand / Company Name',          // 🆕
-    brandNamePlaceholder: 'e.g., Al-Sham Restaurant', // 🆕
-    ctaButtonLabel: 'Call-to-Action Button Text',    // 🆕
-    ctaButtonPlaceholder: 'Contact Us / Visit Store', // 🆕
-    ctaButtonNote: '📌 This text will appear as a button on your square', // 🆕
+    bookingTypeLabel: 'Booking Type',
+    bookingTypePersonal: 'Personal Booking',
+    bookingTypeBusiness: 'Business / Company',
+    brandNameLabel: 'Brand / Company Name',
+    brandNamePlaceholder: 'e.g., Al-Sham Restaurant',
+    ctaButtonLabel: 'Call-to-Action Button Text',
+    ctaButtonPlaceholder: 'Contact Us / Visit Store',
+    ctaButtonNote: '📌 This text will appear as a button on your square',
     quantityLabel: 'Number of Squares (1-400)',
     nameLabel: 'Name',
     phoneLabel: 'Phone (optional)',
@@ -2238,7 +2228,6 @@ function applyLanguage(lang) {
     }
   });
   
-  // 🆕 ترجمة placeholders
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (t[key]) {
@@ -2332,7 +2321,7 @@ trackVisit();
 setInterval(loadBookings, 30000);
 setTimeout(preloadImages, 3000);
 
-// 🆕 ===== حلقة رسم مستمرة للأعمال التجارية (للحصول على تأثير الإطار النابض) =====
+// ===== حلقة رسم مستمرة للأعمال التجارية (للإطار النابض) =====
 setInterval(() => {
   const hasBusiness = approvedBookings.some(b => b.isBusiness === true);
   if (hasBusiness && !isDragging && !inertiaFrame && !isSelecting) {
