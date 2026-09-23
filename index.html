@@ -75,7 +75,7 @@
 
   <!-- بانر الإحالة -->
   <div class="referral-banner">
-    <span data-i18n="referralText">🎁 ادعُ 5 من أصدقائك واحصل على مربع مجاني!</span>
+    <span data-i18n="referralText">🎁 ادعُ 10 من أصدقائك واحصل على مربع مجاني!</span>
     <button onclick="copyReferralLink()" class="referral-btn" data-i18n="referralBtn">
       📋 نسخ رابط الإحالة
     </button>
@@ -127,6 +127,10 @@
       <div class="legend-item">
         <span class="legend-box booked"></span>
         <span data-i18n="legendBooked">محجوز</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-box business"></span>
+        <span data-i18n="legendBusiness">تجاري</span>
       </div>
       <span class="legend-hint" data-i18n="legendHint">انقر على أي مربع للحجز</span>
     </div>
@@ -223,6 +227,42 @@
       <button class="close-btn" id="closeModal">✕</button>
       <h2 data-i18n="bookingTitle">حجز المربعات</h2>
 
+      <!-- 🆕 نوع الحجز -->
+      <div class="form-group booking-type-group">
+        <label data-i18n="bookingTypeLabel">نوع الحجز</label>
+        <div class="booking-type-options">
+          <label class="booking-type-option personal active">
+            <input type="radio" name="bookingType" value="personal" checked>
+            <div class="booking-type-content">
+              <span class="bt-icon">👤</span>
+              <span class="bt-title" data-i18n="bookingTypePersonal">حجز شخصي</span>
+              <span class="bt-price">$1 / مربع</span>
+            </div>
+          </label>
+          <label class="booking-type-option business">
+            <input type="radio" name="bookingType" value="business">
+            <div class="booking-type-content">
+              <span class="bt-icon">🏢</span>
+              <span class="bt-title" data-i18n="bookingTypeBusiness">حجز تجاري / شركات</span>
+              <span class="bt-price">$5 / مربع</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 🆕 حقول تجارية (تظهر فقط عند اختيار حجز تجاري) -->
+      <div class="business-fields hidden" id="businessFields">
+        <div class="form-group">
+          <label data-i18n="brandNameLabel">اسم العلامة التجارية / الشركة</label>
+          <input type="text" id="brandNameInput" placeholder="مثال: مطعم الشام" data-i18n-placeholder="brandNamePlaceholder">
+        </div>
+        <div class="form-group">
+          <label data-i18n="ctaButtonLabel">نص زر الدعوة للاتخاذ إجراء</label>
+          <input type="text" id="ctaButtonInput" placeholder="اتصل بنا / تصفح المتجر" maxlength="30" data-i18n-placeholder="ctaButtonPlaceholder">
+          <p class="link-note" data-i18n="ctaButtonNote">📌 سيظهر هذا النص كزر على مربعك في الجدارية</p>
+        </div>
+      </div>
+
       <!-- 🔒 حقل عدد المربعات (تلقائي - للعرض فقط) -->
       <div class="form-group">
         <label data-i18n="quantityLabel">عدد المربعات (1-400)</label>
@@ -257,7 +297,7 @@
       </div>
 
       <div class="form-group">
-        <label data-i18n="selfieLabel">صورة السيلفي</label>
+        <label data-i18n="selfieLabel">صورة السيلفي / شعار الشركة</label>
         <input type="file" id="selfieInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.avif,.ico">
         <img id="selfiePreview" class="img-preview" style="display:none;" alt="معاينة السيلفي">
       </div>
@@ -281,7 +321,7 @@
       <div class="terms-box">
         <h4 data-i18n="termsTitle">📋 الشروط والأحكام</h4>
         <ul class="terms-list">
-          <li data-i18n="term1">• يجب أن تكون الصورة سيلفي شخصية وحقيقية.</li>
+          <li data-i18n="term1">• يجب أن تكون الصورة سيلفي شخصية وحقيقية (أو شعار رسمي للشركة).</li>
           <li data-i18n="term2">• يُمنع رفع صور مخالفة للقوانين أو الآداب العامة.</li>
           <li data-i18n="term3">• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.</li>
           <li data-i18n="term4">• مدة معالجة الطلب: 24-48 ساعة.</li>
