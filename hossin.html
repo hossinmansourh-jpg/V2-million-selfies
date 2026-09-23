@@ -176,6 +176,22 @@
       box-shadow: 0 0 12px var(--gold);
     }
 
+    /* 🆕 شريط تجاري */
+    .stat-box.business-top::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+      box-shadow: 0 0 15px var(--gold-light);
+      animation: businessStatPulse 2s infinite;
+    }
+
+    @keyframes businessStatPulse {
+      0%, 100% { box-shadow: 0 0 15px var(--gold-light); }
+      50% { box-shadow: 0 0 30px var(--gold-light); }
+    }
+
     .stat-box .num {
       display: block;
       font-size: 32px;
@@ -189,6 +205,7 @@
     .stat-box .num.gold { color: var(--gold-light); }
     .stat-box .num.green { color: #4ade80; }
     .stat-box .num.red { color: #ff5555; }
+    .stat-box .num.business { color: var(--gold-light); }
 
     .stat-box .lbl {
       display: block;
@@ -283,6 +300,12 @@
     .tab-btn.active { background: var(--gold); color: var(--bg-dark); border-color: var(--gold); }
     .tab-btn:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
 
+    /* 🆕 تبويب تجاري */
+    .tab-btn.business-tab.active {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
+    }
+
     .search-box {
       width: 100%;
       padding: 14px 18px;
@@ -309,6 +332,13 @@
       gap: 15px;
       flex-wrap: wrap;
       align-items: flex-start;
+    }
+
+    /* 🆕 بطاقة تجارية */
+    .booking-card.business-card {
+      border: 1.5px solid var(--gold);
+      background: linear-gradient(135deg, rgba(212, 160, 23, 0.08), var(--bg-gray));
+      box-shadow: 0 0 20px rgba(212, 160, 23, 0.15);
     }
 
     .booking-images { display: flex; gap: 10px; flex-shrink: 0; }
@@ -342,6 +372,12 @@
     .selfie-img { border-color: var(--gold); }
     .receipt-img { border-color: #4a9eff; }
 
+    /* 🆕 شعار الشركة */
+    .booking-img.business-selfie {
+      border-color: var(--gold-light);
+      box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
+    }
+
     .booking-info { flex: 1; min-width: 200px; }
 
     .booking-info p {
@@ -353,6 +389,24 @@
     }
 
     .booking-info p strong { color: #fff; }
+
+    /* 🆕 اسم الشركة */
+    .booking-info p .brand-name {
+      color: var(--gold-light);
+      font-weight: 900;
+    }
+
+    /* 🆕 شارة تجارية داخل البطاقة */
+    .business-tag-admin {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg-dark);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 900;
+      margin-right: 5px;
+    }
 
     .status-badge {
       display: inline-block;
@@ -481,6 +535,11 @@
     .admin-notification.show { transform: translateX(0); }
     .admin-notification.new-booking { border-color: #4ade80; color: #4ade80; }
     .admin-notification.new-like { border-color: #ff3366; color: #ff3366; }
+    .admin-notification.new-business { 
+      border-color: var(--gold-light); 
+      color: var(--gold-light);
+      box-shadow: 0 10px 30px rgba(212, 160, 23, 0.6);
+    }
 
     /* ===== الهاتف ===== */
     @media (max-width: 600px) {
@@ -563,6 +622,15 @@
         <span class="num red" id="totalLikes">0</span>
         <span class="lbl">إجمالي الإعجابات</span>
       </div>
+      <!-- 🆕 إحصائيات تجارية -->
+      <div class="stat-box business-top">
+        <span class="num business" id="businessCount">0</span>
+        <span class="lbl">🏢 حجوزات تجارية</span>
+      </div>
+      <div class="stat-box business-top">
+        <span class="num business" id="businessRevenue">$0</span>
+        <span class="lbl">💰 إيرادات تجارية</span>
+      </div>
     </div>
 
     <!-- المُحيلين -->
@@ -591,6 +659,8 @@
       <button class="tab-btn" data-tab="approved">مقبولة</button>
       <button class="tab-btn" data-tab="rejected">مرفوضة</button>
       <button class="tab-btn" data-tab="all">الكل</button>
+      <!-- 🆕 تبويب الحجوزات التجارية -->
+      <button class="tab-btn business-tab" data-tab="business">🏢 تجارية</button>
     </div>
 
     <input type="text" class="search-box" id="searchBox" placeholder="🔍 ابحث بالاسم أو الهاتف أو رقم المربع..." />
@@ -628,7 +698,7 @@
     const auth = getAuth(app);
 
     const ADMIN_EMAIL = "hossinmansourh@gmail.com";
-    const REWARD_THRESHOLD = 5;
+    const REWARD_THRESHOLD = 10;   // 🆕 تم تغييرها من 5 إلى 10
 
     let allBookings = [];
     let currentTab = 'pending';
@@ -726,6 +796,16 @@
         }
         lastLikesCount = totalLikes;
 
+        // 🆕 إشعار الحجوزات التجارية الجديدة
+        const businessCount = allBookings.filter(b => b.isBusiness === true).length;
+        if (!isFirstLoad && businessCount > 0) {
+          const lastBusinessCount = parseInt(localStorage.getItem('last_business_count') || '0');
+          if (businessCount > lastBusinessCount && lastBusinessCount > 0) {
+            showAdminNotification(`🏢 لديك ${businessCount - lastBusinessCount} حجز تجاري جديد!`, 'new-business');
+          }
+          localStorage.setItem('last_business_count', businessCount.toString());
+        }
+
         isFirstLoad = false;
 
         updateBookingStats();
@@ -768,12 +848,22 @@
       const totalLikes = allBookings
         .reduce((sum, b) => sum + (b.likes || 0), 0);
 
+      // 🆕 إحصائيات تجارية
+      const businessBookings = allBookings.filter(b => b.isBusiness === true);
+      const businessRevenue = businessBookings
+        .filter(b => b.status === 'approved')
+        .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
+
       document.getElementById('totalBookings').textContent = allBookings.length.toLocaleString('en-US');
       document.getElementById('pendingCount').textContent = pending.toLocaleString('en-US');
       document.getElementById('approvedCount').textContent = approved.toLocaleString('en-US');
       document.getElementById('rejectedCount').textContent = rejected.toLocaleString('en-US');
       document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
       document.getElementById('totalLikes').textContent = totalLikes.toLocaleString('en-US');
+      
+      // 🆕 عرض الإحصائيات التجارية
+      document.getElementById('businessCount').textContent = businessBookings.length.toLocaleString('en-US');
+      document.getElementById('businessRevenue').textContent = '$' + businessRevenue.toLocaleString('en-US');
     }
 
     function updateReferrers() {
@@ -832,7 +922,10 @@
       const list = document.getElementById('bookingsList');
       let filtered = allBookings;
 
-      if (currentTab !== 'all') {
+      // 🆕 تبويب الحجوزات التجارية
+      if (currentTab === 'business') {
+        filtered = filtered.filter(b => b.isBusiness === true);
+      } else if (currentTab !== 'all') {
         filtered = filtered.filter(b => b.status === currentTab);
       }
 
@@ -840,6 +933,7 @@
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(b =>
           (b.userName || '').toLowerCase().includes(q) ||
+          (b.brandName || '').toLowerCase().includes(q) ||
           (b.userPhone || '').includes(q) ||
           (b.startCell || '').toString().includes(q) ||
           (b.referralCode || '').toLowerCase().includes(q)
@@ -857,13 +951,32 @@
         const statusText = b.status === 'pending' ? 'قيد الانتظار' :
                           b.status === 'approved' ? 'مقبولة' : 'مرفوضة';
 
+        // 🆕 تحديد إن كان تجارياً
+        const isBusiness = b.isBusiness === true;
+        const businessTagHTML = isBusiness ? '<span class="business-tag-admin">🏢 تجاري</span>' : '';
+
+        // 🆕 اسم العرض (شركة أو شخصي)
+        const displayName = isBusiness 
+          ? `<span class="brand-name">${b.brandName || b.userName || 'شركة'}</span>`
+          : (b.userName || 'زائر');
+
+        // 🆕 اسم الشركة المسجل
+        const brandNameRow = isBusiness && b.brandName 
+          ? `<p><strong>الاسم المسجل:</strong> ${b.userName || '-'}</p>`
+          : '';
+
+        // 🆕 زر CTA
+        const ctaRow = isBusiness && b.ctaButton 
+          ? `<p><strong>نص CTA:</strong> <span class="brand-name">"${b.ctaButton}"</span></p>`
+          : '';
+
         return `
-          <div class="booking-card" data-id="${b.id}">
+          <div class="booking-card ${isBusiness ? 'business-card' : ''}" data-id="${b.id}">
             <div class="booking-images">
               <div class="img-wrapper">
-                <span class="img-label">السيلفي</span>
-                <img src="${b.selfieUrl || ''}" alt="سيلفي" 
-                     class="booking-img selfie-img"
+                <span class="img-label">${isBusiness ? 'الشعار' : 'السيلفي'}</span>
+                <img src="${b.selfieUrl || ''}" alt="${isBusiness ? 'شعار' : 'سيلفي'}" 
+                     class="booking-img ${isBusiness ? 'business-selfie' : 'selfie-img'}"
                      onclick="showImage('${b.selfieUrl || ''}')"
                      onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%232a2a35%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2255%22 fill=%22%23a0a0b0%22 text-anchor=%22middle%22 font-size=%2212%22>لا صورة</text></svg>'">
               </div>
@@ -876,10 +989,12 @@
               </div>
             </div>
             <div class="booking-info">
-              <p><strong>الاسم:</strong> ${b.userName || 'زائر'}</p>
+              <p>${businessTagHTML}<strong>الاسم:</strong> ${displayName}</p>
+              ${brandNameRow}
+              ${ctaRow}
               <p><strong>الهاتف:</strong> ${b.userPhone || '-'}</p>
               <p><strong>المربعات:</strong> ${b.quantity || 0} (يبدأ من ${b.startCell || 0})</p>
-              <p><strong>السعر:</strong> $${b.totalPrice || 0}</p>
+              <p><strong>السعر:</strong> $${b.totalPrice || 0} ${isBusiness ? '(تجاري: 5$/مربع)' : '(شخصي: 1$/مربع)'}</p>
               <p><strong>الدفع:</strong> ${b.paymentMethod || '-'}</p>
               ${b.referredBy ? `<p><strong>أحاله:</strong> <span class="ref-code">${b.referredBy}</span></p>` : ''}
               <p>
@@ -944,7 +1059,11 @@
         startCell: booking.startCell || 0,
         quantity: booking.quantity || 1,
         selfieUrl: booking.selfieUrl || '',
-        referralCode: booking.referralCode || ''
+        referralCode: booking.referralCode || '',
+        // 🆕 تمرير البيانات التجارية
+        isBusiness: (booking.isBusiness === true).toString(),
+        brandName: booking.brandName || '',
+        ctaButton: booking.ctaButton || ''
       });
       
       window.open('card.html?' + params.toString(), '_blank');
@@ -967,7 +1086,11 @@
             startCell: booking.startCell || 0,
             quantity: booking.quantity || 1,
             selfieUrl: booking.selfieUrl || '',
-            referralCode: booking.referralCode || ''
+            referralCode: booking.referralCode || '',
+            // 🆕 تمرير البيانات التجارية
+            isBusiness: (booking.isBusiness === true).toString(),
+            brandName: booking.brandName || '',
+            ctaButton: booking.ctaButton || ''
           });
           window.open('card.html?' + params.toString(), '_blank');
         }
