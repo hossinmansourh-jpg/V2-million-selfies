@@ -396,7 +396,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== رسم الحجوزات =====
+// ===== رسم الحجوزات (مع إطار ملون واضح) =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -408,18 +408,24 @@ function drawBookings() {
 
     const isBusiness = booking.isBusiness === true;
 
+    // ==========================================
+    // 🎨 1. طبقة الخلفية (تظهر خلف الصورة)
+    // ==========================================
     if (isBusiness) {
-      ctx.fillStyle = 'rgba(212, 160, 23, 0.15)';
+      ctx.fillStyle = 'rgba(212, 160, 23, 0.25)';
       ctx.fillRect(startX, startY, width, height);
       drawBusinessHatch(startX, startY, width, height);
     } else {
-      ctx.fillStyle = 'rgba(212, 160, 23, 0.3)';
+      ctx.fillStyle = 'rgba(74, 158, 255, 0.15)';
       ctx.fillRect(startX, startY, width, height);
     }
 
+    // ==========================================
+    // 🖼️ 2. الصورة (فوق الخلفية)
+    // ==========================================
     if (booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
-        ctx.globalAlpha = isBusiness ? 0.85 : 1;
+        ctx.globalAlpha = isBusiness ? 0.75 : 1;
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
         ctx.globalAlpha = 1;
       } else if (!imageCache[booking.id]) {
@@ -437,14 +443,36 @@ function drawBookings() {
       }
     }
 
+    // ==========================================
+    // 🎯 3. الإطار الملون الواضح (فوق كل شيء)
+    // ==========================================
     if (isBusiness) {
       drawGlowingBorder(startX, startY, width, height);
-    } else {
-      ctx.strokeStyle = '#d4a017';
+      
+      ctx.strokeStyle = 'rgba(245, 179, 1, 0.9)';
       ctx.lineWidth = 2;
-      ctx.strokeRect(startX, startY, width, height);
+      ctx.strokeRect(startX + 3, startY + 3, width - 6, height - 6);
+    } else {
+      ctx.save();
+      
+      ctx.shadowColor = 'rgba(74, 158, 255, 0.6)';
+      ctx.shadowBlur = 8;
+      
+      ctx.strokeStyle = 'rgba(74, 158, 255, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(startX + 1, startY + 1, width - 2, height - 2);
+      
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(74, 158, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(startX + 3, startY + 3, width - 6, height - 6);
+      
+      ctx.restore();
     }
 
+    // ==========================================
+    // 🏢 4. شارة تجارية صغيرة في الزاوية
+    // ==========================================
     if (isBusiness && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
@@ -467,6 +495,9 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
+    // ==========================================
+    // ❤️ 5. شارة الإعجابات
+    // ==========================================
     if (booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
@@ -486,7 +517,6 @@ function drawBookings() {
     }
   });
 }
-
 // ===== التحقق من حجز المربع =====
 function isCellBooked(cellX, cellY) {
   return allBookings.some(b => {
