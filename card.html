@@ -40,6 +40,14 @@
       text-align: center;
     }
 
+    /* 🆕 التصميم التجاري */
+    .card-container.business {
+      border: 2px solid var(--gold-light);
+      box-shadow: 
+        0 0 30px rgba(212, 160, 23, 0.4),
+        0 0 60px rgba(212, 160, 23, 0.2);
+    }
+
     .card-title {
       color: var(--gold);
       font-weight: 900;
@@ -52,6 +60,29 @@
       font-size: 14px;
       margin-bottom: 20px;
       font-weight: 700;
+    }
+
+    /* 🆕 شارة تجارية */
+    .business-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg-dark);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 15px;
+      box-shadow: 0 0 20px rgba(212, 160, 23, 0.5);
+      animation: businessPulse 2s infinite;
+    }
+
+    @keyframes businessPulse {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(212, 160, 23, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 35px rgba(212, 160, 23, 0.9);
+      }
     }
 
     .card-preview {
@@ -115,9 +146,10 @@
 </head>
 <body>
 
-  <div class="card-container">
-    <h1 class="card-title">🎉 بطاقة الإنجاز</h1>
-    <p class="card-subtitle">شاركها مع أصدقائك على إنستغرام وتيك توك</p>
+  <div class="card-container" id="cardContainer">
+    <h1 class="card-title" id="cardTitle">🎉 بطاقة الإنجاز</h1>
+    <p class="card-subtitle" id="cardSubtitle">شاركها مع أصدقائك على إنستغرام وتيك توك</p>
+    <div id="businessBadgeWrapper"></div>
     <p class="loading-msg" id="loadingMsg">⏳ جاري توليد البطاقة...</p>
     <img id="cardPreview" class="card-preview" style="display:none;" alt="بطاقة الإنجاز">
     <div class="card-buttons" id="cardButtons" style="display:none;">
@@ -137,11 +169,27 @@
       startCell: parseInt(params.get('startCell')) || 0,
       quantity: parseInt(params.get('quantity')) || 1,
       selfieUrl: params.get('selfieUrl') || '',
-      referralCode: params.get('referralCode') || ''
+      referralCode: params.get('referralCode') || '',
+      // 🆕 بيانات الحجز التجاري
+      isBusiness: params.get('isBusiness') === 'true',
+      brandName: params.get('brandName') || '',
+      ctaButton: params.get('ctaButton') || ''
     };
 
     let generatedCardBlob = null;
     let generatedCardDataURL = null;
+
+    // 🆕 تعديل الواجهة بناءً على نوع الحجز
+    if (bookingData.isBusiness) {
+      document.getElementById('cardContainer').classList.add('business');
+      document.getElementById('cardTitle').textContent = '🏢 بطاقة الشركة';
+      document.getElementById('cardSubtitle').textContent = 'بطاقتك التجارية جاهزة - شاركها للترويج لعلامتك';
+      
+      const badgeWrapper = document.getElementById('businessBadgeWrapper');
+      badgeWrapper.innerHTML = '<div class="business-badge">🏢 حساب تجاري معتمد</div>';
+      
+      document.title = 'بطاقة تجارية - جدارية المليون';
+    }
 
     function roundRect(ctx, x, y, width, height, radius) {
       ctx.beginPath();
@@ -229,6 +277,7 @@
     async function generateCard() {
       const WIDTH = 1080;
       const HEIGHT = 1920;
+      const isBusiness = bookingData.isBusiness;
 
       const cardCanvas = document.createElement('canvas');
       cardCanvas.width = WIDTH;
@@ -241,6 +290,16 @@
       bgGradient.addColorStop(1, '#0a0a0f');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      // 🆕 إطار ذهبي متوهج إضافي للبطاقة التجارية
+      if (isBusiness) {
+        ctx.shadowColor = '#f5b301';
+        ctx.shadowBlur = 40;
+        ctx.strokeStyle = '#f5b301';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(20, 20, WIDTH - 40, HEIGHT - 40);
+        ctx.shadowBlur = 0;
+      }
 
       ctx.strokeStyle = '#d4a017';
       ctx.lineWidth = 8;
@@ -255,9 +314,10 @@
       ctx.textAlign = 'center';
       ctx.direction = 'rtl';
 
+      // 🆕 الأيقونة
       ctx.font = 'bold 80px Cairo, sans-serif';
       ctx.fillStyle = '#f5b301';
-      ctx.fillText('🎨', WIDTH / 2, 180);
+      ctx.fillText(isBusiness ? '🏢' : '🎨', WIDTH / 2, 180);
 
       ctx.font = 'bold 52px Cairo, sans-serif';
       ctx.fillStyle = '#d4a017';
@@ -267,16 +327,32 @@
       ctx.fillStyle = '#a0a0b0';
       ctx.fillText('Million Selfies Wall', WIDTH / 2, 310);
 
+      // 🆕 شارة تجارية على البطاقة
+      if (isBusiness) {
+        ctx.font = 'bold 24px Cairo, sans-serif';
+        const badgeText = '🏢 حساب تجاري معتمد';
+        const badgeWidth = ctx.measureText(badgeText).width + 40;
+        const badgeX = (WIDTH - badgeWidth) / 2;
+        
+        ctx.fillStyle = '#f5b301';
+        roundRect(ctx, badgeX, 330, badgeWidth, 44, 22);
+        ctx.fill();
+        
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillText(badgeText, WIDTH / 2, 362);
+      }
+
       ctx.strokeStyle = '#d4a017';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(200, 350);
-      ctx.lineTo(WIDTH - 200, 350);
+      const lineY = isBusiness ? 400 : 350;
+      ctx.moveTo(200, lineY);
+      ctx.lineTo(WIDTH - 200, lineY);
       ctx.stroke();
 
       const photoSize = 500;
       const photoX = (WIDTH - photoSize) / 2;
-      const photoY = 420;
+      const photoY = isBusiness ? 470 : 420;
 
       ctx.fillStyle = '#d4a017';
       roundRect(ctx, photoX - 15, photoY - 15, photoSize + 30, photoSize + 30, 30);
@@ -311,10 +387,17 @@
 
       ctx.font = 'bold 60px Cairo, sans-serif';
       ctx.fillStyle = '#f5b301';
-      ctx.fillText('أنا الآن جزء من', WIDTH / 2, 1050);
-      ctx.fillText('التاريخ الرقمي! 🚀', WIDTH / 2, 1130);
+      
+      const titleY = isBusiness ? 1100 : 1050;
+      if (isBusiness) {
+        ctx.fillText('علامة تجارية على', WIDTH / 2, titleY);
+        ctx.fillText('الجدارية الأكبر! 🏢', WIDTH / 2, titleY + 80);
+      } else {
+        ctx.fillText('أنا الآن جزء من', WIDTH / 2, titleY);
+        ctx.fillText('التاريخ الرقمي! 🚀', WIDTH / 2, titleY + 80);
+      }
 
-      const dataY = 1250;
+      const dataY = isBusiness ? 1300 : 1250;
       const dataBoxWidth = 700;
       const dataBoxX = (WIDTH - dataBoxWidth) / 2;
 
@@ -327,13 +410,17 @@
       roundRect(ctx, dataBoxX, dataY, dataBoxWidth, 260, 20);
       ctx.stroke();
 
+      // 🆕 عنوان مختلف
       ctx.font = 'bold 32px Cairo, sans-serif';
       ctx.fillStyle = '#a0a0b0';
-      ctx.fillText('الاسم', WIDTH / 2, dataY + 55);
+      ctx.fillText(isBusiness ? 'اسم العلامة التجارية' : 'الاسم', WIDTH / 2, dataY + 55);
 
       ctx.font = 'bold 42px Cairo, sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(bookingData.userName, WIDTH / 2, dataY + 110);
+      const displayName = isBusiness 
+        ? (bookingData.brandName || bookingData.userName || 'شركة')
+        : (bookingData.userName || 'زائر');
+      ctx.fillText(displayName, WIDTH / 2, dataY + 110);
 
       ctx.font = 'bold 28px Cairo, sans-serif';
       ctx.fillStyle = '#a0a0b0';
@@ -348,7 +435,7 @@
 
       const qrSize = 200;
       const qrX = (WIDTH - qrSize) / 2;
-      const qrY = 1560;
+      const qrY = isBusiness ? 1610 : 1560;
 
       const userLink = window.location.origin + '/million-selfies-v2/?cell=' + bookingData.startCell;
 
@@ -356,13 +443,18 @@
 
       ctx.font = 'bold 24px Cairo, sans-serif';
       ctx.fillStyle = '#a0a0b0';
-      ctx.fillText('امسح الرمز لزيارة صورتي', WIDTH / 2, qrY + qrSize + 40);
+      ctx.fillText('امسح الرمز لزيارة الصفحة', WIDTH / 2, qrY + qrSize + 40);
 
       const ctaY = HEIGHT - 100;
 
       ctx.font = 'bold 36px Cairo, sans-serif';
       ctx.fillStyle = '#d4a017';
-      ctx.fillText('احجز مربعك الآن بـ 1$ فقط!', WIDTH / 2, ctaY);
+      
+      if (isBusiness) {
+        ctx.fillText('انضم كشركة بـ 5$ فقط!', WIDTH / 2, ctaY);
+      } else {
+        ctx.fillText('احجز مربعك الآن بـ 1$ فقط!', WIDTH / 2, ctaY);
+      }
 
       ctx.font = 'bold 22px Cairo, sans-serif';
       ctx.fillStyle = '#a0a0b0';
@@ -384,7 +476,8 @@
     function downloadCard() {
       if (!generatedCardDataURL) return;
       const link = document.createElement('a');
-      link.download = `million-selfies-card-${Date.now()}.png`;
+      const prefix = bookingData.isBusiness ? 'business-card' : 'million-selfies-card';
+      link.download = `${prefix}-${Date.now()}.png`;
       link.href = generatedCardDataURL;
       link.click();
     }
@@ -392,15 +485,20 @@
     async function shareCardBtn() {
       if (!generatedCardBlob) return;
 
-      const shareText = '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀';
+      const isBusiness = bookingData.isBusiness;
+      const shareText = isBusiness
+        ? '🏢 علامتي التجارية الآن على جدارية مليون صورة سيلفي! انضم كشركة بـ 5$ فقط 🚀'
+        : '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀';
+      
       const shareUrl = window.location.origin + '/million-selfies-v2/';
-      const shareFile = new File([generatedCardBlob], 'million-selfies-card.png', { type: 'image/png' });
+      const filePrefix = isBusiness ? 'business-card' : 'million-selfies-card';
+      const shareFile = new File([generatedCardBlob], `${filePrefix}.png`, { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
         try {
           await navigator.share({
             files: [shareFile],
-            title: 'جدارية مليون صورة سيلفي',
+            title: isBusiness ? 'بطاقة الشركة - جدارية المليون' : 'جدارية مليون صورة سيلفي',
             text: shareText,
             url: shareUrl
           });
@@ -417,7 +515,7 @@
     function fallbackShare(url, text) {
       if (navigator.share) {
         navigator.share({
-          title: 'جدارية مليون صورة سيلفي',
+          title: bookingData.isBusiness ? 'بطاقة الشركة - جدارية المليون' : 'جدارية مليون صورة سيلفي',
           text: text,
           url: url
         }).catch(() => {
