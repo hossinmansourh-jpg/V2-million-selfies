@@ -223,9 +223,14 @@
       <button class="close-btn" id="closeModal">✕</button>
       <h2 data-i18n="bookingTitle">حجز المربعات</h2>
 
+      <!-- 🔒 حقل عدد المربعات (تلقائي - للعرض فقط) -->
       <div class="form-group">
         <label data-i18n="quantityLabel">عدد المربعات (1-400)</label>
-        <input type="number" id="quantityInput" min="1" max="400" value="1">
+        <div class="quantity-display-wrapper">
+          <input type="number" id="quantityInput" readonly min="1" max="400" value="1" class="quantity-readonly">
+          <span class="auto-badge">🔒 تلقائي</span>
+        </div>
+        <p class="quantity-hint">💡 يتم تحديد العدد تلقائياً عند السحب على الشبكة</p>
       </div>
 
       <div class="form-group">
