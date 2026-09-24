@@ -895,8 +895,7 @@
           ? `<span class="ref-reward">🎁 مستحق</span>`
           : `<span class="ref-reward pending">${r.count}/${REWARD_THRESHOLD}</span>`;
         
-        const refLink = window.location.origin + '/million-selfies-v2/?ref=' + r.code;
-        
+        const shareUrl = window.location.origin + '/V2-million-selfies/';
         return `
           <tr>
             <td><span class="ref-code">${r.code}</span></td>
