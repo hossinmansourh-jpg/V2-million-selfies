@@ -437,7 +437,7 @@
       const qrX = (WIDTH - qrSize) / 2;
       const qrY = isBusiness ? 1610 : 1560;
 
-      const userLink = window.location.origin + '/million-selfies-v2/?cell=' + bookingData.startCell;
+      const userLink = window.location.origin + '/V2-million-selfies/?cell=' + bookingData.startCell;
 
       await generateQRCode(ctx, userLink, qrX, qrY, qrSize);
 
@@ -490,7 +490,7 @@
         ? '🏢 علامتي التجارية الآن على جدارية مليون صورة سيلفي! انضم كشركة بـ 5$ فقط 🚀'
         : '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀';
       
-      const shareUrl = window.location.origin + '/million-selfies-v2/';
+       const shareUrl = window.location.origin + '/V2-million-selfies/';
       const filePrefix = isBusiness ? 'business-card' : 'million-selfies-card';
       const shareFile = new File([generatedCardBlob], `${filePrefix}.png`, { type: 'image/png' });
 
