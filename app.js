@@ -32,7 +32,7 @@ let currentCellPrice = CELL_PRICE;
 
 // ===== Canvas =====
 const canvas = document.getElementById('gridCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 
 let offsetX = 0;
 let offsetY = 0;
@@ -50,6 +50,14 @@ let selectionMode = false;
 
 let previewImage = null;
 let previewImageUrl = null;
+
+// ===== 🆕 Cache للحجوزات (للبحث السريع) =====
+let bookingsIndexCache = new Map();
+let cacheVersion = 0;
+
+// ===== 🆕 متغيرات منع الرسم المكرر =====
+let drawGridPending = false;
+const pendingImageLoads = new Set();
 
 // ===== إدارة الإعجابات =====
 function getMyLikes() {
@@ -193,12 +201,36 @@ function convertToJPG(file) {
   });
 }
 
-// ===== إعداد Canvas =====
+// ===== إعداد Canvas (محسّن) =====
 function resizeCanvas() {
   const container = canvas.parentElement;
-  canvas.width = container.clientWidth;
-  canvas.height = container.clientHeight;
+  const newWidth = container.clientWidth;
+  const newHeight = container.clientHeight;
+  
+  if (canvas.width === newWidth && canvas.height === newHeight) return;
+  
+  canvas.width = newWidth;
+  canvas.height = newHeight;
   drawGrid();
+}
+
+// ===== 🆕 بناء Cache الحجوزات (للبحث السريع) =====
+function buildBookingsIndex() {
+  bookingsIndexCache.clear();
+  allBookings.forEach(b => {
+    if (b.status !== 'approved' && b.status !== 'pending') return;
+    const startX = b.startCell % GRID_SIZE;
+    const startY = Math.floor(b.startCell / GRID_SIZE);
+    const endX = startX + b.gridShape.cols - 1;
+    const endY = startY + b.gridShape.rows - 1;
+    
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
+        bookingsIndexCache.set(`${x},${y}`, b);
+      }
+    }
+  });
+  cacheVersion++;
 }
 
 // ===== رسم التهشير الذهبي المتقاطع =====
@@ -251,26 +283,38 @@ function drawGlowingBorder(x, y, width, height, intensity = 1) {
   ctx.restore();
 }
 
-// ===== رسم الشبكة =====
+// ===== 🆕 رسم الشبكة (مع requestAnimationFrame) =====
 function drawGrid() {
+  if (drawGridPending) return;
+  drawGridPending = true;
+  
+  requestAnimationFrame(() => {
+    drawGridPending = false;
+    drawGridNow();
+  });
+}
+
+function drawGridNow() {
   ctx.fillStyle = '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const startX = Math.floor(offsetX / CELL_PIXEL_SIZE);
-  const startY = Math.floor(offsetY / CELL_PIXEL_SIZE);
-  const endX = startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 1;
-  const endY = startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 1;
+  // ✅ رسم الخطوط المحيطة فقط (Batch Drawing)
+  const startX = Math.max(0, Math.floor(offsetX / CELL_PIXEL_SIZE) - 1);
+  const startY = Math.max(0, Math.floor(offsetY / CELL_PIXEL_SIZE) - 1);
+  const endX = Math.min(GRID_SIZE, startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 3);
+  const endY = Math.min(GRID_SIZE, startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 3);
 
+  ctx.strokeStyle = '#2a2a35';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
   for (let y = startY; y < endY; y++) {
     for (let x = startX; x < endX; x++) {
-      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) continue;
       const px = x * CELL_PIXEL_SIZE - offsetX;
       const py = y * CELL_PIXEL_SIZE - offsetY;
-      ctx.strokeStyle = '#2a2a35';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px, py, CELL_PIXEL_SIZE, CELL_PIXEL_SIZE);
+      ctx.rect(px, py, CELL_PIXEL_SIZE, CELL_PIXEL_SIZE);
     }
   }
+  ctx.stroke();
 
   drawBookings();
 
@@ -396,7 +440,7 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== 🆕 رسم الحجوزات (Pending vs Approved) =====
+// ===== 🆕 رسم الحجوزات (Viewport Culling) =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -404,13 +448,14 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
-    if (startX + width < 0 || startX > canvas.width || startY + height < 0 || startY > canvas.height) return;
+    // ✅ Viewport Culling
+    if (startX + width < -50 || startX > canvas.width + 50 || 
+        startY + height < -50 || startY > canvas.height + 50) return;
 
     const isBusiness = booking.isBusiness === true;
     const isPending = booking.status === 'pending';
     const isApproved = booking.status === 'approved';
 
-    // ===== 1. الخلفية (فقط للحجوزات Pending) =====
     if (isPending) {
       if (isBusiness) {
         ctx.fillStyle = 'rgba(212, 160, 23, 0.35)';
@@ -422,24 +467,14 @@ function drawBookings() {
       }
     }
 
-    // ===== 2. الصورة (فقط للحجوزات المعتمدة) =====
     if (isApproved && booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
       } else if (!imageCache[booking.id]) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          imageCache[booking.id] = img;
-          drawGrid();
-        };
-        img.onerror = () => console.error('فشل تحميل الصورة:', booking.selfieUrl);
-        imageCache[booking.id] = img;
-        img.src = booking.selfieUrl;
+        loadBookingImage(booking);
       }
     }
 
-    // ===== 3. الإطار (يختلف حسب الحالة) =====
     if (isPending) {
       if (isBusiness) {
         drawGlowingBorder(startX, startY, width, height);
@@ -471,7 +506,6 @@ function drawBookings() {
       }
     }
 
-    // ===== 4. شارة ⏳ للـ Pending =====
     if (isPending && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
@@ -500,7 +534,6 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // ===== 5. شارة الإعجابات (فقط للمعتمد) =====
     if (isApproved && booking.likes && booking.likes > 0 && width > 60 && height > 60) {
       const liked = hasLiked(booking.id);
       const badgeX = startX + width - 40;
@@ -521,16 +554,33 @@ function drawBookings() {
   });
 }
 
-// ===== التحقق من حجز المربع =====
+// ===== 🆕 تحميل صور الحجوزات بشكل ذكي =====
+function loadBookingImage(booking) {
+  if (pendingImageLoads.has(booking.id)) return;
+  pendingImageLoads.add(booking.id);
+  
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    imageCache[booking.id] = img;
+    pendingImageLoads.delete(booking.id);
+    
+    const keys = Object.keys(imageCache);
+    if (keys.length > 100) {
+      delete imageCache[keys[0]];
+    }
+    
+    drawGrid();
+  };
+  img.onerror = () => {
+    pendingImageLoads.delete(booking.id);
+  };
+  img.src = booking.selfieUrl;
+}
+
+// ===== التحقق من حجز المربع (فوري) =====
 function isCellBooked(cellX, cellY) {
-  return allBookings.some(b => {
-    if (b.status !== 'approved' && b.status !== 'pending') return false;
-    const startX = b.startCell % GRID_SIZE;
-    const startY = Math.floor(b.startCell / GRID_SIZE);
-    const endX = startX + b.gridShape.cols - 1;
-    const endY = startY + b.gridShape.rows - 1;
-    return cellX >= startX && cellX <= endX && cellY >= startY && cellY <= endY;
-  });
+  return bookingsIndexCache.has(`${cellX},${cellY}`);
 }
 
 function isSelectionValid(x1, y1, x2, y2) {
@@ -542,7 +592,7 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== 🆕 تحميل الحجوزات (مع Pending) =====
+// ===== تحميل الحجوزات (محسّن) =====
 async function loadBookings() {
   try {
     const snapshot = await getDocs(collection(db, "bookings"));
@@ -550,9 +600,12 @@ async function loadBookings() {
     allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
     approvedBookings = allDocs.filter(b => b.status === 'approved' || b.status === 'pending');
     allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    buildBookingsIndex();
+    
     updateStats();
     drawGrid();
-    await updateLeaderboard();
+    updateLeaderboard();
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
   }
@@ -655,14 +708,20 @@ let velocityY = 0;
 let inertiaFrame = null;
 let lastMoveTime = 0;
 
+// ===== 🆕 القصور الذاتي (محسّن) =====
 function startInertia() {
   if (inertiaFrame) cancelAnimationFrame(inertiaFrame);
+  
+  let lastFrameTime = performance.now();
 
-  function animate() {
-    offsetX += velocityX;
-    offsetY += velocityY;
-    velocityX *= 0.95;
-    velocityY *= 0.95;
+  function animate(currentTime) {
+    const deltaTime = Math.min((currentTime - lastFrameTime) / 16.67, 3);
+    lastFrameTime = currentTime;
+    
+    offsetX += velocityX * deltaTime;
+    offsetY += velocityY * deltaTime;
+    velocityX *= Math.pow(0.95, deltaTime);
+    velocityY *= Math.pow(0.95, deltaTime);
 
     if (Math.abs(velocityX) < 0.1 && Math.abs(velocityY) < 0.1) {
       velocityX = 0;
@@ -751,7 +810,7 @@ function closeOnboarding() {
 }
 window.closeOnboarding = closeOnboarding;
 
-// ===== التفاعل مع الفأرة =====
+// ===== التفاعل مع الفأرة (محسّن) =====
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
 
@@ -760,9 +819,11 @@ canvas.addEventListener('mousemove', (e) => {
       const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
       const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
       if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-        selectionEnd = { x, y };
-        updateSelectedCount();
-        drawGrid();
+        if (!selectionEnd || selectionEnd.x !== x || selectionEnd.y !== y) {
+          selectionEnd = { x, y };
+          updateSelectedCount();
+          drawGrid();
+        }
       }
     }
     return;
@@ -773,11 +834,11 @@ canvas.addEventListener('mousemove', (e) => {
     const dx = e.clientX - dragStartX;
     const dy = e.clientY - dragStartY;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasDragged = true;
-    offsetX -= dx * 1;
-    offsetY -= dy * 1;
+    offsetX -= dx;
+    offsetY -= dy;
     const dt = now - lastMoveTime || 16;
-    velocityX = -(dx * 1) / dt * 16;
-    velocityY = -(dy * 1) / dt * 16;
+    velocityX = -(dx) / dt * 16;
+    velocityY = -(dy) / dt * 16;
     lastMoveTime = now;
     dragStartX = e.clientX;
     dragStartY = e.clientY;
@@ -790,8 +851,10 @@ canvas.addEventListener('mousemove', (e) => {
   const x = Math.floor((e.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
   const y = Math.floor((e.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
   if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-    hoveredCell = { x, y };
-    drawGrid();
+    if (!hoveredCell || hoveredCell.x !== x || hoveredCell.y !== y) {
+      hoveredCell = { x, y };
+      drawGrid();
+    }
   }
 });
 
@@ -839,30 +902,41 @@ canvas.addEventListener('mouseup', () => {
 
 canvas.addEventListener('mouseleave', () => {
   isDragging = false;
-  hoveredCell = null;
+  if (hoveredCell) {
+    hoveredCell = null;
+    drawGrid();
+  }
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
-  drawGrid();
 });
 
-// ===== عجلة الفأرة =====
+// ===== 🆕 عجلة الفأرة (Debounced) =====
+let wheelTimer = null;
+let wheelAccum = 0;
+
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  const oldSize = CELL_PIXEL_SIZE;
   
-  if (e.deltaY < 0) {
-    CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + ZOOM_STEP, 200);
-  } else {
-    CELL_PIXEL_SIZE = Math.max(CELL_PIXEL_SIZE - ZOOM_STEP, 10);
-  }
+  wheelAccum += e.deltaY;
   
-  const rect = canvas.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-  offsetX = (offsetX + mouseX) * (CELL_PIXEL_SIZE / oldSize) - mouseX;
-  offsetY = (offsetY + mouseY) * (CELL_PIXEL_SIZE / oldSize) - mouseY;
-  offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
-  offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
-  drawGrid();
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    const oldSize = CELL_PIXEL_SIZE;
+    const direction = wheelAccum < 0 ? 1 : -1;
+    const steps = Math.max(1, Math.floor(Math.abs(wheelAccum) / 100));
+    
+    CELL_PIXEL_SIZE = Math.max(10, Math.min(200, CELL_PIXEL_SIZE + direction * steps * ZOOM_STEP));
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    offsetX = (offsetX + mouseX) * (CELL_PIXEL_SIZE / oldSize) - mouseX;
+    offsetY = (offsetY + mouseY) * (CELL_PIXEL_SIZE / oldSize) - mouseY;
+    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+    
+    drawGrid();
+    wheelAccum = 0;
+  }, 16);
 }, { passive: false });
 
 // ===== إدارة النقرات =====
@@ -932,7 +1006,6 @@ function handleSingleClick(e) {
     }
   }
 
-  // التحقق من المربعات المعلقة
   for (const booking of approvedBookings) {
     if (booking.status !== 'pending') continue;
     
@@ -1188,9 +1261,11 @@ canvas.addEventListener('touchmove', (e) => {
     const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
     const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
     if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-      selectionEnd = { x, y };
-      updateSelectedCount();
-      drawGrid();
+      if (!selectionEnd || selectionEnd.x !== x || selectionEnd.y !== y) {
+        selectionEnd = { x, y };
+        updateSelectedCount();
+        drawGrid();
+      }
     }
     return;
   }
@@ -1199,11 +1274,11 @@ canvas.addEventListener('touchmove', (e) => {
     const now = Date.now();
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    offsetX -= dx * 1;
-    offsetY -= dy * 1;
+    offsetX -= dx;
+    offsetY -= dy;
     const dt = now - lastMoveTime || 16;
-    velocityX = -(dx * 1) / dt * 16;
-    velocityY = -(dy * 1) / dt * 16;
+    velocityX = -(dx) / dt * 16;
+    velocityY = -(dy) / dt * 16;
     lastMoveTime = now;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
@@ -2001,8 +2076,7 @@ function downloadShareCard() {
   }
 
   const link = document.createElement('a');
-  const prefix = 'million-selfies-card';
-  link.download = `${prefix}-${Date.now()}.png`;
+  link.download = `million-selfies-card-${Date.now()}.png`;
   link.href = generatedCardDataURL;
   link.click();
 
@@ -2350,29 +2424,53 @@ async function trackVisit() {
 function preloadImages() {
   allBookings.filter(b => b.status === 'approved').slice(0, 20).forEach(booking => {
     if (booking.selfieUrl && !imageCache[booking.id]) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        imageCache[booking.id] = img;
-        drawGrid();
-      };
-      img.src = booking.selfieUrl;
+      loadBookingImage(booking);
     }
   });
 }
 
-// ===== التشغيل =====
-window.addEventListener('resize', resizeCanvas);
+// ===== التشغيل (محسّن) =====
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(resizeCanvas, 200);
+});
+
 resizeCanvas();
 loadBookings();
 trackVisit();
-setInterval(loadBookings, 30000);
-setTimeout(preloadImages, 3000);
 
-// ===== حلقة رسم مستمرة (للإطار النابض) =====
-setInterval(() => {
-  const hasPending = allBookings.some(b => b.status === 'pending' && b.isBusiness === true);
-  if (hasPending && !isDragging && !inertiaFrame && !isSelecting) {
-    drawGrid();
+// ✅ تحميل كل 60 ثانية
+setInterval(loadBookings, 60000);
+
+// ✅ تحميل الصور بعد 2 ثانية
+setTimeout(preloadImages, 2000);
+
+// ✅ حلقة الرسم النابض
+let pulseInterval = null;
+function startPulseAnimation() {
+  if (pulseInterval) return;
+  pulseInterval = setInterval(() => {
+    const hasPending = approvedBookings.some(b => b.status === 'pending');
+    if (hasPending && !isDragging && !inertiaFrame && !isSelecting) {
+      drawGrid();
+    } else if (!hasPending) {
+      clearInterval(pulseInterval);
+      pulseInterval = null;
+    }
+  }, 600);
+}
+
+setTimeout(startPulseAnimation, 3000);
+
+// ✅ إيقاف الرسم عند مغادرة الصفحة
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (pulseInterval) {
+      clearInterval(pulseInterval);
+      pulseInterval = null;
+    }
+  } else {
+    startPulseAnimation();
   }
-}, 800);
+});
