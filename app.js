@@ -1934,7 +1934,7 @@ async function generateShareCard(bookingData) {
 
       ctx2.font = 'bold 22px Cairo, sans-serif';
       ctx2.fillStyle = '#a0a0b0';
-      ctx2.fillText('hossinmansourh-jpg.github.io/million-selfies-v2', WIDTH / 2, ctaY + 45);
+      ctx2.fillText('hossinmansourh-jpg.github.io/V2-million-selfies', WIDTH / 2, ctaY + 45);
 
       generatedCardDataURL = cardCanvas.toDataURL('image/png', 1.0);
       
