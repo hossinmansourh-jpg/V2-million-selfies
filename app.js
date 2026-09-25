@@ -54,27 +54,6 @@ let previewImageUrl = null;
 // ===== 🆕 Cache للحجوزات (للبحث السريع) =====
 let bookingsIndexCache = new Map();
 let cacheVersion = 0;
-// ===== 🆕 دالة رسم القلب =====
-function drawHeartPath(ctx, centerX, centerY, size) {
-  const topCurveHeight = size * 0.3;
-  
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY + topCurveHeight);
-  
-  ctx.bezierCurveTo(
-    centerX - size * 0.5, centerY - size * 0.3,
-    centerX - size * 0.5, centerY + size * 0.1,
-    centerX, centerY + size * 0.4
-  );
-  
-  ctx.bezierCurveTo(
-    centerX + size * 0.5, centerY + size * 0.1,
-    centerX + size * 0.5, centerY - size * 0.3,
-    centerX, centerY + topCurveHeight
-  );
-  
-  ctx.closePath();
-}
 
 // ===== 🆕 متغيرات منع الرسم المكرر =====
 let drawGridPending = false;
@@ -555,66 +534,24 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // ===== 5. شارة الإعجابات (قلب) =====
-if (isApproved && width > 50 && height > 50) {
-  const liked = hasLiked(booking.id);
-  const likesCount = booking.likes || 0;
-  
-  // حجم القلب يتناسب مع حجم المربع
-  const heartSize = Math.min(36, Math.max(22, width / 5));
-  const heartX = startX + width - heartSize / 2 - 10;
-  const heartY = startY + height - heartSize / 2 - 10;
-  
-  ctx.save();
-  
-  if (liked) {
-    // ✅ الحالة 1: مع إعجاب → قلب وردي ممتلئ + رقم بداخله
-    ctx.shadowColor = 'rgba(255, 51, 102, 0.8)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 2;
-    
-    const gradient = ctx.createRadialGradient(
-      heartX, heartY - heartSize * 0.1, 0,
-      heartX, heartY, heartSize
-    );
-    gradient.addColorStop(0, '#ff6699');
-    gradient.addColorStop(1, '#ff3366');
-    ctx.fillStyle = gradient;
-    
-    drawHeartPath(ctx, heartX, heartY, heartSize);
-    ctx.fill();
-    
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-    
-    // كتابة الرقم داخل القلب
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.round(heartSize * 0.42)}px Cairo, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(likesCount, heartX, heartY + heartSize * 0.05);
-    ctx.textBaseline = 'alphabetic';
-    
-  } else {
-    // ✅ الحالة 2: بدون إعجاب → قلب مفرغ بإطار أبيض فقط (بدون رقم)
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 6;
-    
-    // خلفية داكنة خفيفة داخل القلب
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    drawHeartPath(ctx, heartX, heartY, heartSize);
-    ctx.fill();
-    
-    ctx.shadowBlur = 0;
-    
-    // إطار أبيض
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.lineWidth = Math.max(1.5, heartSize * 0.06);
-    drawHeartPath(ctx, heartX, heartY, heartSize);
-    ctx.stroke();
-  }
-  
-  ctx.restore();
+    if (isApproved && booking.likes && booking.likes > 0 && width > 60 && height > 60) {
+      const liked = hasLiked(booking.id);
+      const badgeX = startX + width - 40;
+      const badgeY = startY + height - 26;
+      
+      ctx.fillStyle = liked ? 'rgba(255, 51, 102, 0.9)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.beginPath();
+      ctx.roundRect(badgeX, badgeY, 36, 22, 11);
+      ctx.fill();
+      
+      ctx.fillStyle = liked ? '#fff' : '#f5b301';
+      ctx.font = 'bold 12px Cairo, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`❤️${booking.likes}`, badgeX + 18, badgeY + 11);
+      ctx.textBaseline = 'alphabetic';
+    }
+  });
 }
 
 // ===== 🆕 تحميل صور الحجوزات بشكل ذكي =====
