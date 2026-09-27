@@ -1,6 +1,6 @@
 // ===== استيراد Firebase =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 // ===== إعدادات Firebase =====
 const firebaseConfig = {
@@ -22,6 +22,7 @@ const CELL_PRICE = 1;
 const BUSINESS_CELL_PRICE = 5;
 const MAX_SQUARES = 400;
 const REFERRAL_TARGET = 10;
+const MAX_IMAGE_CACHE = 100;
 
 let CELL_PIXEL_SIZE = 50;
 let ZOOM_STEP = 3;
@@ -51,13 +52,32 @@ let selectionMode = false;
 let previewImage = null;
 let previewImageUrl = null;
 
-// ===== 🆕 Cache للحجوزات (للبحث السريع) =====
+// ===== Cache للحجوزات =====
 let bookingsIndexCache = new Map();
-let cacheVersion = 0;
 
-// ===== 🆕 متغيرات منع الرسم المكرر =====
+// ===== منع الرسم المكرر =====
 let drawGridPending = false;
 const pendingImageLoads = new Set();
+
+// ===== الثيم =====
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+}
+
+function getStoredTheme() {
+  return localStorage.getItem('theme') || 'dark';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  drawGrid();
+}
+
+// تهيئة الثيم
+applyTheme(getStoredTheme());
 
 // ===== إدارة الإعجابات =====
 function getMyLikes() {
@@ -78,9 +98,9 @@ function hasLiked(bookingId) {
 }
 
 // ===== إظهار إشعار (Toast) =====
-function showToast(message) {
+function showToast(message, type = 'info') {
   const toast = document.createElement('div');
-  toast.className = 'toast-notification';
+  toast.className = 'toast-notification ' + type;
   toast.textContent = message;
   document.body.appendChild(toast);
   
@@ -88,7 +108,7 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 300);
-  }, 2000);
+  }, 2500);
 }
 
 // ===== إشعار الإعجاب =====
@@ -102,7 +122,7 @@ function showLikeNotification(booking, count) {
   toast.className = 'like-notification';
   toast.innerHTML = `
     <div class="like-notification-content">
-      <img src="${booking.selfieUrl || ''}" alt="صورة" onerror="this.style.display='none'">
+      <img src="${booking.selfieUrl || ''}" alt="" onerror="this.style.display='none'">
       <div class="like-text">
         <span class="like-heart">❤️</span>
         <span>${message}</span>
@@ -141,20 +161,126 @@ function getReferredBy() {
   return ref || localStorage.getItem('referred_by') || null;
 }
 
+// ===== نصوص الدعوة =====
+const REFERRAL_TEXTS = {
+  ar: {
+    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n{LINK}`,
+    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟\nادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك!\n👇 الرابط:\n\n{LINK}`,
+    mysterious: `🤫 اكتشفت شيئاً مميزاً...\nمليون صورة سيلفي على جدارية رقمية واحدة.\nاحجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!\n👇 جرّب من هنا:\n\n{LINK}`,
+    short: `🎨 انضم لجدارية مليون صورة سيلفي!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
+    friendly: `مرحباً 👋\nجربت هذا الموقع، وهو فكرة عبقرية!\nادخل واحجز مربعك قبل أن يمتلئ 👇\n\n{LINK}\n\n(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
+    emotional: `📸 صورتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
+    professional: `🏢 جدارية مليون صورة سيلفي\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
+  },
+  en: {
+    direct: `🎨 Join me on the Million Selfies Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
+    challenge: `🏆 I accepted the challenge... Do you?\nJoin the world's largest wall and book your square before it's taken!\n👇 Link:\n\n{LINK}`,
+    mysterious: `🤫 I discovered something special...\nA million selfies on one digital wall.\nBook your square for $1 before spots run out!\n👇 Try here:\n\n{LINK}`,
+    short: `🎨 Join the Million Selfies Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
+    friendly: `Hey 👋\nI tried this site, it's genius!\nJoin and book your square before it fills up 👇\n\n{LINK}\n\n(Use my link so we both get a reward 🎁)`,
+    emotional: `📸 Your photo could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
+    professional: `🏢 Million Selfies Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
+  }
+};
+
 // ===== نسخ رابط الإحالة =====
 window.copyReferralLink = function() {
   const code = getMyReferralCode();
   const url = window.location.origin + window.location.pathname + '?ref=' + code;
   
-  navigator.clipboard.writeText(url).then(() => {
+  const modal = document.getElementById('referralModal');
+  const linkInput = document.getElementById('referralLinkInput');
+  const textarea = document.getElementById('referralTextarea');
+  
+  if (!modal || !linkInput || !textarea) {
+    navigator.clipboard.writeText(url).then(() => {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      showToast(currentLang === 'ar' 
+        ? `✅ تم نسخ رابط الإحالة!` 
+        : `✅ Referral link copied!`, 'success');
+    }).catch(() => {
+      showToast('❌ فشل نسخ الرابط', 'error');
+    });
+    return;
+  }
+  
+  linkInput.value = url;
+  
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const templates = REFERRAL_TEXTS[currentLang] || REFERRAL_TEXTS.ar;
+  const savedText = localStorage.getItem('my_referral_text') || templates.direct;
+  textarea.value = savedText.replace('{LINK}', url);
+  
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+
+// ===== إغلاق نافذة الإحالة =====
+window.closeReferralModal = function() {
+  const modal = document.getElementById('referralModal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+};
+
+// ===== نسخ الرابط فقط =====
+window.copyReferralLinkOnly = function() {
+  const linkInput = document.getElementById('referralLinkInput');
+  if (!linkInput) return;
+  
+  navigator.clipboard.writeText(linkInput.value).then(() => {
     const currentLang = localStorage.getItem('lang') || 'ar';
     showToast(currentLang === 'ar' 
-      ? `✅ تم نسخ رابط الإحالة! شاركه مع ${REFERRAL_TARGET} من أصدقائك.` 
-      : `✅ Referral link copied! Share it with ${REFERRAL_TARGET} friends.`);
+      ? `✅ تم نسخ الرابط فقط!` 
+      : `✅ Link copied!`, 'success');
   }).catch(() => {
-    showToast('❌ فشل نسخ الرابط');
+    showToast('❌ فشل النسخ', 'error');
   });
 };
+
+// ===== نسخ النص + الرابط =====
+window.copyReferralAll = function() {
+  const textarea = document.getElementById('referralTextarea');
+  if (!textarea) return;
+  
+  const text = textarea.value;
+  localStorage.setItem('my_referral_text', text.replace(/https?:\/\/\S+/g, '{LINK}'));
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    showToast(currentLang === 'ar' 
+      ? `✅ تم نسخ النص والرابط!` 
+      : `✅ Text and link copied!`, 'success');
+    
+    setTimeout(() => closeReferralModal(), 800);
+  }).catch(() => {
+    showToast('❌ فشل النسخ', 'error');
+  });
+};
+
+// ===== معالجة اختيار نص القالب =====
+document.addEventListener('DOMContentLoaded', () => {
+  const referralRadios = document.querySelectorAll('input[name="referralTemplate"]');
+  const textarea = document.getElementById('referralTextarea');
+  const linkInput = document.getElementById('referralLinkInput');
+  
+  if (!referralRadios.length || !textarea) return;
+  
+  referralRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      const templates = REFERRAL_TEXTS[currentLang] || REFERRAL_TEXTS.ar;
+      const selectedTemplate = e.target.value;
+      const text = templates[selectedTemplate] || templates.direct;
+      const url = linkInput ? linkInput.value : '';
+      textarea.value = text.replace('{LINK}', url);
+    });
+  });
+  
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', toggleTheme);
+  }
+});
 
 // ===== تحويل الصورة إلى JPG =====
 function convertToJPG(file) {
@@ -201,7 +327,7 @@ function convertToJPG(file) {
   });
 }
 
-// ===== إعداد Canvas (محسّن) =====
+// ===== إعداد Canvas =====
 function resizeCanvas() {
   const container = canvas.parentElement;
   const newWidth = container.clientWidth;
@@ -214,7 +340,7 @@ function resizeCanvas() {
   drawGrid();
 }
 
-// ===== 🆕 بناء Cache الحجوزات (للبحث السريع) =====
+// ===== بناء Cache الحجوزات =====
 function buildBookingsIndex() {
   bookingsIndexCache.clear();
   allBookings.forEach(b => {
@@ -230,9 +356,7 @@ function buildBookingsIndex() {
       }
     }
   });
-  cacheVersion++;
 }
-
 // ===== رسم التهشير الذهبي المتقاطع =====
 function drawBusinessHatch(x, y, width, height) {
   ctx.save();
@@ -283,7 +407,7 @@ function drawGlowingBorder(x, y, width, height, intensity = 1) {
   ctx.restore();
 }
 
-// ===== 🆕 رسم الشبكة (مع requestAnimationFrame) =====
+// ===== رسم الشبكة =====
 function drawGrid() {
   if (drawGridPending) return;
   drawGridPending = true;
@@ -295,16 +419,19 @@ function drawGrid() {
 }
 
 function drawGridNow() {
-  ctx.fillStyle = '#0a0a0f';
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  
+  // خلفية الشبكة
+  ctx.fillStyle = isLight ? '#f5efe0' : '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // ✅ رسم الخطوط المحيطة فقط (Batch Drawing)
   const startX = Math.max(0, Math.floor(offsetX / CELL_PIXEL_SIZE) - 1);
   const startY = Math.max(0, Math.floor(offsetY / CELL_PIXEL_SIZE) - 1);
   const endX = Math.min(GRID_SIZE, startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 3);
   const endY = Math.min(GRID_SIZE, startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 3);
 
-  ctx.strokeStyle = '#2a2a35';
+  // خطوط الشبكة
+  ctx.strokeStyle = isLight ? '#d4c4a0' : '#2a2a35';
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let y = startY; y < endY; y++) {
@@ -318,6 +445,7 @@ function drawGridNow() {
 
   drawBookings();
 
+  // تحديد المنطقة
   if (isSelecting && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -355,6 +483,7 @@ function drawGridNow() {
     ctx.fillText(`${count}`, px + width / 2, py - 10);
   }
 
+  // معاينة الصورة
   if (previewImage && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -382,6 +511,7 @@ function drawGridNow() {
     ctx.setLineDash([]);
   }
 
+  // الخلية تحت المؤشر
   if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
@@ -401,13 +531,14 @@ function drawGridNow() {
 
 // ===== رسم أشرطة التمرير =====
 function drawScrollbars() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
   const totalHeight = GRID_SIZE * CELL_PIXEL_SIZE;
 
   const scrollbarThickness = 5;
   const scrollbarMargin = 8;
-  const scrollbarColor = '#d4a017';
-  const scrollbarBgColor = 'rgba(42, 42, 53, 0.5)';
+  const scrollbarColor = isLight ? '#b8860b' : '#d4a017';
+  const scrollbarBgColor = isLight ? 'rgba(212, 196, 160, 0.5)' : 'rgba(42, 42, 53, 0.5)';
 
   const vTrackX = canvas.width - scrollbarThickness - scrollbarMargin;
   const vTrackY = scrollbarMargin;
@@ -440,7 +571,145 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ===== 🆕 رسم الحجوزات (Viewport Culling) =====
+// ==========================================
+// ❤️ رسم القلب (Instagram Style)
+// ==========================================
+function drawHeart(x, y, size, filled, count) {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  
+  ctx.save();
+  
+  // تأثير النبض عند الإعجاب
+  let scale = 1;
+  if (filled) {
+    const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
+    scale = 1 + pulse * 0.15;
+  }
+  
+  ctx.translate(x + size / 2, y + size / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-size / 2, -size / 2);
+  
+  // ===== مسار SVG Heart معياري (Font Awesome) =====
+  function heartPath(scaleToSize) {
+    const s = scaleToSize / 512;
+    ctx.beginPath();
+    ctx.moveTo(47.6 * s, 480 * s);
+    ctx.bezierCurveTo(37.4 * s, 469.4 * s, 0, 432.1 * s, 0, 253.9 * s);
+    ctx.bezierCurveTo(0, 129.6 * s, 88.5 * s, 32 * s, 210.4 * s, 32 * s);
+    ctx.bezierCurveTo(276.7 * s, 32 * s, 338.8 * s, 63.7 * s, 383.8 * s, 115.4 * s);
+    ctx.bezierCurveTo(410.3 * s, 79.7 * s, 459.5 * s, 32 * s, 512 * s, 32 * s);
+    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
+    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
+    ctx.closePath();
+  }
+  
+  // مسار قلب مبسّط ومتقن
+  function drawHeartShape(s) {
+    ctx.beginPath();
+    ctx.moveTo(50 * s, 30 * s);
+    ctx.bezierCurveTo(50 * s, 27 * s, 47 * s, 24 * s, 44 * s, 24 * s);
+    ctx.bezierCurveTo(37 * s, 24 * s, 32 * s, 29 * s, 32 * s, 36 * s);
+    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
+    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
+    ctx.closePath();
+  }
+  
+  // ===== مسار قلب مثالي (يستخدمه Font Awesome) =====
+  function perfectHeart(s) {
+    ctx.beginPath();
+    ctx.moveTo(s * 0.5, s * 0.88);
+    ctx.bezierCurveTo(s * 0.42, s * 0.80, s * 0.0, s * 0.42, s * 0.0, s * 0.24);
+    ctx.bezierCurveTo(s * 0.0, s * 0.10, s * 0.11, s * 0.0, s * 0.25, s * 0.0);
+    ctx.bezierCurveTo(s * 0.35, s * 0.0, s * 0.44, s * 0.06, s * 0.5, s * 0.15);
+    ctx.bezierCurveTo(s * 0.56, s * 0.06, s * 0.65, s * 0.0, s * 0.75, s * 0.0);
+    ctx.bezierCurveTo(s * 0.89, s * 0.0, s * 1.0, s * 0.10, s * 1.0, s * 0.24);
+    ctx.bezierCurveTo(s * 1.0, s * 0.42, s * 0.58, s * 0.80, s * 0.5, s * 0.88);
+    ctx.closePath();
+  }
+  
+  // الحجم الفعلي للقلب داخل الإطار
+  const heartSize = size * 1.05;
+  const offsetX = (size - heartSize) / 2;
+  const offsetY = (size - heartSize) / 2;
+  
+  if (filled) {
+    // ===== ❤️ قلب أحمر ممتلئ مع توهج =====
+    ctx.shadowColor = isLight ? 'rgba(225, 29, 72, 0.9)' : 'rgba(255, 51, 102, 1)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = isLight ? '#e11d48' : '#ff3366';
+    ctx.translate(offsetX, offsetY);
+    perfectHeart(heartSize);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // حدود بيضاء رفيعة
+    ctx.strokeStyle = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = Math.max(1, size * 0.045);
+    ctx.lineJoin = 'round';
+    perfectHeart(heartSize);
+    ctx.stroke();
+    
+    // ===== رقم الإعجابات داخل القلب =====
+    if (count > 0) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(`${count}`, heartSize / 2, heartSize / 2 + size * 0.08);
+      ctx.shadowBlur = 0;
+    }
+  } else {
+    // ===== 🤍 قلب أبيض فارغ مع حدود سوداء =====
+    const heartStrokeBlack = isLight ? '#3a2818' : '#000000';
+    const heartStrokeWhite = isLight ? '#3a2818' : '#ffffff';
+    
+    ctx.translate(offsetX, offsetY);
+    
+    // حد أسود خارجي (سميك) لضمان الظهور على أي خلفية
+    ctx.strokeStyle = heartStrokeBlack;
+    ctx.lineWidth = Math.max(3, size * 0.14);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    perfectHeart(heartSize);
+    ctx.stroke();
+    
+    // حد أبيض داخلي (رفيع) — يبرز القلب
+    ctx.strokeStyle = heartStrokeWhite;
+    ctx.lineWidth = Math.max(1.8, size * 0.08);
+    perfectHeart(heartSize);
+    ctx.stroke();
+    
+    // تعبئة داخلية خفيفة جداً
+    ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.35)';
+    perfectHeart(heartSize);
+    ctx.fill();
+    
+    // إعادة الحد الأبيض فوق التعبئة
+    ctx.strokeStyle = heartStrokeWhite;
+    ctx.lineWidth = Math.max(1.8, size * 0.08);
+    perfectHeart(heartSize);
+    ctx.stroke();
+    
+    // ===== رقم الإعجابات =====
+    if (count > 0) {
+      ctx.fillStyle = heartStrokeWhite;
+      ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = heartStrokeBlack;
+      ctx.shadowBlur = 4;
+      ctx.fillText(`${count}`, heartSize / 2, heartSize / 2 + size * 0.08);
+      ctx.shadowBlur = 0;
+    }
+  }
+  
+  ctx.restore();
+  ctx.textBaseline = 'alphabetic';
+}
+// ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE - offsetX;
@@ -448,7 +717,7 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
-    // ✅ Viewport Culling
+    // Viewport Culling
     if (startX + width < -50 || startX > canvas.width + 50 || 
         startY + height < -50 || startY > canvas.height + 50) return;
 
@@ -456,6 +725,7 @@ function drawBookings() {
     const isPending = booking.status === 'pending';
     const isApproved = booking.status === 'approved';
 
+    // ===== 1. الخلفية (Pending فقط) =====
     if (isPending) {
       if (isBusiness) {
         ctx.fillStyle = 'rgba(212, 160, 23, 0.35)';
@@ -467,6 +737,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 2. الصورة (Approved فقط) =====
     if (isApproved && booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -475,6 +746,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 3. الإطار =====
     if (isPending) {
       if (isBusiness) {
         drawGlowingBorder(startX, startY, width, height);
@@ -506,6 +778,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 4. شارة ⏳ للـ Pending =====
     if (isPending && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
@@ -534,27 +807,24 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
-    if (isApproved && booking.likes && booking.likes > 0 && width > 60 && height > 60) {
+    // ==========================================
+    // ❤️ 5. القلب (أسفل يمين المربع)
+    // ==========================================
+    if (isApproved && width > 30 && height > 30) {
       const liked = hasLiked(booking.id);
-      const badgeX = startX + width - 40;
-      const badgeY = startY + height - 26;
+      const likeCount = booking.likes || 0;
       
-      ctx.fillStyle = liked ? 'rgba(255, 51, 102, 0.9)' : 'rgba(0, 0, 0, 0.75)';
-      ctx.beginPath();
-      ctx.roundRect(badgeX, badgeY, 36, 22, 11);
-      ctx.fill();
+      // حجم القلب يتناسب مع حجم المربع (10% من العرض)
+      const heartSize = Math.min(40, Math.max(20, Math.min(width, height) * 0.22));
+      const heartX = startX + width - heartSize - 6;
+      const heartY = startY + height - heartSize - 6;
       
-      ctx.fillStyle = liked ? '#fff' : '#f5b301';
-      ctx.font = 'bold 12px Cairo, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`❤️${booking.likes}`, badgeX + 18, badgeY + 11);
-      ctx.textBaseline = 'alphabetic';
+      drawHeart(heartX, heartY, heartSize, liked, likeCount);
     }
   });
 }
 
-// ===== 🆕 تحميل صور الحجوزات بشكل ذكي =====
+// ===== تحميل صور الحجوزات =====
 function loadBookingImage(booking) {
   if (pendingImageLoads.has(booking.id)) return;
   pendingImageLoads.add(booking.id);
@@ -565,8 +835,9 @@ function loadBookingImage(booking) {
     imageCache[booking.id] = img;
     pendingImageLoads.delete(booking.id);
     
+    // حد أقصى للـ cache
     const keys = Object.keys(imageCache);
-    if (keys.length > 100) {
+    if (keys.length > MAX_IMAGE_CACHE) {
       delete imageCache[keys[0]];
     }
     
@@ -578,7 +849,7 @@ function loadBookingImage(booking) {
   img.src = booking.selfieUrl;
 }
 
-// ===== التحقق من حجز المربع (فوري) =====
+// ===== التحقق من حجز المربع =====
 function isCellBooked(cellX, cellY) {
   return bookingsIndexCache.has(`${cellX},${cellY}`);
 }
@@ -592,7 +863,7 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== تحميل الحجوزات (محسّن) =====
+// ===== تحميل الحجوزات =====
 async function loadBookings() {
   try {
     const snapshot = await getDocs(collection(db, "bookings"));
@@ -636,7 +907,7 @@ async function updateLeaderboard() {
       const isBusiness = b.isBusiness === true;
       return `
         <div class="lb-item">
-          <img src="${b.selfieUrl || ''}" alt="صورة" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
+          <img src="${b.selfieUrl || ''}" alt="" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
           <span class="name">
             ${b.userName || 'زائر'}
             ${isBusiness ? '<span class="business-badge">🏢</span>' : ''}
@@ -652,19 +923,24 @@ async function updateLeaderboard() {
     const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     
+    // 🌐 نصوص مترجمة
+    const tBooked = currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares';
+    const tApproved = currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos';
+    const tBusiness = currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts';
+    
     const statsEl = document.getElementById('liveStats');
     if (statsEl) {
       statsEl.innerHTML = `
         <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares'}</span>
+          <span class="name">${tBooked}</span>
           <span class="count">${totalBooked.toLocaleString('en-US')}</span>
         </div>
         <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos'}</span>
+          <span class="name">${tApproved}</span>
           <span class="count">${approvedOnly.length.toLocaleString('en-US')}</span>
         </div>
         <div class="lb-item">
-          <span class="name">${currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts'}</span>
+          <span class="name">${tBusiness}</span>
           <span class="count">🏢 ${businessCount.toLocaleString('en-US')}</span>
         </div>
       `;
@@ -679,7 +955,7 @@ async function updateLeaderboard() {
       const isBusiness = b.isBusiness === true;
       return `
         <div class="lb-item">
-          <img src="${b.selfieUrl || ''}" alt="صورة" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
+          <img src="${b.selfieUrl || ''}" alt="" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
           <span class="name">
             ${b.userName || 'زائر'}
             ${isBusiness ? '<span class="business-badge">🏢</span>' : ''}
@@ -696,7 +972,6 @@ async function updateLeaderboard() {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
 }
-
 // ===== متغيرات السحب =====
 let isDragging = false;
 let dragStartX = 0;
@@ -708,7 +983,6 @@ let velocityY = 0;
 let inertiaFrame = null;
 let lastMoveTime = 0;
 
-// ===== 🆕 القصور الذاتي (محسّن) =====
 function startInertia() {
   if (inertiaFrame) cancelAnimationFrame(inertiaFrame);
   
@@ -810,7 +1084,7 @@ function closeOnboarding() {
 }
 window.closeOnboarding = closeOnboarding;
 
-// ===== التفاعل مع الفأرة (محسّن) =====
+// ===== التفاعل مع الفأرة =====
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
 
@@ -909,7 +1183,7 @@ canvas.addEventListener('mouseleave', () => {
   canvas.style.cursor = selectionMode ? 'cell' : 'crosshair';
 });
 
-// ===== 🆕 عجلة الفأرة (Debounced) =====
+// ===== عجلة الفأرة =====
 let wheelTimer = null;
 let wheelAccum = 0;
 
@@ -1038,7 +1312,7 @@ function handleSingleClick(e) {
   openBookingModal(startCell);
 }
 
-// ===== معالجة النقرة المزدوجة =====
+// ===== معالجة النقرة المزدوجة (إعجاب) =====
 async function handleDoubleClick(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1083,7 +1357,6 @@ async function handleDoubleClick(e) {
     }
   }
 }
-
 // ===== الضغط المطول =====
 let longPressTimer = null;
 let longPressActive = false;
@@ -1214,7 +1487,7 @@ function showOwnerCard(booking) {
   card.innerHTML = `
     <div class="owner-card-content">
       <img src="${booking.selfieUrl || ''}" 
-           alt="صورة" 
+           alt="" 
            class="owner-card-img ${isBusiness ? 'business-logo' : ''}" 
            onerror="this.style.display='none'">
       <div class="owner-card-info">
@@ -1341,7 +1614,7 @@ function updateSelectedCount() {
       display.textContent = currentLang === 'ar' 
         ? `المربعات المختارة: ${count}` 
         : `Selected squares: ${count}`;
-      display.style.color = '#f5b301';
+      display.style.color = 'var(--gold-light)';
     } else {
       display.textContent = currentLang === 'ar' 
         ? `⚠️ المنطقة تحتوي على مربعات محجوزة` 
@@ -1359,7 +1632,7 @@ function updateSelectedCount() {
   }
 }
 
-// ===== تحديث السعر الإجمالي =====
+// ===== تحديث السعر =====
 function updatePriceDisplay() {
   const total = selectedQuantity * currentCellPrice;
   const priceDisplay = document.getElementById('totalPrice');
@@ -1388,18 +1661,13 @@ function openBookingModal(startCell) {
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) {
     qtyInput.readOnly = true;
-    qtyInput.style.background = '#1a1a22';
-    qtyInput.style.cursor = 'not-allowed';
-    qtyInput.style.color = '#f5b301';
-    qtyInput.style.fontWeight = 'bold';
-    qtyInput.title = 'يتم تحديد العدد تلقائياً من الشبكة';
   }
   
   updatePaymentInfo();
   updatePriceDisplay();
 }
 
-// ===== إغلاق النافذة =====
+// ===== إغلاق نافذة الحجز =====
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
   document.getElementById('generateCardBtn').style.display = 'none';
@@ -1431,7 +1699,7 @@ function updatePaymentInfo() {
       <p>💰 حوّل USDT (TRC20) إلى:</p>
       <code style="display:block;word-break:break-all;margin:10px 0;color:#f5b301">TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy</code>
       <button onclick="navigator.clipboard.writeText('TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy')" 
-              style="padding:8px 16px;background:#d4a017;border:none;border-radius:6px;cursor:pointer">
+              style="padding:8px 16px;background:#d4a017;border:none;border-radius:6px;cursor:pointer;color:#0a0a0f;font-weight:bold">
         📋 نسخ العنوان
       </button>
       <p style="margin-top:10px">ثم ارفع صورة الإيصال</p>
@@ -1439,7 +1707,7 @@ function updatePaymentInfo() {
   }
 }
 
-// ===== معالجة اختيار نوع الحجز =====
+// ===== اختيار نوع الحجز =====
 document.querySelectorAll('input[name="bookingType"]').forEach(radio => {
   radio.addEventListener('change', (e) => {
     selectedBookingType = e.target.value;
@@ -1510,6 +1778,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
   if (!document.getElementById('termsCheck').checked) {
     msg.textContent = 'يجب الموافقة على الشروط';
     msg.className = 'form-message error';
+    showToast('⚠️ يجب الموافقة على الشروط', 'error');
     return;
   }
 
@@ -1519,6 +1788,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
   if (!selfieFile || !receiptFile) {
     msg.textContent = 'يجب رفع صورة السيلفي والإيصال';
     msg.className = 'form-message error';
+    showToast('⚠️ يجب رفع صورة السيلفي والإيصال', 'error');
     return;
   }
 
@@ -1533,6 +1803,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     if (!brandName) {
       msg.textContent = 'يجب إدخال اسم العلامة التجارية';
       msg.className = 'form-message error';
+      showToast('⚠️ يجب إدخال اسم العلامة التجارية', 'error');
       return;
     }
   }
@@ -1548,6 +1819,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     if (!isSelectionValid(x1, y1, x2, y2)) {
       msg.textContent = '❌ المنطقة المختارة تحتوي على مربعات محجوزة. اختر منطقة فارغة.';
       msg.className = 'form-message error';
+      showToast('❌ المنطقة تحتوي على مربعات محجوزة', 'error');
       return;
     }
 
@@ -1566,6 +1838,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     if (isCellBooked(cx, cy)) {
       msg.textContent = '❌ هذا المربع محجوز بالفعل.';
       msg.className = 'form-message error';
+      showToast('❌ هذا المربع محجوز بالفعل', 'error');
       return;
     }
   }
@@ -1573,6 +1846,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
   if (quantity > MAX_SQUARES) {
     msg.textContent = `الحد الأقصى ${MAX_SQUARES} مربع`;
     msg.className = 'form-message error';
+    showToast(`⚠️ الحد الأقصى ${MAX_SQUARES} مربع`, 'error');
     return;
   }
 
@@ -1625,25 +1899,9 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
 
     msg.textContent = '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
     msg.className = 'form-message success';
+    showToast('✅ تم إرسال طلبك بنجاح!', 'success');
     btn.textContent = 'تم الإرسال';
     btn.disabled = true;
-
-    document.getElementById('generateCardBtn').style.display = 'flex';
-
-    const cardData = {
-      userName: bookingData.userName,
-      startCell: startCell,
-      quantity: quantity,
-      selfieUrl: selfieUrl,
-      referralCode: getMyReferralCode(),
-      isBusiness: isBusiness,
-      brandName: isBusiness ? brandName : '',
-      ctaButton: isBusiness ? ctaButton : ''
-    };
-    
-    setTimeout(() => {
-      showShareCard(cardData);
-    }, 1500);
 
     selectionStart = null;
     selectionEnd = null;
@@ -1658,6 +1916,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
+      document.body.style.overflow = '';
       drawGrid();
     }, 3000);
 
@@ -1665,34 +1924,10 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     console.error(error);
     msg.textContent = '❌ حدث خطأ. حاول مرة أخرى.';
     msg.className = 'form-message error';
+    showToast('❌ حدث خطأ. حاول مرة أخرى.', 'error');
     btn.disabled = false;
     btn.textContent = 'إرسال الطلب';
   }
-});
-
-// ===== زر توليد البطاقة =====
-document.getElementById('generateCardBtn').addEventListener('click', async () => {
-  const selfiePreview = document.getElementById('selfiePreview');
-  const startCell = parseInt(document.getElementById('bookingModal').dataset.startCell) || 0;
-  const quantity = parseInt(document.getElementById('quantityInput').value) || 1;
-  const userName = document.getElementById('nameInput').value || 'زائر';
-  const isBusiness = selectedBookingType === 'business';
-  
-  if (!selfiePreview.src || selfiePreview.src.startsWith('data:image/svg')) {
-    alert('يجب رفع صورة أولاً');
-    return;
-  }
-  
-  await showShareCard({
-    userName,
-    startCell,
-    quantity,
-    selfieUrl: selfiePreview.src,
-    referralCode: getMyReferralCode(),
-    isBusiness,
-    brandName: isBusiness ? document.getElementById('brandNameInput').value : '',
-    ctaButton: isBusiness ? document.getElementById('ctaButtonInput').value : ''
-  });
 });
 
 // ===== رفع الصور على ImgBB =====
@@ -1930,7 +2165,7 @@ async function generateShareCard(bookingData) {
           ctx2.drawImage(img, sx, sy, size, size, photoX, photoY, photoSize, photoSize);
           ctx2.restore();
         } catch (error) {
-          console.error('فشل تحميل صورة السيلفي:', error);
+          console.error('فشل تحميل الصورة:', error);
           ctx2.fillStyle = '#2a2a35';
           roundRect(ctx2, photoX, photoY, photoSize, photoSize, 20);
           ctx2.fill();
@@ -2009,7 +2244,7 @@ async function generateShareCard(bookingData) {
 
       ctx2.font = 'bold 22px Cairo, sans-serif';
       ctx2.fillStyle = '#a0a0b0';
-      ctx2.fillText('hossinmansourh-jpg.github.io/V2-million-selfies', WIDTH / 2, ctaY + 45);
+      ctx2.fillText('hossinmansourh-jpg.github.io/million-selfies.github.io', WIDTH / 2, ctaY + 45);
 
       generatedCardDataURL = cardCanvas.toDataURL('image/png', 1.0);
       
@@ -2025,6 +2260,7 @@ async function generateShareCard(bookingData) {
   });
 }
 
+// ===== عرض نافذة البطاقة =====
 async function showShareCard(bookingData) {
   try {
     document.querySelectorAll('.modal').forEach(m => {
@@ -2046,10 +2282,11 @@ async function showShareCard(bookingData) {
 
   } catch (error) {
     console.error('فشل عرض البطاقة:', error);
-    alert('حدث خطأ أثناء توليد البطاقة');
+    showToast('حدث خطأ أثناء توليد البطاقة', 'error');
   }
 }
 
+// ===== إغلاق نافذة البطاقة =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
   
@@ -2069,9 +2306,10 @@ function closeShareCard() {
 }
 window.closeShareCard = closeShareCard;
 
+// ===== تنزيل البطاقة =====
 function downloadShareCard() {
   if (!generatedCardDataURL) {
-    alert('البطاقة غير جاهزة بعد');
+    showToast('البطاقة غير جاهزة بعد', 'error');
     return;
   }
 
@@ -2083,13 +2321,14 @@ function downloadShareCard() {
   const currentLang = localStorage.getItem('lang') || 'ar';
   showToast(currentLang === 'ar' 
     ? '✅ تم تنزيل البطاقة!' 
-    : '✅ Card downloaded!');
+    : '✅ Card downloaded!', 'success');
 }
 window.downloadShareCard = downloadShareCard;
 
+// ===== مشاركة البطاقة =====
 async function shareCard() {
   if (!generatedCardBlob) {
-    alert('البطاقة غير جاهزة بعد');
+    showToast('البطاقة غير جاهزة بعد', 'error');
     return;
   }
 
@@ -2131,46 +2370,13 @@ function fallbackShare(url, text) {
       url: url
     }).catch(() => {
       navigator.clipboard.writeText(`${text}\n${url}`);
-      showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
+      showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!', 'success');
     });
   } else {
     navigator.clipboard.writeText(`${text}\n${url}`);
-    showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
+    showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!', 'success');
   }
 }
-
-// ===== حماية حقل عدد المربعات =====
-(function protectQuantityInput() {
-  const protect = () => {
-    const qtyInput = document.getElementById('quantityInput');
-    if (!qtyInput) return;
-
-    qtyInput.readOnly = true;
-    qtyInput.style.background = '#1a1a22';
-    qtyInput.style.cursor = 'not-allowed';
-    qtyInput.style.color = '#f5b301';
-    qtyInput.style.fontWeight = 'bold';
-    qtyInput.title = 'يتم تحديد العدد تلقائياً من الشبكة';
-
-    qtyInput.addEventListener('paste', e => e.preventDefault());
-    qtyInput.addEventListener('drop', e => e.preventDefault());
-    qtyInput.addEventListener('keydown', e => {
-      const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
-                       'Tab', 'Home', 'End', 'Escape', 'Enter'];
-      if (!allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-      }
-    });
-  };
-
-  protect();
-
-  const observer = new MutationObserver(protect);
-  const modal = document.getElementById('bookingModal');
-  if (modal) {
-    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-  }
-})();
 
 // ===== الترجمات =====
 const translations = {
@@ -2219,7 +2425,7 @@ const translations = {
     term3: '• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.',
     term4: '• مدة معالجة الطلب: 24-48 ساعة.',
     termsLabel: 'أوافق على الشروط والأحكام',
-    refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.',
+    refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر تيليجرام لاسترجاع المال.',
     totalLabel: 'الإجمالي:',
     submitBtn: 'إرسال الطلب',
     contactUs: 'تواصل معنا',
@@ -2239,6 +2445,11 @@ const translations = {
     guideLongPressDesc: 'اضغط ضغطة مطولة (Long Press) على أي صورة لعرض معلومات صاحبها بشكل احترافي',
     referralText: '🎁 ادعُ 10 من أصدقائك واحصل على مربع مجاني!',
     referralBtn: '📋 نسخ رابط الإحالة',
+    referralModalTitle: '🎁 شارك رابط الإحالة',
+    referralLinkLabel: '🔗 الرابط الخاص بك',
+    referralTextLabel: '✍️ اختر نص الدعوة أو اكتب نصك:',
+    referralEditLabel: '✏️ يمكنك التعديل على النص:',
+    copyAllBtn: 'نسخ النص والرابط',
     leaderboardTitle: '🏆 لوحة الصدارة',
     lbRecent: '📸 آخر الحجوزات',
     lbStats: '📊 إحصائيات حية',
@@ -2251,7 +2462,7 @@ const translations = {
     generateCard: 'توليد بطاقة الإنجاز',
     shareCardTitle: '🎉 مبروك! بطاقتك جاهزة',
     shareCardSubtitle: 'شاركها مع أصدقائك على إنستغرام وتيك توك',
-    downloadCard: 'تنزيل بطاقة الإنجاز',
+    downloadCard: 'تنزيل البطاقة',
     shareNow: 'مشاركة مباشرة',
     closeBtn: 'إغلاق'
   },
@@ -2300,7 +2511,7 @@ const translations = {
     term3: '• If your image is rejected, contact us for a full refund.',
     term4: '• Processing time: 24-48 hours.',
     termsLabel: 'I agree to the Terms & Conditions',
-    refundNotice: '💡 If your image is rejected, please contact us via WhatsApp or Telegram for a refund.',
+    refundNotice: '💡 If your image is rejected, please contact us via Telegram for a refund.',
     totalLabel: 'Total:',
     submitBtn: 'Submit Request',
     contactUs: 'Contact Us',
@@ -2320,6 +2531,11 @@ const translations = {
     guideLongPressDesc: 'Long-press any photo to see the owner\'s info professionally',
     referralText: '🎁 Invite 10 friends and get a free square!',
     referralBtn: '📋 Copy Referral Link',
+    referralModalTitle: '🎁 Share Referral Link',
+    referralLinkLabel: '🔗 Your Link',
+    referralTextLabel: '✍️ Choose a message or write your own:',
+    referralEditLabel: '✏️ You can edit the text:',
+    copyAllBtn: 'Copy Text & Link',
     leaderboardTitle: '🏆 Leaderboard',
     lbRecent: '📸 Recent Bookings',
     lbStats: '📊 Live Stats',
@@ -2332,12 +2548,13 @@ const translations = {
     generateCard: 'Generate Achievement Card',
     shareCardTitle: '🎉 Congratulations! Your card is ready',
     shareCardSubtitle: 'Share it with your friends on Instagram and TikTok',
-    downloadCard: 'Download Achievement Card',
+    downloadCard: 'Download Card',
     shareNow: 'Share Now',
     closeBtn: 'Close'
   }
 };
 
+// ===== تطبيق اللغة =====
 function applyLanguage(lang) {
   const t = translations[lang];
   if (!t) return;
@@ -2377,6 +2594,7 @@ function applyLanguage(lang) {
   updateLeaderboard();
 }
 
+// ===== تبديل اللغة =====
 function setLanguage(lang) {
   const html = document.documentElement;
   html.lang = lang;
@@ -2399,6 +2617,7 @@ document.getElementById('langEn').addEventListener('click', () => setLanguage('e
 const savedLang = localStorage.getItem('lang') || 'ar';
 setLanguage(savedLang);
 
+// ===== تتبع الزيارات =====
 async function trackVisit() {
   const lastVisit = localStorage.getItem('last_visit_time');
   const now = Date.now();
@@ -2421,6 +2640,7 @@ async function trackVisit() {
   }
 }
 
+// ===== تحميل الصور مسبقاً =====
 function preloadImages() {
   allBookings.filter(b => b.status === 'approved').slice(0, 20).forEach(booking => {
     if (booking.selfieUrl && !imageCache[booking.id]) {
@@ -2429,7 +2649,7 @@ function preloadImages() {
   });
 }
 
-// ===== التشغيل (محسّن) =====
+// ===== التشغيل =====
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
@@ -2440,30 +2660,25 @@ resizeCanvas();
 loadBookings();
 trackVisit();
 
-// ✅ تحميل كل 60 ثانية
 setInterval(loadBookings, 60000);
 
-// ✅ تحميل الصور بعد 2 ثانية
 setTimeout(preloadImages, 2000);
 
-// ✅ حلقة الرسم النابض
+// ===== حلقة الرسم النابض =====
 let pulseInterval = null;
 function startPulseAnimation() {
   if (pulseInterval) return;
   pulseInterval = setInterval(() => {
     const hasPending = approvedBookings.some(b => b.status === 'pending');
-    if (hasPending && !isDragging && !inertiaFrame && !isSelecting) {
+    const hasBusiness = approvedBookings.some(b => b.isBusiness === true);
+    if ((hasPending || hasBusiness) && !isDragging && !inertiaFrame && !isSelecting) {
       drawGrid();
-    } else if (!hasPending) {
-      clearInterval(pulseInterval);
-      pulseInterval = null;
     }
   }, 600);
 }
 
 setTimeout(startPulseAnimation, 3000);
 
-// ✅ إيقاف الرسم عند مغادرة الصفحة
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (pulseInterval) {
@@ -2474,3 +2689,31 @@ document.addEventListener('visibilitychange', () => {
     startPulseAnimation();
   }
 });
+
+// ===== حماية حقل عدد المربعات =====
+(function protectQuantityInput() {
+  const protect = () => {
+    const qtyInput = document.getElementById('quantityInput');
+    if (!qtyInput) return;
+
+    qtyInput.readOnly = true;
+
+    qtyInput.addEventListener('paste', e => e.preventDefault());
+    qtyInput.addEventListener('drop', e => e.preventDefault());
+    qtyInput.addEventListener('keydown', e => {
+      const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                       'Tab', 'Home', 'End', 'Escape', 'Enter'];
+      if (!allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+      }
+    });
+  };
+
+  protect();
+
+  const observer = new MutationObserver(protect);
+  const modal = document.getElementById('bookingModal');
+  if (modal) {
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
