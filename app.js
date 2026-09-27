@@ -2905,31 +2905,42 @@ window.addEventListener('resize', () => {
 });
 
 async function initializeApp() {
-  // ✅ إخفاء الشاشة تلقائياً بعد 5 ثوانٍ (حماية)
-  setTimeout(() => hideLoadingScreen(), 5000);
+  // ✅ حماية: إخفاء الشاشة بعد 3 ثوانٍ كحد أقصى
+  const loadingFallback = setTimeout(() => hideLoadingScreen(), 3000);
   
   try {
     updateLoadingProgress(10);
-    
     resizeCanvas();
     updateLoadingProgress(30);
     
-    // محاولة التحميل من Cache أولاً (سريع جداً)
     const cachedLoaded = loadBookingsFromCache();
     
     if (cachedLoaded) {
       updateLoadingProgress(70);
-      setTimeout(() => hideLoadingScreen(), 300);
+      setTimeout(() => {
+        clearTimeout(loadingFallback);
+        hideLoadingScreen();
+      }, 300);
       setTimeout(() => refreshFromFirestore(true), 800);
     } else {
       updateLoadingProgress(60);
       await loadBookings(true);
       updateLoadingProgress(95);
-      setTimeout(() => hideLoadingScreen(), 400);
+      setTimeout(() => {
+        clearTimeout(loadingFallback);
+        hideLoadingScreen();
+      }, 400);
     }
     
     setTimeout(startPulseAnimation, 1500);
     
+  } catch (error) {
+    console.error('خطأ في التهيئة:', error);
+    clearTimeout(loadingFallback);
+    hideLoadingScreen();
+    showToast('حدث خطأ في التحميل', 'error');
+  }
+}
   } catch (error) {
     console.error('خطأ في التهيئة:', error);
     hideLoadingScreen();
