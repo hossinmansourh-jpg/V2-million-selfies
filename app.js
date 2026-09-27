@@ -2905,6 +2905,9 @@ window.addEventListener('resize', () => {
 });
 
 async function initializeApp() {
+  // ✅ إخفاء الشاشة تلقائياً بعد 5 ثوانٍ (حماية)
+  setTimeout(() => hideLoadingScreen(), 5000);
+  
   try {
     updateLoadingProgress(10);
     
