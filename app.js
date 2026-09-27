@@ -59,25 +59,125 @@ let bookingsIndexCache = new Map();
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
+// ============================================
+// 🚀 نظام Cache محلي + شاشة التحميل
+// ============================================
+
+const CACHE_KEY = 'bookings_cache_v1';
+const CACHE_TIMESTAMP_KEY = 'bookings_cache_timestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 دقائق
+
+// حفظ الحجوزات في Cache
+function saveBookingsToCache() {
+  try {
+    const cacheData = {
+      bookings: allBookings.map(b => ({
+        id: b.id,
+        startCell: b.startCell,
+        gridShape: b.gridShape,
+        quantity: b.quantity,
+        status: b.status,
+        isBusiness: b.isBusiness,
+        selfieUrl: b.selfieUrl,
+        userName: b.userName,
+        brandName: b.brandName,
+        ctaButton: b.ctaButton,
+        userLink: b.userLink,
+        userNote: b.userNote,
+        likes: b.likes || 0,
+        timestamp: b.timestamp,
+        totalPrice: b.totalPrice,
+        referralCode: b.referralCode
+      })),
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch (e) {
+    console.warn('فشل حفظ Cache:', e);
+  }
+}
+
+// تحميل الحجوزات من Cache
+function loadBookingsFromCache() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return false;
+    
+    const data = JSON.parse(cached);
+    if (!data.bookings || !Array.isArray(data.bookings)) return false;
+    
+    allBookings = data.bookings;
+    approvedBookings = data.bookings.filter(b => b.status === 'approved' || b.status === 'pending');
+    allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    buildBookingsIndex();
+    updateStats();
+    drawGrid();
+    updateLeaderboard();
+    
+    // تحميل الصور من Cache
+    setTimeout(() => {
+      allBookings.filter(b => b.status === 'approved').slice(0, 15).forEach(booking => {
+        if (booking.selfieUrl && !imageCache[booking.id]) {
+          loadBookingImage(booking);
+        }
+      });
+    }, 100);
+    
+    return true;
+  } catch (e) {
+    console.warn('فشل قراءة Cache:', e);
+    return false;
+  }
+}
+
+// التحقق من صلاحية Cache
+function isCacheValid() {
+  const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+  if (!timestamp) return false;
+  return (Date.now() - parseInt(timestamp)) < CACHE_DURATION;
+}
+
+// تحديث مؤشر المزامنة
+function showSyncIndicator(text = null) {
+  let indicator = document.getElementById('syncIndicator');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'syncIndicator';
+    indicator.className = 'sync-indicator';
+    indicator.innerHTML = '<div class="sync-spinner"></div><span class="sync-text"></span>';
+    document.body.appendChild(indicator);
+  }
+  
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const syncText = text || (currentLang === 'ar' ? 'جاري تحديث البيانات...' : 'Updating data...');
+  indicator.querySelector('.sync-text').textContent = syncText;
+  
+  setTimeout(() => indicator.classList.add('show'), 50);
+  setTimeout(() => {
+    indicator.classList.remove('show');
+  }, 2500);
+}
+
+// إخفاء شاشة التحميل
+function hideLoadingScreen() {
+  const loadingScreen = document.getElementById('loadingScreen');
+  if (!loadingScreen) return;
+  
+  loadingScreen.classList.add('hidden');
+  setTimeout(() => {
+    loadingScreen.style.display = 'none';
+  }, 600);
+}
+
+// تحديث شريط التقدم في شاشة التحميل
+function updateLoadingProgress(percent) {
+  const bar = document.getElementById('loadingProgressBar');
+  if (bar) bar.style.width = percent + '%';
+}
+
 // ===== الثيم =====
 function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
-}
-
-function getStoredTheme() {
-  return localStorage.getItem('theme') || 'dark';
-}
-
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-  drawGrid();
-}
-
-// تهيئة الثيم
-applyTheme(getStoredTheme());
 
 // ===== إدارة الإعجابات =====
 function getMyLikes() {
