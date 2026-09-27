@@ -963,9 +963,19 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== تحميل الحجوزات =====
-async function loadBookings() {
+// ===== 🆕 تحميل الحجوزات (ذكي — Cache + Firestore) =====
+async function loadBookings(silent = false) {
   try {
+    if (!silent) {
+      const cached = loadBookingsFromCache();
+      if (cached && isCacheValid()) {
+        // عرض Cache فوراً، ثم تحديث في الخلفية
+        setTimeout(() => refreshFromFirestore(true), 500);
+        return;
+      }
+    }
+    
+    // تحميل من Firestore
     const snapshot = await getDocs(collection(db, "bookings"));
     const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
@@ -977,8 +987,51 @@ async function loadBookings() {
     updateStats();
     drawGrid();
     updateLeaderboard();
+    
+    // حفظ في Cache
+    saveBookingsToCache();
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
+    
+    // محاولة العودة للـ Cache
+    if (!silent) {
+      const cached = loadBookingsFromCache();
+      if (!cached) {
+        showToast('تعذر تحميل البيانات — حاول التحديث', 'error');
+      }
+    }
+  }
+}
+
+// 🆕 تحديث البيانات في الخلفية (بدون تعطيل الواجهة)
+async function refreshFromFirestore(showIndicator = true) {
+  if (showIndicator) {
+    showSyncIndicator();
+  }
+  
+  try {
+    const snapshot = await getDocs(collection(db, "bookings"));
+    const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    const newAll = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
+    const newApproved = allDocs.filter(b => b.status === 'approved' || b.status === 'pending');
+    newAll.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    allBookings = newAll;
+    approvedBookings = newApproved;
+    
+    buildBookingsIndex();
+    updateStats();
+    drawGrid();
+    updateLeaderboard();
+    
+    saveBookingsToCache();
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    
+  } catch (error) {
+    console.error('فشل تحديث البيانات في الخلفية:', error);
   }
 }
 
