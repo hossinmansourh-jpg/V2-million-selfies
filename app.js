@@ -264,25 +264,120 @@ function getReferredBy() {
 // ===== نصوص الدعوة =====
 const REFERRAL_TEXTS = {
   ar: {
-    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n{LINK}`,
-    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟\nادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك!\n👇 الرابط:\n\n{LINK}`,
-    mysterious: `🤫 اكتشفت شيئاً مميزاً...\nمليون صورة سيلفي على جدارية رقمية واحدة.\nاحجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!\n👇 جرّب من هنا:\n\n{LINK}`,
-    short: `🎨 انضم لجدارية مليون صورة سيلفي!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
-    friendly: `مرحباً 👋\nجربت هذا الموقع، وهو فكرة عبقرية!\nادخل واحجز مربعك قبل أن يمتلئ 👇\n\n{LINK}\n\n(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
-    emotional: `📸 صورتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
-    professional: `🏢 جدارية مليون صورة سيلفي\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
+    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي!
+احجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.
+👇 سجّل الآن من رابطي:
+
+{LINK}`,
+    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟
+ادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك!
+👇 الرابط:
+
+{LINK}`,
+    mysterious: `🤫 اكتشفت شيئاً مميزاً...
+مليون صورة سيلفي على جدارية رقمية واحدة.
+احجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!
+👇 جرّب من هنا:
+
+{LINK}`,
+    short: `🎨 انضم لجدارية مليون صورة سيلفي!
+مربعك بـ 1$ فقط → اترك بصمتك للأبد
+👇
+
+{LINK}`,
+    friendly: `مرحباً 👋
+جربت هذا الموقع، وهو فكرة عبقرية!
+ادخل واحجز مربعك قبل أن يمتلئ 👇
+
+{LINK}
+
+(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
+    emotional: `📸 صورتك قد تبقى للأبد!
+كن جزءاً من أكبر جدارية رقمية في العالم.
+مربع واحد بـ 1$ فقط!
+👇 سجّل الآن:
+
+{LINK}`,
+    professional: `🏢 جدارية مليون صورة سيلفي
+فرصة تسويقية فريدة لعلامتك التجارية.
+احجز مربعك الآن من الرابط:
+
+{LINK}`,
+    business: `💼 أصحاب الأعمال والتجار!
+
+هل تبحث عن طريقة ذكية للترويج لعلامتك التجارية؟
+
+🎨 جدارية مليون صورة سيلفي هي فرصتك!
+
+✅ احجز مربعك التجاري بـ 5$ فقط
+✅ شعار شركتك على الجدارية الأكبر في العالم
+✅ زر مخصص لتوجيه العملاء لحسابك
+✅ ظهور دائم لكل زوار الموقع
+
+📈 استثمار تسويقي بأقل تكلفة وأكبر وصول!
+
+👇 احجز الآن:
+
+{LINK}`
   },
   en: {
-    direct: `🎨 Join me on the Million Selfies Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
-    challenge: `🏆 I accepted the challenge... Do you?\nJoin the world's largest wall and book your square before it's taken!\n👇 Link:\n\n{LINK}`,
-    mysterious: `🤫 I discovered something special...\nA million selfies on one digital wall.\nBook your square for $1 before spots run out!\n👇 Try here:\n\n{LINK}`,
-    short: `🎨 Join the Million Selfies Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
-    friendly: `Hey 👋\nI tried this site, it's genius!\nJoin and book your square before it fills up 👇\n\n{LINK}\n\n(Use my link so we both get a reward 🎁)`,
-    emotional: `📸 Your photo could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
-    professional: `🏢 Million Selfies Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
+    direct: `🎨 Join me on the Million Selfies Wall!
+Book your square for just $1 and be part of digital history.
+👇 Sign up now from my link:
+
+{LINK}`,
+    challenge: `🏆 I accepted the challenge... Do you?
+Join the world's largest wall and book your square before it's taken!
+👇 Link:
+
+{LINK}`,
+    mysterious: `🤫 I discovered something special...
+A million selfies on one digital wall.
+Book your square for $1 before spots run out!
+👇 Try here:
+
+{LINK}`,
+    short: `🎨 Join the Million Selfies Wall!
+Your square for $1 → leave your mark forever
+👇
+
+{LINK}`,
+    friendly: `Hey 👋
+I tried this site, it's genius!
+Join and book your square before it fills up 👇
+
+{LINK}
+
+(Use my link so we both get a reward 🎁)`,
+    emotional: `📸 Your photo could last forever!
+Be part of the largest digital wall in the world.
+One square for just $1!
+👇 Sign up now:
+
+{LINK}`,
+    professional: `🏢 Million Selfies Wall
+A unique marketing opportunity for your brand.
+Book your square now:
+
+{LINK}`,
+    business: `💼 Business Owners & Traders!
+
+Looking for a smart way to promote your brand?
+
+🎨 Million Selfies Wall is your opportunity!
+
+✅ Book your business square for just $5
+✅ Your company logo on the world's largest wall
+✅ Custom button to direct customers to your account
+✅ Permanent visibility for all site visitors
+
+📈 Marketing investment with minimum cost and maximum reach!
+
+👇 Book now:
+
+{LINK}`
   }
 };
-
 // ===== نسخ رابط الإحالة =====
 window.copyReferralLink = function() {
   const code = getMyReferralCode();
@@ -2802,19 +2897,53 @@ function preloadImages() {
   });
 }
 
-// ===== التشغيل =====
+// ===== 🆕 التشغيل مع شاشة التحميل =====
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(resizeCanvas, 200);
 });
 
-resizeCanvas();
-loadBookings();
+async function initializeApp() {
+  try {
+    updateLoadingProgress(10);
+    
+    resizeCanvas();
+    updateLoadingProgress(30);
+    
+    // محاولة التحميل من Cache أولاً (سريع جداً)
+    const cachedLoaded = loadBookingsFromCache();
+    
+    if (cachedLoaded) {
+      updateLoadingProgress(70);
+      setTimeout(() => hideLoadingScreen(), 300);
+      setTimeout(() => refreshFromFirestore(true), 800);
+    } else {
+      updateLoadingProgress(60);
+      await loadBookings(true);
+      updateLoadingProgress(95);
+      setTimeout(() => hideLoadingScreen(), 400);
+    }
+    
+    setTimeout(startPulseAnimation, 1500);
+    
+  } catch (error) {
+    console.error('خطأ في التهيئة:', error);
+    hideLoadingScreen();
+    showToast('حدث خطأ في التحميل', 'error');
+  }
+}
+
+// بدء التطبيق
+initializeApp();
 trackVisit();
 
-setInterval(loadBookings, 60000);
+// ✅ تحديث دوري كل 60 ثانية (في الخلفية)
+setInterval(() => {
+  refreshFromFirestore(false);
+}, 60000);
 
+// ✅ تحميل الصور بعد 2 ثانية
 setTimeout(preloadImages, 2000);
 
 // ===== حلقة الرسم النابض =====
