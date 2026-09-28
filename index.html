@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- 🆕 الشريط العلوي مع زر الوضع الليلي وزر اللغة -->
+  <!-- الشريط العلوي مع زر الوضع الليلي وزر اللغة -->
   <header class="topbar">
     <button id="themeToggle" class="theme-toggle" title="تبديل الوضع الليلي/النهاري" aria-label="Toggle theme">
       <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -195,7 +195,7 @@
       </p>
     </div>
 
-    <!-- 🆕 شريط التواصل — تم إزالة واتساب + إبقاء تيليجرام -->
+    <!-- شريط التواصل — تيليجرام فقط -->
     <div class="contact-bar">
       <a href="https://t.me/Hossinn11" class="contact-btn telegram" target="_blank" rel="noopener" aria-label="Telegram">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -220,15 +220,27 @@
     <div class="leaderboard-grid">
       <div class="lb-card">
         <h3 data-i18n="lbRecent">📸 آخر الحجوزات</h3>
-        <div id="recentBookings"></div>
+        <div id="recentBookings">
+          <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:10px;">
+            <span data-i18n="loadingText">⏳ جاري التحميل...</span>
+          </p>
+        </div>
       </div>
       <div class="lb-card">
         <h3 data-i18n="lbStats">📊 إحصائيات حية</h3>
-        <div id="liveStats"></div>
+        <div id="liveStats">
+          <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:10px;">
+            <span data-i18n="loadingText">⏳ جاري التحميل...</span>
+          </p>
+        </div>
       </div>
       <div class="lb-card" style="grid-column: span 2;">
         <h3 data-i18n="lbTopLiked">❤️ الأكثر إعجاباً</h3>
-        <div id="topLiked"></div>
+        <div id="topLiked">
+          <p style="color:var(--text-muted);font-size:13px;text-align:center;padding:10px;">
+            <span data-i18n="loadingText">⏳ جاري التحميل...</span>
+          </p>
+        </div>
       </div>
     </div>
   </section>
@@ -343,7 +355,7 @@
       </div>
 
       <div class="refund-notice">
-        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.</p>
+        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر تيليجرام لاسترجاع المال.</p>
       </div>
 
       <div class="price-display">
@@ -352,14 +364,11 @@
       </div>
 
       <button id="submitBooking" class="submit-btn" data-i18n="submitBtn">إرسال الطلب</button>
-      <button id="generateCardBtn" class="generate-card-btn" style="display:none;">
-        📸 <span data-i18n="generateCard">توليد بطاقة الإنجاز</span>
-      </button>
       <p id="formMessage" class="form-message"></p>
     </div>
   </div>
 
-  <!-- 🆕 نافذة نموذج الدعوة المتعددة -->
+  <!-- نموذج الدعوة المتعددة النصوص -->
   <div id="referralModal" class="modal hidden">
     <div class="modal-content referral-modal-content">
       <button class="close-btn" onclick="closeReferralModal()">✕</button>
@@ -401,8 +410,8 @@
             <span class="template-label">❤️ عاطفي</span>
           </label>
           <label class="template-option">
-            <input type="radio" name="referralTemplate" value="professional">
-            <span class="template-label">🏢 احترافي</span>
+            <input type="radio" name="referralTemplate" value="business">
+            <span class="template-label">🏢 تجاري</span>
           </label>
         </div>
       </div>
@@ -455,7 +464,7 @@
     </div>
   </div>
 
-  <!-- إشعار عائم -->
+  <!-- حاوية الإشعارات العائمة -->
   <div id="toastContainer" class="toast-container"></div>
 
   <script type="module" src="app.js"></script>
