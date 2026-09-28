@@ -297,8 +297,15 @@ const REFERRAL_TEXTS = {
 
 {LINK}
 
+    friendly: `مرحباً 👋
+جربت هذا الموقع، وهو فكرة عبقرية!
+ادخل واحجز مربعك قبل أن يمتلئ 👇
+
+{LINK}
+
 (استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
-    emotional: `📸 صورتك قد تبقى للأبد!
+    emotional: `📸 صورتك قد تبقى للأبد! 
+    
 كن جزءاً من أكبر جدارية رقمية في العالم.
 مربع واحد بـ 1$ فقط!
 👇 سجّل الآن:
@@ -318,6 +325,72 @@ const REFERRAL_TEXTS = {
 ✅ احجز مربعك التجاري بـ 5$ فقط
 ✅ شعار شركتك على الجدارية الأكبر في العالم
 ✅ زر مخصص لتوجيه العملاء لحسابك
+✅ ظهور دائم لكل زوار الموقع
+
+📈 استثمار تسويقي بأقل تكلفة وأكبر وصول!
+
+👇 احجز الآن:
+
+{LINK}`
+  },
+  en: {
+    direct: `🎨 Join me on the Million Selfies Wall!
+Book your square for just $1 and be part of digital history.
+👇 Sign up now from my link:
+
+{LINK}`,
+    challenge: `🏆 I accepted the challenge... Do you?
+Join the world's largest wall and book your square before it's taken!
+👇 Link:
+
+{LINK}`,
+    mysterious: `🤫 I discovered something special...
+A million selfies on one digital wall.
+Book your square for $1 before spots run out!
+👇 Try here:
+
+{LINK}`,
+    short: `🎨 Join the Million Selfies Wall!
+Your square for $1 → leave your mark forever
+👇
+
+{LINK}`,
+    friendly: `Hey 👋
+I tried this site, it's genius!
+Join and book your square before it fills up 👇
+
+{LINK}
+
+(Use my link so we both get a reward 🎁)`,
+    emotional: `📸 Your photo could last forever!
+Be part of the largest digital wall in the world.
+One square for just $1!
+👇 Sign up now:
+
+{LINK}`,
+    professional: `🏢 Million Selfies Wall
+A unique marketing opportunity for your brand.
+Book your square now:
+
+{LINK}`,
+    business: `💼 Business Owners & Traders!
+
+Looking for a smart way to promote your brand?
+
+🎨 Million Selfies Wall is your opportunity!
+
+✅ Book your business square for just $5
+✅ Your company logo on the world's largest wall
+✅ Custom button to direct customers to your account
+✅ Permanent visibility for all site visitors
+
+📈 Marketing investment with minimum cost and maximum reach!
+
+👇 Book now:
+
+{LINK}`
+  }
+};
 ✅ ظهور دائم لكل زوار الموقع
 
 📈 استثمار تسويقي بأقل تكلفة وأكبر وصول!
