@@ -55,6 +55,10 @@ let previewImageUrl = null;
 // ===== Cache للحجوزات =====
 let bookingsIndexCache = new Map();
 
+// ===== Cache للتخزين المحلي =====
+const CACHE_KEY = 'bookings_cache_v1';
+const CACHE_MAX_AGE = 5 * 60 * 1000; // 5 دقائق
+
 // ===== منع الرسم المكرر =====
 let drawGridPending = false;
 const pendingImageLoads = new Set();
@@ -170,7 +174,7 @@ const REFERRAL_TEXTS = {
     short: `🎨 انضم لجدارية مليون صورة سيلفي!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
     friendly: `مرحباً 👋\nجربت هذا الموقع، وهو فكرة عبقرية!\nادخل واحجز مربعك قبل أن يمتلئ 👇\n\n{LINK}\n\n(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
     emotional: `📸 صورتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
-    professional: `🏢 جدارية مليون صورة سيلفي\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
+    business: `🏢 جدارية مليون صورة سيلفي — فرصة تسويقية فريدة!\nاحجز مربعك التجاري بـ 5$ فقط واجعل علامتك التجارية أمام آلاف الزوار يومياً.\n✅ ظهور دائم + رابط لموقعك + زر دعوة للتواصل.\n👇 سجّل الآن:\n\n{LINK}`
   },
   en: {
     direct: `🎨 Join me on the Million Selfies Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
@@ -179,7 +183,7 @@ const REFERRAL_TEXTS = {
     short: `🎨 Join the Million Selfies Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
     friendly: `Hey 👋\nI tried this site, it's genius!\nJoin and book your square before it fills up 👇\n\n{LINK}\n\n(Use my link so we both get a reward 🎁)`,
     emotional: `📸 Your photo could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
-    professional: `🏢 Million Selfies Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
+    business: `🏢 Million Selfies Wall — Unique marketing opportunity!\nBook your business square for just $5 and put your brand in front of thousands of visitors.\n✅ Permanent exposure + link to your site + CTA button.\n👇 Sign up now:\n\n{LINK}`
   }
 };
 
@@ -257,24 +261,24 @@ window.copyReferralAll = function() {
   });
 };
 
-// ===== معالجة اختيار نص القالب =====
+// ===== معالجة أحداث التحميل =====
 document.addEventListener('DOMContentLoaded', () => {
   const referralRadios = document.querySelectorAll('input[name="referralTemplate"]');
   const textarea = document.getElementById('referralTextarea');
   const linkInput = document.getElementById('referralLinkInput');
   
-  if (!referralRadios.length || !textarea) return;
-  
-  referralRadios.forEach(radio => {
-    radio.addEventListener('change', (e) => {
-      const currentLang = localStorage.getItem('lang') || 'ar';
-      const templates = REFERRAL_TEXTS[currentLang] || REFERRAL_TEXTS.ar;
-      const selectedTemplate = e.target.value;
-      const text = templates[selectedTemplate] || templates.direct;
-      const url = linkInput ? linkInput.value : '';
-      textarea.value = text.replace('{LINK}', url);
+  if (referralRadios.length && textarea) {
+    referralRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const currentLang = localStorage.getItem('lang') || 'ar';
+        const templates = REFERRAL_TEXTS[currentLang] || REFERRAL_TEXTS.ar;
+        const selectedTemplate = e.target.value;
+        const text = templates[selectedTemplate] || templates.direct;
+        const url = linkInput ? linkInput.value : '';
+        textarea.value = text.replace('{LINK}', url);
+      });
     });
-  });
+  }
   
   const themeBtn = document.getElementById('themeToggle');
   if (themeBtn) {
@@ -356,6 +360,56 @@ function buildBookingsIndex() {
       }
     }
   });
+}
+
+// ===== Cache الحجوزات في localStorage =====
+function saveBookingsToCache(bookings) {
+  try {
+    const cacheData = {
+      timestamp: Date.now(),
+      bookings: bookings
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch (e) {
+    console.warn('فشل حفظ Cache:', e);
+  }
+}
+
+function loadBookingsFromCache() {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    
+    const cacheData = JSON.parse(cached);
+    const age = Date.now() - cacheData.timestamp;
+    
+    if (age > CACHE_MAX_AGE) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    
+    return cacheData.bookings;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ===== عرض فوري من Cache =====
+function displayFromCache() {
+  const cached = loadBookingsFromCache();
+  if (!cached || cached.length === 0) return false;
+  
+  allBookings = cached.filter(b => b.status === 'pending' || b.status === 'approved');
+  approvedBookings = cached.filter(b => b.status === 'approved' || b.status === 'pending');
+  allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  
+  buildBookingsIndex();
+  updateStats();
+  drawGrid();
+  updateLeaderboard();
+  
+  console.log('⚡ عرض سريع من Cache:', cached.length, 'حجز');
+  return true;
 }
 // ===== رسم التهشير الذهبي المتقاطع =====
 function drawBusinessHatch(x, y, width, height) {
@@ -590,32 +644,7 @@ function drawHeart(x, y, size, filled, count) {
   ctx.scale(scale, scale);
   ctx.translate(-size / 2, -size / 2);
   
-  // ===== مسار SVG Heart معياري (Font Awesome) =====
-  function heartPath(scaleToSize) {
-    const s = scaleToSize / 512;
-    ctx.beginPath();
-    ctx.moveTo(47.6 * s, 480 * s);
-    ctx.bezierCurveTo(37.4 * s, 469.4 * s, 0, 432.1 * s, 0, 253.9 * s);
-    ctx.bezierCurveTo(0, 129.6 * s, 88.5 * s, 32 * s, 210.4 * s, 32 * s);
-    ctx.bezierCurveTo(276.7 * s, 32 * s, 338.8 * s, 63.7 * s, 383.8 * s, 115.4 * s);
-    ctx.bezierCurveTo(410.3 * s, 79.7 * s, 459.5 * s, 32 * s, 512 * s, 32 * s);
-    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
-    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
-    ctx.closePath();
-  }
-  
-  // مسار قلب مبسّط ومتقن
-  function drawHeartShape(s) {
-    ctx.beginPath();
-    ctx.moveTo(50 * s, 30 * s);
-    ctx.bezierCurveTo(50 * s, 27 * s, 47 * s, 24 * s, 44 * s, 24 * s);
-    ctx.bezierCurveTo(37 * s, 24 * s, 32 * s, 29 * s, 32 * s, 36 * s);
-    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
-    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
-    ctx.closePath();
-  }
-  
-  // ===== مسار قلب مثالي (يستخدمه Font Awesome) =====
+  // ===== مسار قلب مثالي (Font Awesome Style) =====
   function perfectHeart(s) {
     ctx.beginPath();
     ctx.moveTo(s * 0.5, s * 0.88);
@@ -628,13 +657,12 @@ function drawHeart(x, y, size, filled, count) {
     ctx.closePath();
   }
   
-  // الحجم الفعلي للقلب داخل الإطار
   const heartSize = size * 1.05;
   const offsetX = (size - heartSize) / 2;
   const offsetY = (size - heartSize) / 2;
   
   if (filled) {
-    // ===== ❤️ قلب أحمر ممتلئ مع توهج =====
+    // ❤️ قلب أحمر ممتلئ مع توهج
     ctx.shadowColor = isLight ? 'rgba(225, 29, 72, 0.9)' : 'rgba(255, 51, 102, 1)';
     ctx.shadowBlur = 12;
     ctx.fillStyle = isLight ? '#e11d48' : '#ff3366';
@@ -650,7 +678,7 @@ function drawHeart(x, y, size, filled, count) {
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // ===== رقم الإعجابات داخل القلب =====
+    // رقم الإعجابات
     if (count > 0) {
       ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -662,13 +690,13 @@ function drawHeart(x, y, size, filled, count) {
       ctx.shadowBlur = 0;
     }
   } else {
-    // ===== 🤍 قلب أبيض فارغ مع حدود سوداء =====
+    // 🤍 قلب أبيض فارغ مع حدود سوداء
     const heartStrokeBlack = isLight ? '#3a2818' : '#000000';
     const heartStrokeWhite = isLight ? '#3a2818' : '#ffffff';
     
     ctx.translate(offsetX, offsetY);
     
-    // حد أسود خارجي (سميك) لضمان الظهور على أي خلفية
+    // حد أسود خارجي (سميك)
     ctx.strokeStyle = heartStrokeBlack;
     ctx.lineWidth = Math.max(3, size * 0.14);
     ctx.lineJoin = 'round';
@@ -676,24 +704,24 @@ function drawHeart(x, y, size, filled, count) {
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // حد أبيض داخلي (رفيع) — يبرز القلب
+    // حد أبيض داخلي
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // تعبئة داخلية خفيفة جداً
+    // تعبئة داخلية خفيفة
     ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.35)';
     perfectHeart(heartSize);
     ctx.fill();
     
-    // إعادة الحد الأبيض فوق التعبئة
+    // إعادة الحد الأبيض
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // ===== رقم الإعجابات =====
+    // رقم الإعجابات
     if (count > 0) {
       ctx.fillStyle = heartStrokeWhite;
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -807,14 +835,12 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // ==========================================
-    // ❤️ 5. القلب (أسفل يمين المربع)
-    // ==========================================
+    // ===== 5. القلب (أسفل يمين المربع) =====
     if (isApproved && width > 30 && height > 30) {
       const liked = hasLiked(booking.id);
       const likeCount = booking.likes || 0;
       
-      // حجم القلب يتناسب مع حجم المربع (10% من العرض)
+      // حجم القلب يتناسب مع حجم المربع
       const heartSize = Math.min(40, Math.max(20, Math.min(width, height) * 0.22));
       const heartX = startX + width - heartSize - 6;
       const heartY = startY + height - heartSize - 6;
@@ -835,7 +861,6 @@ function loadBookingImage(booking) {
     imageCache[booking.id] = img;
     pendingImageLoads.delete(booking.id);
     
-    // حد أقصى للـ cache
     const keys = Object.keys(imageCache);
     if (keys.length > MAX_IMAGE_CACHE) {
       delete imageCache[keys[0]];
@@ -863,14 +888,27 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== تحميل الحجوزات =====
-async function loadBookings() {
+// ===== تحميل الحجوزات (مع Cache) =====
+async function loadBookings(showCacheFirst = true) {
+  // 1. عرض فوري من Cache إذا متاح
+  if (showCacheFirst) {
+    const hasCache = displayFromCache();
+    if (hasCache) {
+      console.log('⚡ عرض سريع من Cache — تحديث في الخلفية...');
+    }
+  }
+  
+  // 2. تحميل من Firebase
   try {
     const snapshot = await getDocs(collection(db, "bookings"));
     const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
     allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
     approvedBookings = allDocs.filter(b => b.status === 'approved' || b.status === 'pending');
     allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    // حفظ في Cache
+    saveBookingsToCache(allDocs);
     
     buildBookingsIndex();
     
@@ -879,6 +917,10 @@ async function loadBookings() {
     updateLeaderboard();
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
+    
+    if (!showCacheFirst) {
+      displayFromCache();
+    }
   }
 }
 
@@ -918,12 +960,12 @@ async function updateLeaderboard() {
     }).join('');
     
     const recentEl = document.getElementById('recentBookings');
-    if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
+    if (recentEl) recentEl.innerHTML = recentHTML || `<p style="color:var(--text-muted);font-size:13px;">${currentLang === 'ar' ? 'لا توجد حجوزات بعد' : 'No bookings yet'}</p>`;
 
     const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     
-    // 🌐 نصوص مترجمة
+    // نصوص مترجمة
     const tBooked = currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares';
     const tApproved = currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos';
     const tBusiness = currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts';
@@ -966,7 +1008,7 @@ async function updateLeaderboard() {
     }).join('');
     
     const topLikedEl = document.getElementById('topLiked');
-    if (topLikedEl) topLikedEl.innerHTML = topLikedHTML || `<p style="color:#666;font-size:13px;">${currentLang === 'ar' ? 'لا توجد إعجابات بعد' : 'No likes yet'}</p>`;
+    if (topLikedEl) topLikedEl.innerHTML = topLikedHTML || `<p style="color:var(--text-muted);font-size:13px;">${currentLang === 'ar' ? 'لا توجد إعجابات بعد' : 'No likes yet'}</p>`;
 
   } catch (error) {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
@@ -1360,6 +1402,9 @@ async function handleDoubleClick(e) {
 // ===== الضغط المطول =====
 let longPressTimer = null;
 let longPressActive = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTouchDist = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) {
@@ -1517,10 +1562,6 @@ function showOwnerCard(booking) {
 window.showOwnerCard = showOwnerCard;
 
 // ===== اللمس =====
-let touchStartX = 0;
-let touchStartY = 0;
-let lastTouchDist = 0;
-
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
 
@@ -1670,7 +1711,6 @@ function openBookingModal(startCell) {
 // ===== إغلاق نافذة الحجز =====
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
-  document.getElementById('generateCardBtn').style.display = 'none';
   
   document.body.style.overflow = '';
   
@@ -1697,9 +1737,9 @@ function updatePaymentInfo() {
   } else {
     info.innerHTML = `
       <p>💰 حوّل USDT (TRC20) إلى:</p>
-      <code style="display:block;word-break:break-all;margin:10px 0;color:#f5b301">TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy</code>
+      <code style="display:block;word-break:break-all;margin:10px 0;color:var(--gold-light)">TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy</code>
       <button onclick="navigator.clipboard.writeText('TGRAeYyz8off9iqPVcph5YkZJuVL6Cngy')" 
-              style="padding:8px 16px;background:#d4a017;border:none;border-radius:6px;cursor:pointer;color:#0a0a0f;font-weight:bold">
+              style="padding:8px 16px;background:var(--gold);border:none;border-radius:6px;cursor:pointer;color:var(--bg-dark);font-weight:bold">
         📋 نسخ العنوان
       </button>
       <p style="margin-top:10px">ثم ارفع صورة الإيصال</p>
@@ -1769,7 +1809,6 @@ document.getElementById('receiptInput').addEventListener('change', (e) => {
     reader.readAsDataURL(file);
   }
 });
-
 // ===== إرسال الطلب =====
 document.getElementById('submitBooking').addEventListener('click', async () => {
   const btn = document.getElementById('submitBooking');
@@ -1908,11 +1947,10 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     previewImage = null;
     previewImageUrl = null;
 
-    await loadBookings();
+    await loadBookings(false);
 
     setTimeout(() => {
       document.getElementById('bookingModal').classList.add('hidden');
-      document.getElementById('generateCardBtn').style.display = 'none';
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
@@ -2260,7 +2298,6 @@ async function generateShareCard(bookingData) {
   });
 }
 
-// ===== عرض نافذة البطاقة =====
 async function showShareCard(bookingData) {
   try {
     document.querySelectorAll('.modal').forEach(m => {
@@ -2286,7 +2323,6 @@ async function showShareCard(bookingData) {
   }
 }
 
-// ===== إغلاق نافذة البطاقة =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
   
@@ -2301,12 +2337,10 @@ function closeShareCard() {
   const bookingModal = document.getElementById('bookingModal');
   if (bookingModal && !bookingModal.classList.contains('hidden')) {
     bookingModal.classList.add('hidden');
-    document.getElementById('generateCardBtn').style.display = 'none';
   }
 }
 window.closeShareCard = closeShareCard;
 
-// ===== تنزيل البطاقة =====
 function downloadShareCard() {
   if (!generatedCardDataURL) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2325,7 +2359,6 @@ function downloadShareCard() {
 }
 window.downloadShareCard = downloadShareCard;
 
-// ===== مشاركة البطاقة =====
 async function shareCard() {
   if (!generatedCardBlob) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2389,6 +2422,7 @@ const translations = {
     statAvailable: 'مربعات متبقية',
     statSelfies: 'صورة سيلفي',
     progressLabel: 'نسبة الحجز',
+    loadingText: '⏳ جاري التحميل...',
     wallTitle: 'لوحة الجدارية التفاعلية',
     legendEmpty: 'مربع فارغ',
     legendBooked: 'محجوز',
@@ -2475,6 +2509,7 @@ const translations = {
     statAvailable: 'Available Squares',
     statSelfies: 'Selfies',
     progressLabel: 'Booking Progress',
+    loadingText: '⏳ Loading...',
     wallTitle: 'Interactive Wall',
     legendEmpty: 'Empty',
     legendBooked: 'Booked',
@@ -2657,10 +2692,17 @@ window.addEventListener('resize', () => {
 });
 
 resizeCanvas();
-loadBookings();
+
+// ✅ 1. عرض فوري من Cache
+const hasCachedData = displayFromCache();
+
+// ✅ 2. تحميل من Firebase في الخلفية
+loadBookings(!hasCachedData);
+
 trackVisit();
 
-setInterval(loadBookings, 60000);
+// تحديث كل 5 دقائق
+setInterval(() => loadBookings(false), 5 * 60 * 1000);
 
 setTimeout(preloadImages, 2000);
 
