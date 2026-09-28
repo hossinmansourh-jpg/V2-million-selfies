@@ -1978,7 +1978,216 @@ html[data-theme="light"] .owner-card {
   background: #c44;
   transform: scale(1.1) rotate(90deg);
 }
+/* ===== إشعار حالة الطلب ===== */
+.status-notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.3s ease;
+}
 
+html[data-theme="light"] .status-notification-modal {
+  background: rgba(58, 40, 24, 0.85);
+}
+
+.status-notification-modal.active {
+  display: flex;
+}
+
+.status-notification-content {
+  background: var(--bg-gray);
+  border: 3px solid var(--gold);
+  border-radius: 24px;
+  padding: 35px 25px 25px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  animation: statusPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(212, 160, 23, 0.4);
+}
+
+@keyframes statusPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* أيقونة كبيرة في الأعلى */
+.status-icon {
+  font-size: 72px;
+  line-height: 1;
+  margin-bottom: 15px;
+  display: block;
+  animation: statusIconBounce 0.8s ease infinite alternate;
+}
+
+@keyframes statusIconBounce {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-8px) scale(1.08); }
+}
+
+.status-title {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 24px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.status-message {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-muted);
+  margin-bottom: 25px;
+  padding: 0 10px;
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.status-btn.primary {
+  background: var(--gold);
+  color: var(--bg-dark);
+}
+
+.status-btn.primary:hover {
+  background: var(--gold-light);
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(212, 160, 23, 0.4);
+}
+
+.status-btn.secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1.5px solid var(--bg-light);
+}
+
+.status-btn.secondary:hover {
+  background: rgba(212, 160, 23, 0.08);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.status-btn.danger {
+  background: linear-gradient(135deg, #9a3a3a, #c44);
+  color: #fff;
+}
+
+.status-btn.danger:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(154, 58, 58, 0.4);
+}
+
+/* ألوان حسب الحالة */
+.status-notification-content.pending {
+  border-color: #f5b301;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(245, 179, 1, 0.5);
+}
+
+.status-notification-content.pending .status-title {
+  color: #f5b301;
+}
+
+.status-notification-content.approved {
+  border-color: #4ade80;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(74, 222, 128, 0.5);
+}
+
+.status-notification-content.approved .status-title {
+  color: #4ade80;
+}
+
+.status-notification-content.rejected {
+  border-color: #ff5555;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(255, 85, 85, 0.5);
+}
+
+.status-notification-content.rejected .status-title {
+  color: #ff5555;
+}
+
+/* شارة "طلب جديد" */
+.status-notification-content::before {
+  content: '🔔';
+  position: absolute;
+  top: -20px;
+  right: 20px;
+  font-size: 32px;
+  animation: bellRing 1s ease infinite;
+}
+
+@keyframes bellRing {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+@media (max-width: 600px) {
+  .status-notification-content {
+    padding: 30px 20px 20px;
+    max-width: 92%;
+  }
+  
+  .status-icon {
+    font-size: 60px;
+  }
+  
+  .status-title {
+    font-size: 20px;
+  }
+  
+  .status-message {
+    font-size: 14px;
+  }
+  
+  .status-btn {
+    padding: 13px;
+    font-size: 14px;
+  }
+}
 /* ============================================
    📱 تحسينات الجوال
    ============================================ */
