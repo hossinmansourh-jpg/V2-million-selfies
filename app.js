@@ -3117,10 +3117,10 @@ const hasCachedData = displayFromCache();
 // ✅ 2. تحميل من Firebase في الخلفية
 loadBookings(!hasCachedData);
 
-// ✅ 3. فحص حالة حجوزات المستخدم
-setTimeout(() => {
-  checkMyBookingsStatus();
-}, 2000);
+// ✅ 3. فحص حالة حجوزات المستخدم (معطل مؤقتاً)
+// setTimeout(() => {
+//   checkMyBookingsStatus();
+// }, 2000);
 
 trackVisit();
 
