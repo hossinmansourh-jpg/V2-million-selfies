@@ -32,10 +32,16 @@ let selectedBookingType = 'personal';
 let currentCellPrice = CELL_PRICE;
 
 // ===== Canvas =====
-const canvas = document.getElementById('gridCanvas');
-const ctx = canvas.getContext('2d', { alpha: false });
+// ===== Canvas =====
+// 🆕 انتظر حتى يكون DOM جاهزاً
+let canvas = document.getElementById('gridCanvas');
+let ctx;
 
-let offsetX = 0;
+if (!canvas) {
+  console.error('❌ Canvas غير موجود في HTML!');
+} else {
+  ctx = canvas.getContext('2d', { alpha: false });
+}let offsetX = 0;
 let offsetY = 0;
 
 let allBookings = [];
