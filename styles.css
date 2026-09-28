@@ -1897,6 +1897,13 @@ html[data-theme="light"] .owner-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: sticky;
+  bottom: -25px;
+  margin: 0 -25px -25px -25px;
+  padding: 15px 25px 25px 25px;
+  background: linear-gradient(to top, var(--bg-gray) 85%, transparent);
+  z-index: 5;
+  border-radius: 0 0 20px 20px;
 }
 
 .share-btn {
