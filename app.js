@@ -32,8 +32,8 @@ let selectedBookingType = 'personal';
 let currentCellPrice = CELL_PRICE;
 
 // ===== Canvas =====
-let canvas = document.getElementById('gridCanvas');
-let ctx = canvas ? canvas.getContext('2d', { alpha: false }) : null;
+const canvas = document.getElementById('gridCanvas');
+const ctx = canvas.getContext('2d', { alpha: false });
 
 let offsetX = 0;
 let offsetY = 0;
@@ -59,114 +59,6 @@ let bookingsIndexCache = new Map();
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
-// ============================================
-// 🚀 نظام Cache محلي + شاشة التحميل
-// ============================================
-
-const CACHE_KEY = 'bookings_cache_v1';
-const CACHE_TIMESTAMP_KEY = 'bookings_cache_timestamp';
-const CACHE_DURATION = 5 * 60 * 1000;
-
-function saveBookingsToCache() {
-  try {
-    const cacheData = {
-      bookings: allBookings.map(b => ({
-        id: b.id,
-        startCell: b.startCell,
-        gridShape: b.gridShape,
-        quantity: b.quantity,
-        status: b.status,
-        isBusiness: b.isBusiness,
-        selfieUrl: b.selfieUrl,
-        userName: b.userName,
-        brandName: b.brandName,
-        ctaButton: b.ctaButton,
-        userLink: b.userLink,
-        userNote: b.userNote,
-        likes: b.likes || 0,
-        timestamp: b.timestamp,
-        totalPrice: b.totalPrice,
-        referralCode: b.referralCode
-      })),
-      timestamp: Date.now()
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-  } catch (e) {
-    console.warn('فشل حفظ Cache:', e);
-  }
-}
-
-function loadBookingsFromCache() {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) return false;
-    
-    const data = JSON.parse(cached);
-    if (!data.bookings || !Array.isArray(data.bookings)) return false;
-    
-    allBookings = data.bookings;
-    approvedBookings = data.bookings.filter(b => b.status === 'approved' || b.status === 'pending');
-    allBookings.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    
-    buildBookingsIndex();
-    updateStats();
-    drawGrid();
-    updateLeaderboard();
-    
-    setTimeout(() => {
-      allBookings.filter(b => b.status === 'approved').slice(0, 15).forEach(booking => {
-        if (booking.selfieUrl && !imageCache[booking.id]) {
-          loadBookingImage(booking);
-        }
-      });
-    }, 100);
-    
-    return true;
-  } catch (e) {
-    console.warn('فشل قراءة Cache:', e);
-    return false;
-  }
-}
-
-function isCacheValid() {
-  const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-  if (!timestamp) return false;
-  return (Date.now() - parseInt(timestamp)) < CACHE_DURATION;
-}
-
-function showSyncIndicator(text = null) {
-  let indicator = document.getElementById('syncIndicator');
-  if (!indicator) {
-    indicator = document.createElement('div');
-    indicator.id = 'syncIndicator';
-    indicator.className = 'sync-indicator';
-    indicator.innerHTML = '<div class="sync-spinner"></div><span class="sync-text"></span>';
-    document.body.appendChild(indicator);
-  }
-  
-  const currentLang = localStorage.getItem('lang') || 'ar';
-  const syncText = text || (currentLang === 'ar' ? 'جاري تحديث البيانات...' : 'Updating data...');
-  indicator.querySelector('.sync-text').textContent = syncText;
-  
-  setTimeout(() => indicator.classList.add('show'), 50);
-  setTimeout(() => indicator.classList.remove('show'), 2500);
-}
-
-function hideLoadingScreen() {
-  const loadingScreen = document.getElementById('loadingScreen');
-  if (!loadingScreen) return;
-  
-  loadingScreen.classList.add('hidden');
-  setTimeout(() => {
-    loadingScreen.style.display = 'none';
-  }, 600);
-}
-
-function updateLoadingProgress(percent) {
-  const bar = document.getElementById('loadingProgressBar');
-  if (bar) bar.style.width = percent + '%';
-}
-
 // ===== الثيم =====
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -184,6 +76,7 @@ function toggleTheme() {
   drawGrid();
 }
 
+// تهيئة الثيم
 applyTheme(getStoredTheme());
 
 // ===== إدارة الإعجابات =====
@@ -204,7 +97,7 @@ function hasLiked(bookingId) {
   return getMyLikes().includes(bookingId);
 }
 
-// ===== إشعار Toast =====
+// ===== إظهار إشعار (Toast) =====
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = 'toast-notification ' + type;
@@ -271,24 +164,22 @@ function getReferredBy() {
 // ===== نصوص الدعوة =====
 const REFERRAL_TEXTS = {
   ar: {
-    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي! احجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي. سجّل الآن: {LINK}`,
-    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟ ادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك! الرابط: {LINK}`,
-    mysterious: `🤫 اكتشفت شيئاً مميزاً... مليون صورة سيلفي على جدارية رقمية واحدة. احجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن! جرّب من هنا: {LINK}`,
-    short: `🎨 انضم لجدارية مليون صورة سيلفي! مربعك بـ 1$ فقط → اترك بصمتك للأبد: {LINK}`,
-    friendly: `مرحباً 👋 جربت هذا الموقع، وهو فكرة عبقرية! ادخل واحجز مربعك قبل أن يمتلئ 👇 {LINK} (استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
-    emotional: `📸 صورتك قد تبقى للأبد! كن جزءاً من أكبر جدارية رقمية في العالم. مربع واحد بـ 1$ فقط! سجّل الآن: {LINK}`,
-    professional: `🏢 جدارية مليون صورة سيلفي - فرصة تسويقية فريدة لعلامتك التجارية. احجز مربعك الآن من الرابط: {LINK}`,
-    business: `💼 أصحاب الأعمال والتجار! هل تبحث عن طريقة ذكية للترويج لعلامتك التجارية؟ 🎨 جدارية مليون صورة سيلفي هي فرصتك! ✅ احجز مربعك التجاري بـ 5$ فقط ✅ شعار شركتك على الجدارية الأكبر ✅ زر مخصص لتوجيه العملاء ✅ ظهور دائم لكل الزوار. احجز الآن: {LINK}`
+    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n{LINK}`,
+    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟\nادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك!\n👇 الرابط:\n\n{LINK}`,
+    mysterious: `🤫 اكتشفت شيئاً مميزاً...\nمليون صورة سيلفي على جدارية رقمية واحدة.\nاحجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!\n👇 جرّب من هنا:\n\n{LINK}`,
+    short: `🎨 انضم لجدارية مليون صورة سيلفي!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
+    friendly: `مرحباً 👋\nجربت هذا الموقع، وهو فكرة عبقرية!\nادخل واحجز مربعك قبل أن يمتلئ 👇\n\n{LINK}\n\n(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
+    emotional: `📸 صورتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
+    professional: `🏢 جدارية مليون صورة سيلفي\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
   },
   en: {
-    direct: `🎨 Join me on the Million Selfies Wall! Book your square for just $1 and be part of digital history. Sign up now: {LINK}`,
-    challenge: `🏆 I accepted the challenge... Do you? Join the world's largest wall and book your square before it's taken! Link: {LINK}`,
-    mysterious: `🤫 I discovered something special... A million selfies on one digital wall. Book your square for $1 before spots run out! Try here: {LINK}`,
-    short: `🎨 Join the Million Selfies Wall! Your square for $1 → leave your mark forever: {LINK}`,
-    friendly: `Hey 👋 I tried this site, it's genius! Join and book your square before it fills up 👇 {LINK} (Use my link so we both get a reward 🎁)`,
-    emotional: `📸 Your photo could last forever! Be part of the largest digital wall in the world. One square for just $1! Sign up now: {LINK}`,
-    professional: `🏢 Million Selfies Wall - A unique marketing opportunity for your brand. Book your square now: {LINK}`,
-    business: `💼 Business Owners & Traders! Looking for a smart way to promote your brand? 🎨 Million Selfies Wall is your opportunity! ✅ Book your business square for $5 ✅ Your logo on the world's largest wall ✅ Custom CTA button ✅ Permanent visibility. Book now: {LINK}`
+    direct: `🎨 Join me on the Million Selfies Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
+    challenge: `🏆 I accepted the challenge... Do you?\nJoin the world's largest wall and book your square before it's taken!\n👇 Link:\n\n{LINK}`,
+    mysterious: `🤫 I discovered something special...\nA million selfies on one digital wall.\nBook your square for $1 before spots run out!\n👇 Try here:\n\n{LINK}`,
+    short: `🎨 Join the Million Selfies Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
+    friendly: `Hey 👋\nI tried this site, it's genius!\nJoin and book your square before it fills up 👇\n\n{LINK}\n\n(Use my link so we both get a reward 🎁)`,
+    emotional: `📸 Your photo could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
+    professional: `🏢 Million Selfies Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
   }
 };
 
@@ -303,7 +194,10 @@ window.copyReferralLink = function() {
   
   if (!modal || !linkInput || !textarea) {
     navigator.clipboard.writeText(url).then(() => {
-      showToast('✅ تم نسخ رابط الإحالة!', 'success');
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      showToast(currentLang === 'ar' 
+        ? `✅ تم نسخ رابط الإحالة!` 
+        : `✅ Referral link copied!`, 'success');
     }).catch(() => {
       showToast('❌ فشل نسخ الرابط', 'error');
     });
@@ -334,7 +228,10 @@ window.copyReferralLinkOnly = function() {
   if (!linkInput) return;
   
   navigator.clipboard.writeText(linkInput.value).then(() => {
-    showToast('✅ تم نسخ الرابط فقط!', 'success');
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    showToast(currentLang === 'ar' 
+      ? `✅ تم نسخ الرابط فقط!` 
+      : `✅ Link copied!`, 'success');
   }).catch(() => {
     showToast('❌ فشل النسخ', 'error');
   });
@@ -349,7 +246,11 @@ window.copyReferralAll = function() {
   localStorage.setItem('my_referral_text', text.replace(/https?:\/\/\S+/g, '{LINK}'));
   
   navigator.clipboard.writeText(text).then(() => {
-    showToast('✅ تم نسخ النص والرابط!', 'success');
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    showToast(currentLang === 'ar' 
+      ? `✅ تم نسخ النص والرابط!` 
+      : `✅ Text and link copied!`, 'success');
+    
     setTimeout(() => closeReferralModal(), 800);
   }).catch(() => {
     showToast('❌ فشل النسخ', 'error');
@@ -388,7 +289,7 @@ function convertToJPG(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const tempCanvas = document.createElement('canvas');
+        const canvas = document.createElement('canvas');
         const maxSize = 1200;
         let width = img.width;
         let height = img.height;
@@ -403,13 +304,13 @@ function convertToJPG(file) {
           }
         }
 
-        tempCanvas.width = width;
-        tempCanvas.height = height;
+        canvas.width = width;
+        canvas.height = height;
 
-        const ctxTemp = tempCanvas.getContext('2d');
+        const ctxTemp = canvas.getContext('2d');
         ctxTemp.drawImage(img, 0, 0, width, height);
 
-        tempCanvas.toBlob((blob) => {
+        canvas.toBlob((blob) => {
           if (blob) {
             const newFile = new File([blob], 'image.jpg', { type: 'image/jpeg' });
             resolve(newFile);
@@ -428,7 +329,6 @@ function convertToJPG(file) {
 
 // ===== إعداد Canvas =====
 function resizeCanvas() {
-  if (!canvas) return;
   const container = canvas.parentElement;
   const newWidth = container.clientWidth;
   const newHeight = container.clientHeight;
@@ -457,10 +357,10 @@ function buildBookingsIndex() {
     }
   });
 }
-
-// ===== رسم التهشير الذهبي =====
+// ===== رسم التهشير الذهبي المتقاطع =====
 function drawBusinessHatch(x, y, width, height) {
   ctx.save();
+  
   ctx.beginPath();
   ctx.rect(x, y, width, height);
   ctx.clip();
@@ -519,9 +419,9 @@ function drawGrid() {
 }
 
 function drawGridNow() {
-  if (!ctx || !canvas) return;
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   
+  // خلفية الشبكة
   ctx.fillStyle = isLight ? '#f5efe0' : '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -530,6 +430,7 @@ function drawGridNow() {
   const endX = Math.min(GRID_SIZE, startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 3);
   const endY = Math.min(GRID_SIZE, startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 3);
 
+  // خطوط الشبكة
   ctx.strokeStyle = isLight ? '#d4c4a0' : '#2a2a35';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -544,6 +445,7 @@ function drawGridNow() {
 
   drawBookings();
 
+  // تحديد المنطقة
   if (isSelecting && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -581,6 +483,7 @@ function drawGridNow() {
     ctx.fillText(`${count}`, px + width / 2, py - 10);
   }
 
+  // معاينة الصورة
   if (previewImage && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -608,6 +511,7 @@ function drawGridNow() {
     ctx.setLineDash([]);
   }
 
+  // الخلية تحت المؤشر
   if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
@@ -668,13 +572,14 @@ function drawScrollbars() {
 }
 
 // ==========================================
-// ❤️ رسم القلب (Instagram Style - مسار معياري)
+// ❤️ رسم القلب (Instagram Style)
 // ==========================================
 function drawHeart(x, y, size, filled, count) {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   
   ctx.save();
   
+  // تأثير النبض عند الإعجاب
   let scale = 1;
   if (filled) {
     const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
@@ -685,6 +590,32 @@ function drawHeart(x, y, size, filled, count) {
   ctx.scale(scale, scale);
   ctx.translate(-size / 2, -size / 2);
   
+  // ===== مسار SVG Heart معياري (Font Awesome) =====
+  function heartPath(scaleToSize) {
+    const s = scaleToSize / 512;
+    ctx.beginPath();
+    ctx.moveTo(47.6 * s, 480 * s);
+    ctx.bezierCurveTo(37.4 * s, 469.4 * s, 0, 432.1 * s, 0, 253.9 * s);
+    ctx.bezierCurveTo(0, 129.6 * s, 88.5 * s, 32 * s, 210.4 * s, 32 * s);
+    ctx.bezierCurveTo(276.7 * s, 32 * s, 338.8 * s, 63.7 * s, 383.8 * s, 115.4 * s);
+    ctx.bezierCurveTo(410.3 * s, 79.7 * s, 459.5 * s, 32 * s, 512 * s, 32 * s);
+    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
+    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
+    ctx.closePath();
+  }
+  
+  // مسار قلب مبسّط ومتقن
+  function drawHeartShape(s) {
+    ctx.beginPath();
+    ctx.moveTo(50 * s, 30 * s);
+    ctx.bezierCurveTo(50 * s, 27 * s, 47 * s, 24 * s, 44 * s, 24 * s);
+    ctx.bezierCurveTo(37 * s, 24 * s, 32 * s, 29 * s, 32 * s, 36 * s);
+    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
+    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
+    ctx.closePath();
+  }
+  
+  // ===== مسار قلب مثالي (يستخدمه Font Awesome) =====
   function perfectHeart(s) {
     ctx.beginPath();
     ctx.moveTo(s * 0.5, s * 0.88);
@@ -697,11 +628,13 @@ function drawHeart(x, y, size, filled, count) {
     ctx.closePath();
   }
   
+  // الحجم الفعلي للقلب داخل الإطار
   const heartSize = size * 1.05;
   const offsetX = (size - heartSize) / 2;
   const offsetY = (size - heartSize) / 2;
   
   if (filled) {
+    // ===== ❤️ قلب أحمر ممتلئ مع توهج =====
     ctx.shadowColor = isLight ? 'rgba(225, 29, 72, 0.9)' : 'rgba(255, 51, 102, 1)';
     ctx.shadowBlur = 12;
     ctx.fillStyle = isLight ? '#e11d48' : '#ff3366';
@@ -710,12 +643,14 @@ function drawHeart(x, y, size, filled, count) {
     ctx.fill();
     ctx.shadowBlur = 0;
     
+    // حدود بيضاء رفيعة
     ctx.strokeStyle = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)';
     ctx.lineWidth = Math.max(1, size * 0.045);
     ctx.lineJoin = 'round';
     perfectHeart(heartSize);
     ctx.stroke();
     
+    // ===== رقم الإعجابات داخل القلب =====
     if (count > 0) {
       ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -727,11 +662,13 @@ function drawHeart(x, y, size, filled, count) {
       ctx.shadowBlur = 0;
     }
   } else {
+    // ===== 🤍 قلب أبيض فارغ مع حدود سوداء =====
     const heartStrokeBlack = isLight ? '#3a2818' : '#000000';
     const heartStrokeWhite = isLight ? '#3a2818' : '#ffffff';
     
     ctx.translate(offsetX, offsetY);
     
+    // حد أسود خارجي (سميك) لضمان الظهور على أي خلفية
     ctx.strokeStyle = heartStrokeBlack;
     ctx.lineWidth = Math.max(3, size * 0.14);
     ctx.lineJoin = 'round';
@@ -739,20 +676,24 @@ function drawHeart(x, y, size, filled, count) {
     perfectHeart(heartSize);
     ctx.stroke();
     
+    // حد أبيض داخلي (رفيع) — يبرز القلب
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
+    // تعبئة داخلية خفيفة جداً
     ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.35)';
     perfectHeart(heartSize);
     ctx.fill();
     
+    // إعادة الحد الأبيض فوق التعبئة
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
+    // ===== رقم الإعجابات =====
     if (count > 0) {
       ctx.fillStyle = heartStrokeWhite;
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -768,7 +709,6 @@ function drawHeart(x, y, size, filled, count) {
   ctx.restore();
   ctx.textBaseline = 'alphabetic';
 }
-
 // ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
@@ -777,6 +717,7 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
+    // Viewport Culling
     if (startX + width < -50 || startX > canvas.width + 50 || 
         startY + height < -50 || startY > canvas.height + 50) return;
 
@@ -784,6 +725,7 @@ function drawBookings() {
     const isPending = booking.status === 'pending';
     const isApproved = booking.status === 'approved';
 
+    // ===== 1. الخلفية (Pending فقط) =====
     if (isPending) {
       if (isBusiness) {
         ctx.fillStyle = 'rgba(212, 160, 23, 0.35)';
@@ -795,6 +737,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 2. الصورة (Approved فقط) =====
     if (isApproved && booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -803,6 +746,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 3. الإطار =====
     if (isPending) {
       if (isBusiness) {
         drawGlowingBorder(startX, startY, width, height);
@@ -834,6 +778,7 @@ function drawBookings() {
       }
     }
 
+    // ===== 4. شارة ⏳ للـ Pending =====
     if (isPending && width > 40 && height > 40) {
       const badgeSize = Math.min(24, Math.max(16, width / 8));
       const badgeX = startX + 6;
@@ -862,10 +807,14 @@ function drawBookings() {
       ctx.textBaseline = 'alphabetic';
     }
 
+    // ==========================================
+    // ❤️ 5. القلب (أسفل يمين المربع)
+    // ==========================================
     if (isApproved && width > 30 && height > 30) {
       const liked = hasLiked(booking.id);
       const likeCount = booking.likes || 0;
       
+      // حجم القلب يتناسب مع حجم المربع (10% من العرض)
       const heartSize = Math.min(40, Math.max(20, Math.min(width, height) * 0.22));
       const heartX = startX + width - heartSize - 6;
       const heartY = startY + height - heartSize - 6;
@@ -886,6 +835,7 @@ function loadBookingImage(booking) {
     imageCache[booking.id] = img;
     pendingImageLoads.delete(booking.id);
     
+    // حد أقصى للـ cache
     const keys = Object.keys(imageCache);
     if (keys.length > MAX_IMAGE_CACHE) {
       delete imageCache[keys[0]];
@@ -913,17 +863,9 @@ function isSelectionValid(x1, y1, x2, y2) {
   return true;
 }
 
-// ===== تحميل الحجوزات (ذكي — Cache + Firestore) =====
-async function loadBookings(silent = false) {
+// ===== تحميل الحجوزات =====
+async function loadBookings() {
   try {
-    if (!silent) {
-      const cached = loadBookingsFromCache();
-      if (cached && isCacheValid()) {
-        setTimeout(() => refreshFromFirestore(true), 500);
-        return;
-      }
-    }
-    
     const snapshot = await getDocs(collection(db, "bookings"));
     const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     allBookings = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
@@ -935,49 +877,8 @@ async function loadBookings(silent = false) {
     updateStats();
     drawGrid();
     updateLeaderboard();
-    
-    saveBookingsToCache();
-    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-    
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
-    
-    if (!silent) {
-      const cached = loadBookingsFromCache();
-      if (!cached) {
-        showToast('تعذر تحميل البيانات — حاول التحديث', 'error');
-      }
-    }
-  }
-}
-
-// ===== تحديث في الخلفية =====
-async function refreshFromFirestore(showIndicator = true) {
-  if (showIndicator) {
-    showSyncIndicator();
-  }
-  
-  try {
-    const snapshot = await getDocs(collection(db, "bookings"));
-    const allDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    const newAll = allDocs.filter(b => b.status === 'pending' || b.status === 'approved');
-    const newApproved = allDocs.filter(b => b.status === 'approved' || b.status === 'pending');
-    newAll.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    
-    allBookings = newAll;
-    approvedBookings = newApproved;
-    
-    buildBookingsIndex();
-    updateStats();
-    drawGrid();
-    updateLeaderboard();
-    
-    saveBookingsToCache();
-    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-    
-  } catch (error) {
-    console.error('فشل تحديث البيانات:', error);
   }
 }
 
@@ -988,17 +889,11 @@ function updateStats() {
   const selfiesCount = allBookings.filter(b => b.status === 'approved').length;
   const progress = ((bookedCells / TOTAL_CELLS) * 100).toFixed(2);
 
-  const el1 = document.getElementById('statBooked');
-  const el2 = document.getElementById('statAvailable');
-  const el3 = document.getElementById('statSelfies');
-  const el4 = document.getElementById('progressFill');
-  const el5 = document.getElementById('progressText');
-  
-  if (el1) el1.textContent = bookedCells.toLocaleString('en-US');
-  if (el2) el2.textContent = availableCells.toLocaleString('en-US');
-  if (el3) el3.textContent = selfiesCount.toLocaleString('en-US');
-  if (el4) el4.style.width = progress + '%';
-  if (el5) el5.textContent = progress + '%';
+  document.getElementById('statBooked').textContent = bookedCells.toLocaleString('en-US');
+  document.getElementById('statAvailable').textContent = availableCells.toLocaleString('en-US');
+  document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('en-US');
+  document.getElementById('progressFill').style.width = progress + '%';
+  document.getElementById('progressText').textContent = progress + '%';
 }
 
 // ===== تحديث لوحة الصدارة =====
@@ -1028,6 +923,7 @@ async function updateLeaderboard() {
     const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     
+    // 🌐 نصوص مترجمة
     const tBooked = currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares';
     const tApproved = currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos';
     const tBusiness = currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts';
@@ -1076,7 +972,6 @@ async function updateLeaderboard() {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
 }
-
 // ===== متغيرات السحب =====
 let isDragging = false;
 let dragStartX = 0;
@@ -1088,7 +983,6 @@ let velocityY = 0;
 let inertiaFrame = null;
 let lastMoveTime = 0;
 
-// ===== القصور الذاتي =====
 function startInertia() {
   if (inertiaFrame) cancelAnimationFrame(inertiaFrame);
   
@@ -1344,7 +1238,7 @@ canvas.addEventListener('click', (e) => {
   }
 });
 
-// ===== النقرة المفردة =====
+// ===== معالجة النقرة المفردة =====
 function handleSingleClick(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1418,7 +1312,7 @@ function handleSingleClick(e) {
   openBookingModal(startCell);
 }
 
-// ===== النقرة المزدوجة (إعجاب) =====
+// ===== معالجة النقرة المزدوجة (إعجاب) =====
 async function handleDoubleClick(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1463,13 +1357,9 @@ async function handleDoubleClick(e) {
     }
   }
 }
-
 // ===== الضغط المطول =====
 let longPressTimer = null;
 let longPressActive = false;
-let touchStartX = 0;
-let touchStartY = 0;
-let lastTouchDist = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) {
@@ -1548,83 +1438,7 @@ function handleLongPress(clientX, clientY) {
   }
 }
 
-// ===== اللمس =====
-canvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-
-  if (selectionMode && isSelecting && e.touches.length === 1) {
-    const rect = canvas.getBoundingClientRect();
-    const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
-    const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
-    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-      if (!selectionEnd || selectionEnd.x !== x || selectionEnd.y !== y) {
-        selectionEnd = { x, y };
-        updateSelectedCount();
-        drawGrid();
-      }
-    }
-    return;
-  }
-
-  if (e.touches.length === 1) {
-    const now = Date.now();
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-    offsetX -= dx;
-    offsetY -= dy;
-    const dt = now - lastMoveTime || 16;
-    velocityX = -(dx) / dt * 16;
-    velocityY = -(dy) / dt * 16;
-    lastMoveTime = now;
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
-    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
-    drawGrid();
-  } else if (e.touches.length === 2) {
-    const dist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    if (lastTouchDist > 0) {
-      const oldSize = CELL_PIXEL_SIZE;
-      if (dist > lastTouchDist + 5) {
-        CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + ZOOM_STEP_TOUCH, 200);
-      } else if (dist < lastTouchDist - 5) {
-        CELL_PIXEL_SIZE = Math.max(CELL_PIXEL_SIZE - ZOOM_STEP_TOUCH, 10);
-      }
-      if (CELL_PIXEL_SIZE !== oldSize) {
-        offsetX = offsetX * (CELL_PIXEL_SIZE / oldSize);
-        offsetY = offsetY * (CELL_PIXEL_SIZE / oldSize);
-        drawGrid();
-      }
-    }
-    lastTouchDist = dist;
-  }
-}, { passive: false });
-
-canvas.addEventListener('touchend', () => {
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-  
-  if (selectionMode && isSelecting) {
-    isSelecting = false;
-    return;
-  }
-  lastTouchDist = 0;
-  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
-    startInertia();
-  }
-}, { passive: true });
-
-// ===== بطاقة صاحب الصورة =====
+// ===== عرض بطاقة صاحب الصورة =====
 function showOwnerCard(booking) {
   const currentLang = localStorage.getItem('lang') || 'ar';
   const isBusiness = booking.isBusiness === true;
@@ -1702,6 +1516,86 @@ function showOwnerCard(booking) {
 
 window.showOwnerCard = showOwnerCard;
 
+// ===== اللمس =====
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTouchDist = 0;
+
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+
+  if (selectionMode && isSelecting && e.touches.length === 1) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
+    const y = Math.floor((e.touches[0].clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+      if (!selectionEnd || selectionEnd.x !== x || selectionEnd.y !== y) {
+        selectionEnd = { x, y };
+        updateSelectedCount();
+        drawGrid();
+      }
+    }
+    return;
+  }
+
+  if (e.touches.length === 1) {
+    const now = Date.now();
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    offsetX -= dx;
+    offsetY -= dy;
+    const dt = now - lastMoveTime || 16;
+    velocityX = -(dx) / dt * 16;
+    velocityY = -(dy) / dt * 16;
+    lastMoveTime = now;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    offsetX = Math.max(0, Math.min(offsetX, GRID_SIZE * CELL_PIXEL_SIZE - canvas.width));
+    offsetY = Math.max(0, Math.min(offsetY, GRID_SIZE * CELL_PIXEL_SIZE - canvas.height));
+    drawGrid();
+  } else if (e.touches.length === 2) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    if (lastTouchDist > 0) {
+      const oldSize = CELL_PIXEL_SIZE;
+      if (dist > lastTouchDist + 5) {
+        CELL_PIXEL_SIZE = Math.min(CELL_PIXEL_SIZE + ZOOM_STEP_TOUCH, 200);
+      } else if (dist < lastTouchDist - 5) {
+        CELL_PIXEL_SIZE = Math.max(CELL_PIXEL_SIZE - ZOOM_STEP_TOUCH, 10);
+      }
+      if (CELL_PIXEL_SIZE !== oldSize) {
+        offsetX = offsetX * (CELL_PIXEL_SIZE / oldSize);
+        offsetY = offsetY * (CELL_PIXEL_SIZE / oldSize);
+        drawGrid();
+      }
+    }
+    lastTouchDist = dist;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  
+  if (selectionMode && isSelecting) {
+    isSelecting = false;
+    return;
+  }
+  lastTouchDist = 0;
+  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+    startInertia();
+  }
+}, { passive: true });
+
 // ===== تحديث عدد المربعات المختارة =====
 function updateSelectedCount() {
   if (!selectionStart || !selectionEnd) return;
@@ -1773,9 +1667,10 @@ function openBookingModal(startCell) {
   updatePriceDisplay();
 }
 
-// ===== إغلاق النافذة =====
+// ===== إغلاق نافذة الحجز =====
 document.getElementById('closeModal').addEventListener('click', () => {
   document.getElementById('bookingModal').classList.add('hidden');
+  document.getElementById('generateCardBtn').style.display = 'none';
   
   document.body.style.overflow = '';
   
@@ -2017,6 +1912,7 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
 
     setTimeout(() => {
       document.getElementById('bookingModal').classList.add('hidden');
+      document.getElementById('generateCardBtn').style.display = 'none';
       btn.disabled = false;
       btn.textContent = 'إرسال الطلب';
       msg.textContent = '';
@@ -2364,6 +2260,7 @@ async function generateShareCard(bookingData) {
   });
 }
 
+// ===== عرض نافذة البطاقة =====
 async function showShareCard(bookingData) {
   try {
     document.querySelectorAll('.modal').forEach(m => {
@@ -2389,6 +2286,7 @@ async function showShareCard(bookingData) {
   }
 }
 
+// ===== إغلاق نافذة البطاقة =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
   
@@ -2403,10 +2301,12 @@ function closeShareCard() {
   const bookingModal = document.getElementById('bookingModal');
   if (bookingModal && !bookingModal.classList.contains('hidden')) {
     bookingModal.classList.add('hidden');
+    document.getElementById('generateCardBtn').style.display = 'none';
   }
 }
 window.closeShareCard = closeShareCard;
 
+// ===== تنزيل البطاقة =====
 function downloadShareCard() {
   if (!generatedCardDataURL) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2425,6 +2325,7 @@ function downloadShareCard() {
 }
 window.downloadShareCard = downloadShareCard;
 
+// ===== مشاركة البطاقة =====
 async function shareCard() {
   if (!generatedCardBlob) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2449,6 +2350,7 @@ async function shareCard() {
       });
     } catch (error) {
       if (error.name !== 'AbortError') {
+        console.error('فشل المشاركة:', error);
         fallbackShare(shareUrl, shareText);
       }
     }
@@ -2747,49 +2649,20 @@ function preloadImages() {
   });
 }
 
-// ===== التشغيل مع شاشة التحميل =====
+// ===== التشغيل =====
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(resizeCanvas, 200);
 });
 
-async function initializeApp() {
-  const loadingFallback = setTimeout(() => hideLoadingScreen(), 3000);
-  
-  try {
-    updateLoadingProgress(10);
-    resizeCanvas();
-    updateLoadingProgress(30);
-    
-    const cachedLoaded = loadBookingsFromCache();
-    
-    if (cachedLoaded) {
-      updateLoadingProgress(70);
-      setTimeout(() => {
-        clearTimeout(loadingFallback);
-        hideLoadingScreen();
-      }, 300);
-      setTimeout(() => refreshFromFirestore(true), 800);
-    } else {
-      updateLoadingProgress(60);
-      await loadBookings(true);
-      updateLoadingProgress(95);
-      setTimeout(() => {
-        clearTimeout(loadingFallback);
-        hideLoadingScreen();
-      }, 400);
-    }
-    
-    setTimeout(startPulseAnimation, 1500);
-    
-  } catch (error) {
-    console.error('خطأ في التهيئة:', error);
-    clearTimeout(loadingFallback);
-    hideLoadingScreen();
-    showToast('حدث خطأ في التحميل', 'error');
-  }
-}
+resizeCanvas();
+loadBookings();
+trackVisit();
+
+setInterval(loadBookings, 60000);
+
+setTimeout(preloadImages, 2000);
 
 // ===== حلقة الرسم النابض =====
 let pulseInterval = null;
@@ -2804,19 +2677,8 @@ function startPulseAnimation() {
   }, 600);
 }
 
-// بدء التطبيق
-initializeApp();
-trackVisit();
+setTimeout(startPulseAnimation, 3000);
 
-// تحديث دوري كل 60 ثانية
-setInterval(() => {
-  refreshFromFirestore(false);
-}, 60000);
-
-// تحميل الصور بعد 2 ثانية
-setTimeout(preloadImages, 2000);
-
-// إخفاء شاشة التحميل عند التمرير (احتياطي)
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (pulseInterval) {
