@@ -2336,8 +2336,18 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       likes: 0
     };
 
-    await addDoc(collection(db, "bookings"), bookingData);
-
+    const docRef = await addDoc(collection(db, "bookings"), bookingData);
+saveMyBooking(docRef.id, {
+  startCell,
+  quantity,
+  userName: bookingData.userName,
+  selfieUrl: bookingData.selfieUrl,
+  referralCode: bookingData.referralCode,
+  isBusiness: bookingData.isBusiness,
+  brandName: bookingData.brandName,
+  ctaButton: bookingData.ctaButton,
+  totalPrice: bookingData.totalPrice
+});
     msg.textContent = '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
     msg.className = 'form-message success';
     showToast('✅ تم إرسال طلبك بنجاح!', 'success');
@@ -2352,13 +2362,19 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     await loadBookings(false);
 
     setTimeout(() => {
-      document.getElementById('bookingModal').classList.add('hidden');
-      btn.disabled = false;
-      btn.textContent = 'إرسال الطلب';
-      msg.textContent = '';
-      document.body.style.overflow = '';
-      drawGrid();
-    }, 3000);
+  document.getElementById('bookingModal').classList.add('hidden');
+  btn.disabled = false;
+  btn.textContent = 'إرسال الطلب';
+  msg.textContent = '';
+  document.body.style.overflow = '';
+  drawGrid();
+  
+  // ✅ إظهار إشعار "قيد المراجعة"
+  showStatusNotification({
+    id: docRef.id,
+    ...bookingData
+  }, 'pending');
+}, 3000);
 
   } catch (error) {
     console.error(error);
@@ -3100,6 +3116,11 @@ const hasCachedData = displayFromCache();
 
 // ✅ 2. تحميل من Firebase في الخلفية
 loadBookings(!hasCachedData);
+
+// ✅ 3. فحص حالة حجوزات المستخدم
+setTimeout(() => {
+  checkMyBookingsStatus();
+}, 2000);
 
 trackVisit();
 
