@@ -10,19 +10,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- 🆕 شاشة التحميل الأولية -->
-  <div id="loadingScreen" class="loading-screen" style="display:none;">
-    <div class="loading-content">
-      <div class="loading-spinner"></div>
-      <h2 class="loading-title">🎨 جدارية مليون صورة سيلفي</h2>
-      <p class="loading-text">جاري تحميل الجدارية...</p>
-      <div class="loading-progress">
-        <div class="loading-progress-bar" id="loadingProgressBar"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- الشريط العلوي العائم -->
+  <!-- 🆕 الشريط العلوي مع زر الوضع الليلي وزر اللغة -->
   <header class="topbar">
     <button id="themeToggle" class="theme-toggle" title="تبديل الوضع الليلي/النهاري" aria-label="Toggle theme">
       <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -207,7 +195,7 @@
       </p>
     </div>
 
-    <!-- شريط التواصل (تيليجرام فقط) -->
+    <!-- 🆕 شريط التواصل — تم إزالة واتساب + إبقاء تيليجرام -->
     <div class="contact-bar">
       <a href="https://t.me/Hossinn11" class="contact-btn telegram" target="_blank" rel="noopener" aria-label="Telegram">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -355,7 +343,7 @@
       </div>
 
       <div class="refund-notice">
-        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر تيليجرام لاسترجاع المال.</p>
+        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.</p>
       </div>
 
       <div class="price-display">
@@ -364,46 +352,14 @@
       </div>
 
       <button id="submitBooking" class="submit-btn" data-i18n="submitBtn">إرسال الطلب</button>
+      <button id="generateCardBtn" class="generate-card-btn" style="display:none;">
+        📸 <span data-i18n="generateCard">توليد بطاقة الإنجاز</span>
+      </button>
       <p id="formMessage" class="form-message"></p>
     </div>
   </div>
 
-  <!-- نافذة التوجيه -->
-  <div class="modal hidden" id="onboardingModal">
-    <div class="modal-content onboarding-content">
-      <button class="close-btn" onclick="closeOnboarding()">✕</button>
-      <h2 data-i18n="onboardingTitle">📌 كيف تحجز؟</h2>
-      <ol class="onboarding-steps">
-        <li data-i18n="onboardingStep1">اضغط واسحب لتحديد المربعات التي تريدها</li>
-        <li data-i18n="onboardingStep2">اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز</li>
-        <li data-i18n="onboardingStep3">ارفع صورتك، املأ البيانات، وادفع</li>
-      </ol>
-      <button class="submit-btn" onclick="closeOnboarding()" data-i18n="onboardingBtn">فهمت، لنبدأ!</button>
-    </div>
-  </div>
-
-  <!-- نافذة بطاقة المشاركة -->
-  <div class="share-card-modal" id="shareCardModal">
-    <div class="share-card-content">
-      <button class="share-card-close" onclick="closeShareCard()">✕</button>
-      <h2 class="share-card-title" data-i18n="shareCardTitle">🎉 مبروك! بطاقتك جاهزة</h2>
-      <p class="share-card-subtitle" data-i18n="shareCardSubtitle">شاركها مع أصدقائك على إنستغرام وتيك توك</p>
-      <img id="shareCardPreview" class="share-card-preview" alt="بطاقة المشاركة">
-      <div class="share-card-buttons">
-        <button class="share-btn download" onclick="downloadShareCard()">
-          📸 <span data-i18n="downloadCard">تنزيل البطاقة</span>
-        </button>
-        <button class="share-btn share" onclick="shareCard()">
-          🚀 <span data-i18n="shareNow">مشاركة مباشرة</span>
-        </button>
-        <button class="share-btn close" onclick="closeShareCard()">
-          ✕ <span data-i18n="closeBtn">إغلاق</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- نموذج الإحالة -->
+  <!-- 🆕 نافذة نموذج الدعوة المتعددة -->
   <div id="referralModal" class="modal hidden">
     <div class="modal-content referral-modal-content">
       <button class="close-btn" onclick="closeReferralModal()">✕</button>
@@ -448,10 +404,6 @@
             <input type="radio" name="referralTemplate" value="professional">
             <span class="template-label">🏢 احترافي</span>
           </label>
-          <label class="template-option">
-            <input type="radio" name="referralTemplate" value="business">
-            <span class="template-label">💼 تجاري</span>
-          </label>
         </div>
       </div>
 
@@ -468,18 +420,44 @@
     </div>
   </div>
 
-  <script type="module">
-    window.addEventListener('DOMContentLoaded', () => {
-      import('./app.js').catch(err => {
-        console.error('🔴 خطأ في تحميل app.js:', err);
-        const ls = document.getElementById('loadingScreen');
-        if (ls) ls.style.display = 'none';
-        const errDiv = document.createElement('div');
-        errDiv.style.cssText = 'padding:20px;color:red;font-size:14px;position:fixed;top:50px;left:10px;right:10px;background:#000;z-index:99999;border:2px solid red;border-radius:10px;direction:ltr;';
-        errDiv.textContent = 'خطأ: ' + err.message;
-        document.body.appendChild(errDiv);
-      });
-    });
-  </script>
+  <!-- نافذة التوجيه -->
+  <div class="modal hidden" id="onboardingModal">
+    <div class="modal-content onboarding-content">
+      <button class="close-btn" onclick="closeOnboarding()">✕</button>
+      <h2 data-i18n="onboardingTitle">📌 كيف تحجز؟</h2>
+      <ol class="onboarding-steps">
+        <li data-i18n="onboardingStep1">اضغط واسحب لتحديد المربعات التي تريدها</li>
+        <li data-i18n="onboardingStep2">اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز</li>
+        <li data-i18n="onboardingStep3">ارفع صورتك، املأ البيانات، وادفع</li>
+      </ol>
+      <button class="submit-btn" onclick="closeOnboarding()" data-i18n="onboardingBtn">فهمت، لنبدأ!</button>
+    </div>
+  </div>
+
+  <!-- نافذة بطاقة المشاركة -->
+  <div class="share-card-modal" id="shareCardModal">
+    <div class="share-card-content">
+      <button class="share-card-close" onclick="closeShareCard()">✕</button>
+      <h2 class="share-card-title" data-i18n="shareCardTitle">🎉 مبروك! بطاقتك جاهزة</h2>
+      <p class="share-card-subtitle" data-i18n="shareCardSubtitle">شاركها مع أصدقائك على إنستغرام وتيك توك</p>
+      <img id="shareCardPreview" class="share-card-preview" alt="بطاقة المشاركة">
+      <div class="share-card-buttons">
+        <button class="share-btn download" onclick="downloadShareCard()">
+          📸 <span data-i18n="downloadCard">تنزيل البطاقة</span>
+        </button>
+        <button class="share-btn share" onclick="shareCard()">
+          🚀 <span data-i18n="shareNow">مشاركة مباشرة</span>
+        </button>
+        <button class="share-btn close" onclick="closeShareCard()">
+          ✕ <span data-i18n="closeBtn">إغلاق</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- إشعار عائم -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
