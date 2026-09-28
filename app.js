@@ -59,6 +59,247 @@ let bookingsIndexCache = new Map();
 const CACHE_KEY = 'bookings_cache_v1';
 const CACHE_MAX_AGE = 5 * 60 * 1000; // 5 دقائق
 
+// ===== Cache لمعرّف المستخدم وحجوزاته =====
+const MY_UID_KEY = 'my_uid';
+const MY_BOOKINGS_KEY = 'my_bookings';
+const SHOWN_NOTIFICATIONS_KEY = 'shown_status_notifications';
+
+// ===== الحصول على معرّف المستخدم الفريد =====
+function getMyUid() {
+  let uid = localStorage.getItem(MY_UID_KEY);
+  if (!uid) {
+    uid = 'guest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem(MY_UID_KEY, uid);
+  }
+  return uid;
+}
+
+// ===== حفظ حجز المستخدم في localStorage =====
+function saveMyBooking(bookingId, bookingData) {
+  try {
+    const myBookings = JSON.parse(localStorage.getItem(MY_BOOKINGS_KEY) || '[]');
+    
+    const existing = myBookings.findIndex(b => b.id === bookingId);
+    const bookingInfo = {
+      id: bookingId,
+      startCell: bookingData.startCell,
+      quantity: bookingData.quantity,
+      userName: bookingData.userName,
+      selfieUrl: bookingData.selfieUrl,
+      referralCode: bookingData.referralCode,
+      isBusiness: bookingData.isBusiness,
+      brandName: bookingData.brandName,
+      ctaButton: bookingData.ctaButton,
+      totalPrice: bookingData.totalPrice,
+      savedAt: Date.now(),
+      lastStatus: 'pending'
+    };
+    
+    if (existing >= 0) {
+      myBookings[existing] = { ...myBookings[existing], ...bookingInfo };
+    } else {
+      myBookings.push(bookingInfo);
+    }
+    
+    localStorage.setItem(MY_BOOKINGS_KEY, JSON.stringify(myBookings));
+  } catch (e) {
+    console.warn('فشل حفظ حجز المستخدم:', e);
+  }
+}
+
+// ===== الحصول على حجوزات المستخدم =====
+function getMyBookings() {
+  try {
+    return JSON.parse(localStorage.getItem(MY_BOOKINGS_KEY) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+// ===== تحديث حالة الحجز في localStorage =====
+function updateMyBookingStatus(bookingId, newStatus) {
+  try {
+    const myBookings = getMyBookings();
+    const booking = myBookings.find(b => b.id === bookingId);
+    if (booking) {
+      booking.lastStatus = newStatus;
+      localStorage.setItem(MY_BOOKINGS_KEY, JSON.stringify(myBookings));
+    }
+  } catch (e) {
+    console.warn('فشل تحديث الحالة:', e);
+  }
+}
+
+// ===== إخفاء الإشعار المُشاهد (حتى لا يتكرر) =====
+function markNotificationAsShown(bookingId, status) {
+  try {
+    const shown = JSON.parse(localStorage.getItem(SHOWN_NOTIFICATIONS_KEY) || '{}');
+    shown[`${bookingId}_${status}`] = Date.now();
+    localStorage.setItem(SHOWN_NOTIFICATIONS_KEY, JSON.stringify(shown));
+  } catch (e) {}
+}
+
+function wasNotificationShown(bookingId, status) {
+  try {
+    const shown = JSON.parse(localStorage.getItem(SHOWN_NOTIFICATIONS_KEY) || '{}');
+    return !!shown[`${bookingId}_${status}`];
+  } catch (e) {
+    return false;
+  }
+}
+// ===== إظهار نافذة حالة الطلب =====
+function showStatusNotification(booking, status) {
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  
+  const oldModal = document.getElementById('statusNotificationModal');
+  if (oldModal) oldModal.remove();
+  
+  const configs = {
+    pending: {
+      icon: '⏳',
+      title_ar: 'طلبك قيد المراجعة',
+      title_en: 'Your request is under review',
+      message_ar: `شكراً لك! طلبك للمربع رقم ${booking.startCell} (${booking.quantity} مربع) قيد المراجعة من قبل الإدارة.\n\nسيتم إشعارك خلال 24-48 ساعة.`,
+      message_en: `Thank you! Your request for square #${booking.startCell} (${booking.quantity} squares) is being reviewed.\n\nYou'll be notified within 24-48 hours.`,
+      buttons_ar: [{ text: '👌 حسناً', action: 'close', class: 'secondary' }],
+      buttons_en: [{ text: '👌 OK', action: 'close', class: 'secondary' }]
+    },
+    approved: {
+      icon: '🎉',
+      title_ar: 'مبروك! تم قبول طلبك',
+      title_en: 'Congratulations! Your request was approved',
+      message_ar: `تم قبول طلبك بنجاح! 🎊\n\nمربعك رقم ${booking.startCell} (${booking.quantity} مربع) أصبح جزءاً من الجدارية.\n\nبطاقتك الرقمية جاهزة الآن!`,
+      message_en: `Your request was approved! 🎊\n\nYour square #${booking.startCell} (${booking.quantity} squares) is now part of the wall.\n\nYour digital card is ready!`,
+      buttons_ar: [
+        { text: '🎴 عرض بطاقتي', action: 'showCard', class: 'primary' },
+        { text: 'إغلاق', action: 'close', class: 'secondary' }
+      ],
+      buttons_en: [
+        { text: '🎴 View My Card', action: 'showCard', class: 'primary' },
+        { text: 'Close', action: 'close', class: 'secondary' }
+      ]
+    },
+    rejected: {
+      icon: '😔',
+      title_ar: 'نأسف، تم رفض طلبك',
+      title_en: 'We apologize, your request was rejected',
+      message_ar: `نأسف، لم يتم قبول طلبك.\n\nالأسباب المحتملة:\n• الصورة غير واضحة\n• مخالفة الشروط\n• مشكلة في الإيصال\n\n💡 يمكنك التواصل معنا عبر تيليجرام لمعرفة السبب أو استرجاع المبلغ.`,
+      message_en: `Unfortunately, your request was rejected.\n\nPossible reasons:\n• Unclear image\n• Terms violation\n• Receipt issue\n\n💡 Contact us on Telegram for details or refund.`,
+      buttons_ar: [
+        { text: '📞 تواصل معنا', action: 'contact', class: 'primary' },
+        { text: '🔄 طلب جديد', action: 'newOrder', class: 'secondary' }
+      ],
+      buttons_en: [
+        { text: '📞 Contact Us', action: 'contact', class: 'primary' },
+        { text: '🔄 New Order', action: 'newOrder', class: 'secondary' }
+      ]
+    }
+  };
+  
+  const config = configs[status];
+  if (!config) return;
+  
+  const title = currentLang === 'ar' ? config.title_ar : config.title_en;
+  const message = currentLang === 'ar' ? config.message_ar : config.message_en;
+  const buttons = currentLang === 'ar' ? config.buttons_ar : config.buttons_en;
+  
+  const modal = document.createElement('div');
+  modal.id = 'statusNotificationModal';
+  modal.className = 'status-notification-modal active';
+  
+  const buttonsHTML = buttons.map((btn, i) => 
+    `<button class="status-btn ${btn.class}" data-action="${btn.action}" data-index="${i}">${btn.text}</button>`
+  ).join('');
+  
+  modal.innerHTML = `
+    <div class="status-notification-content ${status}">
+      <div class="status-icon">${config.icon}</div>
+      <h2 class="status-title">${title}</h2>
+      <p class="status-message">${message.replace(/\n/g, '<br>')}</p>
+      <div class="status-actions">
+        ${buttonsHTML}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  modal.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      
+      if (action === 'close') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      } else if (action === 'showCard') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+        openMyCard(booking);
+      } else if (action === 'contact') {
+        window.open('https://t.me/Hossinn11', '_blank');
+      } else if (action === 'newOrder') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      }
+    });
+  });
+  
+  markNotificationAsShown(booking.id, status);
+}
+
+// ===== فتح بطاقة المستخدم =====
+function openMyCard(booking) {
+  const params = new URLSearchParams({
+    userName: booking.userName || 'زائر',
+    startCell: booking.startCell || 0,
+    quantity: booking.quantity || 1,
+    selfieUrl: booking.selfieUrl || '',
+    referralCode: booking.referralCode || '',
+    isBusiness: (booking.isBusiness === true).toString(),
+    brandName: booking.brandName || '',
+    ctaButton: booking.ctaButton || ''
+  });
+  
+  window.open('card.html?' + params.toString(), '_blank');
+}
+
+// ===== فحص حالة حجوزات المستخدم =====
+async function checkMyBookingsStatus() {
+  const myBookings = getMyBookings();
+  if (myBookings.length === 0) return;
+  
+  try {
+    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js");
+    
+    for (const myBooking of myBookings) {
+      try {
+        const docRef = doc(db, "bookings", myBooking.id);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) continue;
+        
+        const data = docSnap.data();
+        const currentStatus = data.status;
+        const oldStatus = myBooking.lastStatus;
+        
+        if (currentStatus !== oldStatus && !wasNotificationAsShown(myBooking.id, currentStatus)) {
+          const fullBooking = { id: myBooking.id, ...data };
+          
+          setTimeout(() => {
+            showStatusNotification(fullBooking, currentStatus);
+          }, 1500);
+          
+          updateMyBookingStatus(myBooking.id, currentStatus);
+        }
+      } catch (err) {
+        console.warn('فشل فحص حجز:', myBooking.id, err);
+      }
+    }
+  } catch (error) {
+    console.error('فشل فحص حالات الحجوزات:', error);
+  }
+}
+
 // ===== منع الرسم المكرر =====
 let drawGridPending = false;
 const pendingImageLoads = new Set();
@@ -99,6 +340,167 @@ function saveLike(bookingId) {
 
 function hasLiked(bookingId) {
   return getMyLikes().includes(bookingId);
+}
+
+// ===== إظهار نافذة حالة الطلب =====
+function showStatusNotification(booking, status) {
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  
+  // إزالة أي نافذة موجودة
+  const oldModal = document.getElementById('statusNotificationModal');
+  if (oldModal) oldModal.remove();
+  
+  // الإعدادات حسب الحالة
+  const configs = {
+    pending: {
+      icon: '⏳',
+      title_ar: 'طلبك قيد المراجعة',
+      title_en: 'Your request is under review',
+      message_ar: `شكراً لك! طلبك للمربع رقم ${booking.startCell} (${booking.quantity} مربع) قيد المراجعة من قبل الإدارة.\n\nسيتم إشعارك خلال 24-48 ساعة.`,
+      message_en: `Thank you! Your request for square #${booking.startCell} (${booking.quantity} squares) is being reviewed.\n\nYou'll be notified within 24-48 hours.`,
+      buttons_ar: [{ text: '👌 حسناً', action: 'close', class: 'secondary' }],
+      buttons_en: [{ text: '👌 OK', action: 'close', class: 'secondary' }]
+    },
+    approved: {
+      icon: '🎉',
+      title_ar: 'مبروك! تم قبول طلبك',
+      title_en: 'Congratulations! Your request was approved',
+      message_ar: `تم قبول طلبك بنجاح! 🎊\n\nمربعك رقم ${booking.startCell} (${booking.quantity} مربع) أصبح جزءاً من الجدارية.\n\nبطاقتك الرقمية جاهزة الآن!`,
+      message_en: `Your request was approved! 🎊\n\nYour square #${booking.startCell} (${booking.quantity} squares) is now part of the wall.\n\nYour digital card is ready!`,
+      buttons_ar: [
+        { text: '🎴 عرض بطاقتي', action: 'showCard', class: 'primary' },
+        { text: 'إغلاق', action: 'close', class: 'secondary' }
+      ],
+      buttons_en: [
+        { text: '🎴 View My Card', action: 'showCard', class: 'primary' },
+        { text: 'Close', action: 'close', class: 'secondary' }
+      ]
+    },
+    rejected: {
+      icon: '😔',
+      title_ar: 'نأسف، تم رفض طلبك',
+      title_en: 'We apologize, your request was rejected',
+      message_ar: `نأسف، لم يتم قبول طلبك.\n\nالأسباب المحتملة:\n• الصورة غير واضحة\n• مخالفة الشروط\n• مشكلة في الإيصال\n\n💡 يمكنك التواصل معنا عبر تيليجرام لمعرفة السبب أو استرجاع المبلغ.`,
+      message_en: `Unfortunately, your request was rejected.\n\nPossible reasons:\n• Unclear image\n• Terms violation\n• Receipt issue\n\n💡 Contact us on Telegram for details or refund.`,
+      buttons_ar: [
+        { text: '📞 تواصل معنا', action: 'contact', class: 'primary' },
+        { text: '🔄 طلب جديد', action: 'newOrder', class: 'secondary' }
+      ],
+      buttons_en: [
+        { text: '📞 Contact Us', action: 'contact', class: 'primary' },
+        { text: '🔄 New Order', action: 'newOrder', class: 'secondary' }
+      ]
+    }
+  };
+  
+  const config = configs[status];
+  if (!config) return;
+  
+  const title = currentLang === 'ar' ? config.title_ar : config.title_en;
+  const message = currentLang === 'ar' ? config.message_ar : config.message_en;
+  const buttons = currentLang === 'ar' ? config.buttons_ar : config.buttons_en;
+  
+  // إنشاء النافذة
+  const modal = document.createElement('div');
+  modal.id = 'statusNotificationModal';
+  modal.className = 'status-notification-modal active';
+  
+  const buttonsHTML = buttons.map((btn, i) => 
+    `<button class="status-btn ${btn.class}" data-action="${btn.action}" data-index="${i}">${btn.text}</button>`
+  ).join('');
+  
+  modal.innerHTML = `
+    <div class="status-notification-content ${status}">
+      <div class="status-icon">${config.icon}</div>
+      <h2 class="status-title">${title}</h2>
+      <p class="status-message">${message.replace(/\n/g, '<br>')}</p>
+      <div class="status-actions">
+        ${buttonsHTML}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // ربط الأزرار
+  modal.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      
+      if (action === 'close') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      } else if (action === 'showCard') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+        openMyCard(booking);
+      } else if (action === 'contact') {
+        window.open('https://t.me/Hossinn11', '_blank');
+      } else if (action === 'newOrder') {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      }
+    });
+  });
+  
+  // تسجيل أنه تم عرض الإشعار
+  markNotificationAsShown(booking.id, status);
+}
+
+// ===== فتح بطاقة المستخدم =====
+function openMyCard(booking) {
+  const params = new URLSearchParams({
+    userName: booking.userName || 'زائر',
+    startCell: booking.startCell || 0,
+    quantity: booking.quantity || 1,
+    selfieUrl: booking.selfieUrl || '',
+    referralCode: booking.referralCode || '',
+    isBusiness: (booking.isBusiness === true).toString(),
+    brandName: booking.brandName || '',
+    ctaButton: booking.ctaButton || ''
+  });
+  
+  window.open('card.html?' + params.toString(), '_blank');
+}
+
+// ===== فحص حالة حجوزات المستخدم =====
+async function checkMyBookingsStatus() {
+  const myBookings = getMyBookings();
+  if (myBookings.length === 0) return;
+  
+  try {
+    const { getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js");
+    
+    for (const myBooking of myBookings) {
+      try {
+        const docRef = doc(db, "bookings", myBooking.id);
+        const docSnap = await getDoc(docRef);
+        
+        if (!docSnap.exists()) continue;
+        
+        const data = docSnap.data();
+        const currentStatus = data.status;
+        const oldStatus = myBooking.lastStatus;
+        
+        // إذا تغيرت الحالة ولم يُعرض الإشعار سابقاً
+        if (currentStatus !== oldStatus && !wasNotificationAsShown(myBooking.id, currentStatus)) {
+          const fullBooking = { id: myBooking.id, ...data };
+          
+          // انتظر قليلاً حتى يجهز الموقع
+          setTimeout(() => {
+            showStatusNotification(fullBooking, currentStatus);
+          }, 1500);
+          
+          // تحديث الحالة
+          updateMyBookingStatus(myBooking.id, currentStatus);
+        }
+      } catch (err) {
+        console.warn('فشل فحص حجز:', myBooking.id, err);
+      }
+    }
+  } catch (error) {
+    console.error('فشل فحص حالات الحجوزات:', error);
+  }
 }
 
 // ===== إظهار إشعار (Toast) =====
