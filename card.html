@@ -28,15 +28,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 12px;
     }
 
     .card-container {
       background: var(--bg-gray);
       border: 2px solid var(--gold);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 500px;
+      border-radius: 16px;
+      padding: 18px;
+      max-width: 420px;
       width: 100%;
       text-align: center;
     }
@@ -51,14 +51,14 @@
     .card-title {
       color: var(--gold);
       font-weight: 900;
-      font-size: 24px;
-      margin-bottom: 10px;
+      font-size: 18px;
+      margin-bottom: 6px;
     }
 
     .card-subtitle {
       color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: 12px;
+      margin-bottom: 12px;
       font-weight: 700;
     }
 
@@ -66,11 +66,11 @@
       display: inline-block;
       background: linear-gradient(135deg, var(--gold), var(--gold-light));
       color: var(--bg-dark);
-      padding: 6px 16px;
+      padding: 5px 14px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       box-shadow: 0 0 20px rgba(212, 160, 23, 0.5);
       animation: businessPulse 2s infinite;
     }
@@ -82,33 +82,33 @@
 
     .card-preview {
       width: 100%;
-      max-width: 300px;
-      margin: 0 auto 20px;
-      border-radius: 15px;
-      box-shadow: 0 10px 40px rgba(212, 160, 23, 0.3);
+      max-width: 210px;
+      margin: 0 auto 12px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(212, 160, 23, 0.3);
       display: block;
     }
 
     .card-buttons {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .card-btn {
       width: 100%;
-      padding: 14px;
+      padding: 11px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       font-family: 'Cairo', sans-serif;
       font-weight: 900;
-      font-size: 15px;
+      font-size: 13px;
       cursor: pointer;
       transition: 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .card-btn.download {
@@ -147,8 +147,8 @@
     .loading-msg {
       color: var(--gold-light);
       font-weight: 700;
-      padding: 40px;
-      font-size: 16px;
+      padding: 30px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -533,12 +533,8 @@
       }
     }
 
-    // ===== زر الإغلاق الجديد =====
     function closeCardPage() {
-      // محاولة إغلاق النافذة
       window.close();
-      
-      // إذا فشل (المتصفح يمنع)، اذهب للموقع الرئيسي
       setTimeout(() => {
         window.location.href = window.location.pathname.replace('card.html', '') || 'index.html';
       }, 300);
