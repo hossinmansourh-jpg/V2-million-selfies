@@ -2596,7 +2596,6 @@ function applyLanguage(lang) {
 
 // ===== تبديل اللغة =====
 function setLanguage(lang) {
-function setLanguage(lang) {
   const html = document.documentElement;
   html.lang = lang;
   html.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -2609,9 +2608,6 @@ function setLanguage(lang) {
   
   applyLanguage(lang);
   localStorage.setItem('lang', lang);
-  
-  // 🆕 إعادة تحميل الصفحة لتطبيق الترجمة على كل العناصر
-  location.reload();
 }
 
 document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
