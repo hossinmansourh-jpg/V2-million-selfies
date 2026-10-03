@@ -357,6 +357,7 @@ function buildBookingsIndex() {
     }
   });
 }
+
 // ===== رسم التهشير الذهبي المتقاطع =====
 function drawBusinessHatch(x, y, width, height) {
   ctx.save();
@@ -421,7 +422,6 @@ function drawGrid() {
 function drawGridNow() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   
-  // خلفية الشبكة
   ctx.fillStyle = isLight ? '#f5efe0' : '#0a0a0f';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -430,7 +430,6 @@ function drawGridNow() {
   const endX = Math.min(GRID_SIZE, startX + Math.ceil(canvas.width / CELL_PIXEL_SIZE) + 3);
   const endY = Math.min(GRID_SIZE, startY + Math.ceil(canvas.height / CELL_PIXEL_SIZE) + 3);
 
-  // خطوط الشبكة
   ctx.strokeStyle = isLight ? '#d4c4a0' : '#2a2a35';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -445,7 +444,6 @@ function drawGridNow() {
 
   drawBookings();
 
-  // تحديد المنطقة
   if (isSelecting && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -483,7 +481,6 @@ function drawGridNow() {
     ctx.fillText(`${count}`, px + width / 2, py - 10);
   }
 
-  // معاينة الصورة
   if (previewImage && selectionStart && selectionEnd) {
     const x1 = Math.min(selectionStart.x, selectionEnd.x);
     const y1 = Math.min(selectionStart.y, selectionEnd.y);
@@ -511,7 +508,6 @@ function drawGridNow() {
     ctx.setLineDash([]);
   }
 
-  // الخلية تحت المؤشر
   if (hoveredCell && !isDragging && !inertiaFrame && !isSelecting && !selectionMode) {
     const px = hoveredCell.x * CELL_PIXEL_SIZE - offsetX;
     const py = hoveredCell.y * CELL_PIXEL_SIZE - offsetY;
@@ -571,15 +567,12 @@ function drawScrollbars() {
   ctx.fillRect(hHandleX, hTrackY, hHandleWidth, scrollbarThickness);
 }
 
-// ==========================================
-// ❤️ رسم القلب (Instagram Style)
-// ==========================================
+// ===== رسم القلب =====
 function drawHeart(x, y, size, filled, count) {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   
   ctx.save();
   
-  // تأثير النبض عند الإعجاب
   let scale = 1;
   if (filled) {
     const pulse = (Math.sin(Date.now() / 250) + 1) / 2;
@@ -590,32 +583,6 @@ function drawHeart(x, y, size, filled, count) {
   ctx.scale(scale, scale);
   ctx.translate(-size / 2, -size / 2);
   
-  // ===== مسار SVG Heart معياري (Font Awesome) =====
-  function heartPath(scaleToSize) {
-    const s = scaleToSize / 512;
-    ctx.beginPath();
-    ctx.moveTo(47.6 * s, 480 * s);
-    ctx.bezierCurveTo(37.4 * s, 469.4 * s, 0, 432.1 * s, 0, 253.9 * s);
-    ctx.bezierCurveTo(0, 129.6 * s, 88.5 * s, 32 * s, 210.4 * s, 32 * s);
-    ctx.bezierCurveTo(276.7 * s, 32 * s, 338.8 * s, 63.7 * s, 383.8 * s, 115.4 * s);
-    ctx.bezierCurveTo(410.3 * s, 79.7 * s, 459.5 * s, 32 * s, 512 * s, 32 * s);
-    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
-    ctx.bezierCurveTo(512 * s, 32 * s, 512 * s, 32 * s, 512 * s, 32 * s);
-    ctx.closePath();
-  }
-  
-  // مسار قلب مبسّط ومتقن
-  function drawHeartShape(s) {
-    ctx.beginPath();
-    ctx.moveTo(50 * s, 30 * s);
-    ctx.bezierCurveTo(50 * s, 27 * s, 47 * s, 24 * s, 44 * s, 24 * s);
-    ctx.bezierCurveTo(37 * s, 24 * s, 32 * s, 29 * s, 32 * s, 36 * s);
-    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
-    ctx.bezierCurveTo(32 * s, 36 * s, 32 * s, 36 * s, 32 * s, 36 * s);
-    ctx.closePath();
-  }
-  
-  // ===== مسار قلب مثالي (يستخدمه Font Awesome) =====
   function perfectHeart(s) {
     ctx.beginPath();
     ctx.moveTo(s * 0.5, s * 0.88);
@@ -628,13 +595,11 @@ function drawHeart(x, y, size, filled, count) {
     ctx.closePath();
   }
   
-  // الحجم الفعلي للقلب داخل الإطار
   const heartSize = size * 1.05;
   const offsetX = (size - heartSize) / 2;
   const offsetY = (size - heartSize) / 2;
   
   if (filled) {
-    // ===== ❤️ قلب أحمر ممتلئ مع توهج =====
     ctx.shadowColor = isLight ? 'rgba(225, 29, 72, 0.9)' : 'rgba(255, 51, 102, 1)';
     ctx.shadowBlur = 12;
     ctx.fillStyle = isLight ? '#e11d48' : '#ff3366';
@@ -643,14 +608,12 @@ function drawHeart(x, y, size, filled, count) {
     ctx.fill();
     ctx.shadowBlur = 0;
     
-    // حدود بيضاء رفيعة
     ctx.strokeStyle = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)';
     ctx.lineWidth = Math.max(1, size * 0.045);
     ctx.lineJoin = 'round';
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // ===== رقم الإعجابات داخل القلب =====
     if (count > 0) {
       ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -662,13 +625,11 @@ function drawHeart(x, y, size, filled, count) {
       ctx.shadowBlur = 0;
     }
   } else {
-    // ===== 🤍 قلب أبيض فارغ مع حدود سوداء =====
     const heartStrokeBlack = isLight ? '#3a2818' : '#000000';
     const heartStrokeWhite = isLight ? '#3a2818' : '#ffffff';
     
     ctx.translate(offsetX, offsetY);
     
-    // حد أسود خارجي (سميك) لضمان الظهور على أي خلفية
     ctx.strokeStyle = heartStrokeBlack;
     ctx.lineWidth = Math.max(3, size * 0.14);
     ctx.lineJoin = 'round';
@@ -676,24 +637,20 @@ function drawHeart(x, y, size, filled, count) {
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // حد أبيض داخلي (رفيع) — يبرز القلب
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // تعبئة داخلية خفيفة جداً
     ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.35)';
     perfectHeart(heartSize);
     ctx.fill();
     
-    // إعادة الحد الأبيض فوق التعبئة
     ctx.strokeStyle = heartStrokeWhite;
     ctx.lineWidth = Math.max(1.8, size * 0.08);
     perfectHeart(heartSize);
     ctx.stroke();
     
-    // ===== رقم الإعجابات =====
     if (count > 0) {
       ctx.fillStyle = heartStrokeWhite;
       ctx.font = `bold ${Math.round(size * 0.42)}px Cairo, sans-serif`;
@@ -709,6 +666,7 @@ function drawHeart(x, y, size, filled, count) {
   ctx.restore();
   ctx.textBaseline = 'alphabetic';
 }
+
 // ===== رسم الحجوزات =====
 function drawBookings() {
   approvedBookings.forEach(booking => {
@@ -717,7 +675,6 @@ function drawBookings() {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
 
-    // Viewport Culling
     if (startX + width < -50 || startX > canvas.width + 50 || 
         startY + height < -50 || startY > canvas.height + 50) return;
 
@@ -725,7 +682,6 @@ function drawBookings() {
     const isPending = booking.status === 'pending';
     const isApproved = booking.status === 'approved';
 
-    // ===== 1. الخلفية (Pending فقط) =====
     if (isPending) {
       if (isBusiness) {
         ctx.fillStyle = 'rgba(212, 160, 23, 0.35)';
@@ -737,7 +693,6 @@ function drawBookings() {
       }
     }
 
-    // ===== 2. الصورة (Approved فقط) =====
     if (isApproved && booking.selfieUrl) {
       if (imageCache[booking.id] && imageCache[booking.id].complete) {
         ctx.drawImage(imageCache[booking.id], startX, startY, width, height);
@@ -746,7 +701,6 @@ function drawBookings() {
       }
     }
 
-    // ===== 3. الإطار =====
     if (isPending) {
       if (isBusiness) {
         drawGlowingBorder(startX, startY, width, height);
@@ -778,43 +732,10 @@ function drawBookings() {
       }
     }
 
-    // ===== 4. شارة ⏳ للـ Pending =====
-    if (isPending && width > 40 && height > 40) {
-      const badgeSize = Math.min(24, Math.max(16, width / 8));
-      const badgeX = startX + 6;
-      const badgeY = startY + 6;
-      
-      ctx.save();
-      if (isBusiness) {
-        ctx.shadowColor = '#f5b301';
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = 'rgba(212, 160, 23, 0.95)';
-      } else {
-        ctx.shadowColor = 'rgba(74, 158, 255, 0.8)';
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = 'rgba(74, 158, 255, 0.9)';
-      }
-      ctx.beginPath();
-      ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      
-      ctx.fillStyle = isBusiness ? '#0a0a0f' : '#ffffff';
-      ctx.font = `bold ${Math.round(badgeSize * 0.6)}px Cairo, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⏳', badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 1);
-      ctx.textBaseline = 'alphabetic';
-    }
-
-    // ==========================================
-    // ❤️ 5. القلب (أسفل يمين المربع)
-    // ==========================================
     if (isApproved && width > 30 && height > 30) {
       const liked = hasLiked(booking.id);
       const likeCount = booking.likes || 0;
       
-      // حجم القلب يتناسب مع حجم المربع (10% من العرض)
       const heartSize = Math.min(40, Math.max(20, Math.min(width, height) * 0.22));
       const heartX = startX + width - heartSize - 6;
       const heartY = startY + height - heartSize - 6;
@@ -835,7 +756,6 @@ function loadBookingImage(booking) {
     imageCache[booking.id] = img;
     pendingImageLoads.delete(booking.id);
     
-    // حد أقصى للـ cache
     const keys = Object.keys(imageCache);
     if (keys.length > MAX_IMAGE_CACHE) {
       delete imageCache[keys[0]];
@@ -876,7 +796,7 @@ async function loadBookings() {
     
     updateStats();
     drawGrid();
-    updateLeaderboard(); // نستخدم اللغة الافتراضية
+    updateLeaderboard();
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
   }
@@ -923,7 +843,6 @@ async function updateLeaderboard(lang = null) {
     const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     
-    // 🌐 نصوص مترجمة
     const tBooked = currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares';
     const tApproved = currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos';
     const tBusiness = currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts';
@@ -972,6 +891,7 @@ async function updateLeaderboard(lang = null) {
     console.error('خطأ في تحديث لوحة الصدارة:', error);
   }
 }
+
 // ===== متغيرات السحب =====
 let isDragging = false;
 let dragStartX = 0;
@@ -1312,7 +1232,7 @@ function handleSingleClick(e) {
   openBookingModal(startCell);
 }
 
-// ===== معالجة النقرة المزدوجة (إعجاب) =====
+// ===== معالجة النقرة المزدوجة =====
 async function handleDoubleClick(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1357,6 +1277,7 @@ async function handleDoubleClick(e) {
     }
   }
 }
+
 // ===== الضغط المطول =====
 let longPressTimer = null;
 let longPressActive = false;
@@ -1895,7 +1816,12 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       likes: 0
     };
 
-    await addDoc(collection(db, "bookings"), bookingData);
+    const docRef = await addDoc(collection(db, "bookings"), bookingData);
+    
+    // 🆕 حفظ bookingId في localStorage لمتابعة حالة الطلب
+    localStorage.setItem('my_booking_id', docRef.id);
+    localStorage.removeItem('my_card_claimed');
+    localStorage.removeItem('approval_notification_shown_at');
 
     msg.textContent = '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
     msg.className = 'form-message success';
@@ -2260,7 +2186,7 @@ async function generateShareCard(bookingData) {
   });
 }
 
-// ===== عرض نافذة البطاقة =====
+// ===== عرض نافذة البطاقة (للمشرف) =====
 async function showShareCard(bookingData) {
   try {
     document.querySelectorAll('.modal').forEach(m => {
@@ -2286,7 +2212,7 @@ async function showShareCard(bookingData) {
   }
 }
 
-// ===== إغلاق نافذة البطاقة =====
+// ===== إغلاق نافذة البطاقة (للمشرف) =====
 function closeShareCard() {
   document.getElementById('shareCardModal').classList.remove('active');
   
@@ -2306,7 +2232,7 @@ function closeShareCard() {
 }
 window.closeShareCard = closeShareCard;
 
-// ===== تنزيل البطاقة =====
+// ===== تنزيل البطاقة (للمشرف) =====
 function downloadShareCard() {
   if (!generatedCardDataURL) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2325,7 +2251,7 @@ function downloadShareCard() {
 }
 window.downloadShareCard = downloadShareCard;
 
-// ===== مشاركة البطاقة =====
+// ===== مشاركة البطاقة (للمشرف) =====
 async function shareCard() {
   if (!generatedCardBlob) {
     showToast('البطاقة غير جاهزة بعد', 'error');
@@ -2464,7 +2390,22 @@ const translations = {
     shareCardSubtitle: 'شاركها مع أصدقائك على إنستغرام وتيك توك',
     downloadCard: 'تنزيل البطاقة',
     shareNow: 'مشاركة مباشرة',
-    closeBtn: 'إغلاق'
+    closeBtn: 'إغلاق',
+    cardGuideTitle: '🎁 كيف تحصل على بطاقة الإنجاز الخاصة بك؟',
+    cardGuideSubtitle: 'بعد الموافقة على طلبك، ستحصل على بطاقة رقمية أنيقة يمكنك مشاركتها مع أصدقائك على وسائل التواصل الاجتماعي!',
+    cardGuideStep1Title: 'احجز مربعك',
+    cardGuideStep1Desc: 'اختر المربعات التي تريدها وارفع صورتك',
+    cardGuideStep2Title: 'انتظر الموافقة',
+    cardGuideStep2Desc: 'سيتم مراجعة طلبك خلال 24-48 ساعة',
+    cardGuideStep3Title: 'ابقَ في الموقع',
+    cardGuideStep3Desc: 'عند الموافقة، سيظهر لك إشعار فوري مع صوت نجاح',
+    cardGuideStep4Title: 'استلم بطاقتك',
+    cardGuideStep4Desc: 'اضغط على زر "استلم بطاقتك" وشاركها مع العالم!',
+    cardGuideNote: 'نصيحة: احفظ الموقع في المفضلة، وعد إليه بعد الموافقة لاستلام بطاقتك!',
+    approvalTitle: 'مبروك!',
+    approvalMessage: 'تم قبول طلبك بنجاح',
+    claimCardBtn: '📸 استلم بطاقتك',
+    myCardTitle: '🎉 بطاقتك جاهزة!'
   },
   en: {
     badge: '🚀 Historic Digital Challenge',
@@ -2550,7 +2491,22 @@ const translations = {
     shareCardSubtitle: 'Share it with your friends on Instagram and TikTok',
     downloadCard: 'Download Card',
     shareNow: 'Share Now',
-    closeBtn: 'Close'
+    closeBtn: 'Close',
+    cardGuideTitle: '🎁 How to Get Your Achievement Card?',
+    cardGuideSubtitle: 'After your request is approved, you will receive an elegant digital card that you can share with your friends on social media!',
+    cardGuideStep1Title: 'Book Your Square',
+    cardGuideStep1Desc: 'Choose the squares you want and upload your photo',
+    cardGuideStep2Title: 'Wait for Approval',
+    cardGuideStep2Desc: 'Your request will be reviewed within 24-48 hours',
+    cardGuideStep3Title: 'Stay on the Site',
+    cardGuideStep3Desc: 'Upon approval, you will receive an instant notification with a success sound',
+    cardGuideStep4Title: 'Claim Your Card',
+    cardGuideStep4Desc: 'Click "Claim Your Card" button and share it with the world!',
+    cardGuideNote: 'Tip: Bookmark the site and return after approval to claim your card!',
+    approvalTitle: 'Congratulations!',
+    approvalMessage: 'Your request has been approved',
+    claimCardBtn: '📸 Claim Your Card',
+    myCardTitle: '🎉 Your card is ready!'
   }
 };
 
@@ -2590,7 +2546,6 @@ function applyLanguage(lang) {
     }
   }
   
-  // 🆕 تحديث الإحصائيات وجدول الصدارة فوراً
   updateStats();
   updateLeaderboard(lang);
 }
@@ -2610,7 +2565,6 @@ function setLanguage(lang) {
   applyLanguage(lang);
   localStorage.setItem('lang', lang);
   
-  // 🆕 تمرير اللغة مباشرة إلى الدالة
   updateStats();
   updateLeaderboard(lang);
   
@@ -2654,6 +2608,228 @@ function preloadImages() {
     }
   });
 }
+
+// ============================================
+// ===== 🆕 نظام إشعار الموافقة على الطلب =====
+// ============================================
+
+let myCardBlob = null;
+let myCardDataURL = null;
+let approvalCheckInterval = null;
+let currentApprovedBooking = null;
+
+// ===== تشغيل صوت النجاح =====
+function playSuccessSound() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    const durations = [0.15, 0.15, 0.15, 0.4];
+    
+    let startTime = audioContext.currentTime;
+    
+    notes.forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + durations[i]);
+      
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + durations[i]);
+      
+      startTime += durations[i];
+    });
+  } catch (e) {
+    console.log('لم يتم تشغيل الصوت:', e);
+  }
+}
+
+// ===== عرض إشعار الموافقة =====
+function showApprovalNotification() {
+  const notification = document.getElementById('approvalNotification');
+  if (!notification) return;
+  
+  notification.classList.remove('hidden');
+  setTimeout(() => notification.classList.add('show'), 50);
+  
+  playSuccessSound();
+  
+  setTimeout(() => {
+    const title = notification.querySelector('.approval-title');
+    const message = notification.querySelector('.approval-message');
+    const icon = notification.querySelector('.approval-icon');
+    
+    if (title) title.style.display = 'none';
+    if (message) message.style.display = 'none';
+    if (icon) icon.style.display = 'none';
+  }, 7000);
+}
+
+// ===== إخفاء الإشعار =====
+function hideApprovalNotification() {
+  const notification = document.getElementById('approvalNotification');
+  if (!notification) return;
+  notification.classList.remove('show');
+  setTimeout(() => notification.classList.add('hidden'), 500);
+}
+
+// ===== التحقق من حالة الحجز =====
+async function checkMyBookingStatus() {
+  const myBookingId = localStorage.getItem('my_booking_id');
+  const cardClaimed = localStorage.getItem('my_card_claimed');
+  
+  if (!myBookingId) return;
+  if (cardClaimed === 'true') return;
+  
+  const notificationShownAt = localStorage.getItem('approval_notification_shown_at');
+  if (notificationShownAt && (Date.now() - parseInt(notificationShownAt)) < 3600000) {
+    const notification = document.getElementById('approvalNotification');
+    if (!notification || notification.classList.contains('hidden')) {
+      showApprovalNotification();
+    }
+    return;
+  }
+  
+  try {
+    const docSnap = await getDocs(collection(db, "bookings"));
+    const myBooking = docSnap.docs.find(d => d.id === myBookingId);
+    
+    if (!myBooking) return;
+    
+    const bookingData = { id: myBooking.id, ...myBooking.data() };
+    
+    if (bookingData.status === 'approved') {
+      currentApprovedBooking = bookingData;
+      localStorage.setItem('approval_notification_shown_at', Date.now().toString());
+      showApprovalNotification();
+    }
+  } catch (error) {
+    console.error('خطأ في التحقق من حالة الحجز:', error);
+  }
+}
+
+// ===== استلام البطاقة =====
+async function claimMyCard() {
+  if (!currentApprovedBooking) {
+    const myBookingId = localStorage.getItem('my_booking_id');
+    if (!myBookingId) return;
+    
+    try {
+      const docSnap = await getDocs(collection(db, "bookings"));
+      const myBooking = docSnap.docs.find(d => d.id === myBookingId);
+      if (myBooking) {
+        currentApprovedBooking = { id: myBooking.id, ...myBooking.data() };
+      }
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  }
+  
+  if (!currentApprovedBooking) return;
+  
+  hideApprovalNotification();
+  
+  const modal = document.getElementById('myCardModal');
+  const preview = document.getElementById('myCardPreview');
+  
+  if (!modal || !preview) return;
+  
+  modal.classList.remove('hidden');
+  preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="533"><rect fill="%2314141c" width="300" height="533"/><text x="150" y="266" fill="%23f5b301" text-anchor="middle" font-size="20" font-family="Cairo">⏳ جاري توليد البطاقة...</text></svg>';
+  
+  try {
+    const dataURL = await generateShareCard(currentApprovedBooking);
+    preview.src = dataURL;
+    myCardDataURL = dataURL;
+    
+    const response = await fetch(dataURL);
+    myCardBlob = await response.blob();
+    
+    localStorage.setItem('my_card_claimed', 'true');
+  } catch (error) {
+    console.error('فشل توليد البطاقة:', error);
+    showToast('حدث خطأ أثناء توليد البطاقة', 'error');
+  }
+}
+
+// ===== إغلاق نافذة البطاقة الشخصية =====
+function closeMyCard() {
+  const modal = document.getElementById('myCardModal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeMyCard = closeMyCard;
+window.claimMyCard = claimMyCard;
+
+// ===== تنزيل البطاقة الشخصية =====
+function downloadMyCard() {
+  if (!myCardDataURL) return;
+  
+  const link = document.createElement('a');
+  link.download = `million-selfies-card-${Date.now()}.png`;
+  link.href = myCardDataURL;
+  link.click();
+  
+  showToast('✅ تم تنزيل البطاقة!', 'success');
+}
+window.downloadMyCard = downloadMyCard;
+
+// ===== مشاركة البطاقة الشخصية =====
+async function shareMyCard() {
+  if (!myCardBlob) return;
+  
+  const currentLang = localStorage.getItem('lang') || 'ar';
+  const shareText = currentLang === 'ar'
+    ? '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀'
+    : '🎨 I\'m now part of the Million Selfies Wall! Book your square now for $1 🚀';
+  
+  const shareUrl = window.location.origin + window.location.pathname;
+  const shareFile = new File([myCardBlob], 'million-selfies-card.png', { type: 'image/png' });
+  
+  if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+    try {
+      await navigator.share({
+        files: [shareFile],
+        title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
+        text: shareText,
+        url: shareUrl
+      });
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        fallbackShare(shareUrl, shareText);
+      }
+    }
+  } else {
+    fallbackShare(shareUrl, shareText);
+  }
+}
+window.shareMyCard = shareMyCard;
+
+// ===== ربط زر استلام البطاقة =====
+document.addEventListener('DOMContentLoaded', () => {
+  const claimBtn = document.getElementById('claimCardBtn');
+  if (claimBtn) {
+    claimBtn.addEventListener('click', claimMyCard);
+  }
+  
+  setTimeout(checkMyBookingStatus, 5000);
+  
+  approvalCheckInterval = setInterval(checkMyBookingStatus, 30000);
+});
+
+window.addEventListener('beforeunload', () => {
+  if (approvalCheckInterval) {
+    clearInterval(approvalCheckInterval);
+  }
+});
 
 // ===== التشغيل =====
 let resizeTimer;
