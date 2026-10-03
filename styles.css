@@ -1604,3 +1604,101 @@ footer {
   .legend { gap: 10px; padding: 12px; }
   .legend-item { font-size: 11px; }
 }
+
+/* ===== 🆕 منع الانزياح الأفقي على الجوال ===== */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  position: relative;
+}
+
+/* التأكد من أن كل العناصر لا تخرج عن الشاشة */
+* {
+  max-width: 100%;
+}
+
+/* إصلاح نافذة الإحالة */
+.referral-modal-content,
+.modal-content,
+.share-card-content,
+.my-card-content,
+.approval-notification {
+  max-width: calc(100vw - 30px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* إصلاح حقل رابط الإحالة الطويل */
+.referral-link-box input {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* إصلاح النصوص الطويلة */
+.hero h1,
+.hero-desc,
+.section-title,
+.how-title,
+.guide-title,
+.card-guide-title,
+.leaderboard,
+.referral-banner,
+.stats,
+.progress-section,
+.wall-section {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* إصلاح الشبكة على الجوال */
+.grid-wrapper {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.grid-frame {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* إصلاح لوحة الصدارة على الجوال */
+.leaderboard-grid {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* إصلاح نافذة الإحالة */
+.modal {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* إصلاح الشريط العلوي */
+.topbar {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* إصلاح الصور */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* إصلاح لوحة الصدارة على الجوال */
+@media (max-width: 768px) {
+  .lb-card[style*="grid-column: span 2"] {
+    grid-column: span 1 !important;
+  }
+  
+  .leaderboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .wall-section,
+  .leaderboard,
+  .stats {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+}
