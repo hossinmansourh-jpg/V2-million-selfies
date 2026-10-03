@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- 🆕 الشريط العلوي مع زر الوضع الليلي وزر اللغة -->
+  <!-- الشريط العلوي -->
   <header class="topbar">
     <button id="themeToggle" class="theme-toggle" title="تبديل الوضع الليلي/النهاري" aria-label="Toggle theme">
       <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -41,6 +41,44 @@
     <h1 data-i18n="heroTitle">جدارية مليون<br>صورة سيلفي</h1>
     <p class="hero-desc" data-i18n="heroSubtitle">كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.</p>
     <p class="hero-price" data-i18n="priceNote">كل مربع 10×10 بكسل بـ دولار واحد فقط.</p>
+  </section>
+
+  <!-- 🆕 قسم: كيف تحصل على بطاقتك؟ -->
+  <section class="card-guide-section">
+    <h2 class="card-guide-title" data-i18n="cardGuideTitle">🎁 كيف تحصل على بطاقة الإنجاز الخاصة بك؟</h2>
+    <p class="card-guide-subtitle" data-i18n="cardGuideSubtitle">بعد الموافقة على طلبك، ستحصل على بطاقة رقمية أنيقة يمكنك مشاركتها مع أصدقائك على وسائل التواصل الاجتماعي!</p>
+    
+    <div class="card-guide-steps">
+      <div class="card-guide-step">
+        <div class="card-guide-num">1</div>
+        <div class="card-guide-icon">🖱️</div>
+        <h3 data-i18n="cardGuideStep1Title">احجز مربعك</h3>
+        <p data-i18n="cardGuideStep1Desc">اختر المربعات التي تريدها وارفع صورتك</p>
+      </div>
+      <div class="card-guide-step">
+        <div class="card-guide-num">2</div>
+        <div class="card-guide-icon">⏳</div>
+        <h3 data-i18n="cardGuideStep2Title">انتظر الموافقة</h3>
+        <p data-i18n="cardGuideStep2Desc">سيتم مراجعة طلبك خلال 24-48 ساعة</p>
+      </div>
+      <div class="card-guide-step">
+        <div class="card-guide-num">3</div>
+        <div class="card-guide-icon">🔔</div>
+        <h3 data-i18n="cardGuideStep3Title">ابقَ في الموقع</h3>
+        <p data-i18n="cardGuideStep3Desc">عند الموافقة، سيظهر لك إشعار فوري مع صوت نجاح</p>
+      </div>
+      <div class="card-guide-step highlight">
+        <div class="card-guide-num">4</div>
+        <div class="card-guide-icon">📸</div>
+        <h3 data-i18n="cardGuideStep4Title">استلم بطاقتك</h3>
+        <p data-i18n="cardGuideStep4Desc">اضغط على زر "استلم بطاقتك" وشاركها مع العالم!</p>
+      </div>
+    </div>
+
+    <div class="card-guide-note">
+      <span class="note-icon">💡</span>
+      <p data-i18n="cardGuideNote">نصيحة: احفظ الموقع في المفضلة، وعد إليه بعد الموافقة لاستلام بطاقتك!</p>
+    </div>
   </section>
 
   <!-- كيف يعمل الموقع -->
@@ -195,7 +233,7 @@
       </p>
     </div>
 
-    <!-- 🆕 شريط التواصل — تم إزالة واتساب + إبقاء تيليجرام -->
+    <!-- شريط التواصل -->
     <div class="contact-bar">
       <a href="https://t.me/Hossinn11" class="contact-btn telegram" target="_blank" rel="noopener" aria-label="Telegram">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
@@ -343,7 +381,7 @@
       </div>
 
       <div class="refund-notice">
-        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر واتساب أو تيليجرام لاسترجاع المال.</p>
+        <p data-i18n="refundNotice">💡 في حال رفض الصورة، يرجى التواصل معنا عبر تيليجرام لاسترجاع المال.</p>
       </div>
 
       <div class="price-display">
@@ -359,7 +397,7 @@
     </div>
   </div>
 
-  <!-- 🆕 نافذة نموذج الدعوة المتعددة -->
+  <!-- نافذة نموذج الدعوة -->
   <div id="referralModal" class="modal hidden">
     <div class="modal-content referral-modal-content">
       <button class="close-btn" onclick="closeReferralModal()">✕</button>
@@ -457,6 +495,30 @@
 
   <!-- إشعار عائم -->
   <div id="toastContainer" class="toast-container"></div>
+
+  <!-- 🆕 إشعار الموافقة على الطلب -->
+  <div id="approvalNotification" class="approval-notification hidden">
+    <div class="approval-content">
+      <div class="approval-icon">🎉</div>
+      <h3 class="approval-title" data-i18n="approvalTitle">مبروك!</h3>
+      <p class="approval-message" data-i18n="approvalMessage">تم قبول طلبك بنجاح</p>
+      <button id="claimCardBtn" class="claim-card-btn" data-i18n="claimCardBtn">📸 استلم بطاقتك</button>
+    </div>
+  </div>
+
+  <!-- 🆕 نافذة عرض البطاقة -->
+  <div id="myCardModal" class="my-card-modal hidden">
+    <div class="my-card-content">
+      <button class="my-card-close" onclick="closeMyCard()">✕</button>
+      <h2 class="my-card-title" data-i18n="myCardTitle">🎉 بطاقتك جاهزة!</h2>
+      <img id="myCardPreview" class="my-card-preview" alt="بطاقتي">
+      <div class="my-card-buttons">
+        <button class="my-card-btn download" onclick="downloadMyCard()" data-i18n="downloadCard">📥 تنزيل</button>
+        <button class="my-card-btn share" onclick="shareMyCard()" data-i18n="shareNow">🚀 مشاركة</button>
+        <button class="my-card-btn close" onclick="closeMyCard()" data-i18n="closeBtn">إغلاق</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="app.js"></script>
 </body>
