@@ -876,7 +876,7 @@ async function loadBookings() {
     
     updateStats();
     drawGrid();
-    updateLeaderboard();
+    updateLeaderboard(); // نستخدم اللغة الافتراضية
   } catch (error) {
     console.error("خطأ في تحميل الحجوزات:", error);
   }
@@ -897,9 +897,9 @@ function updateStats() {
 }
 
 // ===== تحديث لوحة الصدارة =====
-async function updateLeaderboard() {
+async function updateLeaderboard(lang = null) {
   try {
-    const currentLang = localStorage.getItem('lang') || 'ar';
+    const currentLang = lang || localStorage.getItem('lang') || 'ar';
     
     const approvedOnly = allBookings.filter(b => b.status === 'approved');
     const recent = approvedOnly.slice(0, 5);
@@ -909,7 +909,7 @@ async function updateLeaderboard() {
         <div class="lb-item">
           <img src="${b.selfieUrl || ''}" alt="" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
           <span class="name">
-            ${b.userName || 'زائر'}
+            ${b.userName || (currentLang === 'ar' ? 'زائر' : 'Guest')}
             ${isBusiness ? '<span class="business-badge">🏢</span>' : ''}
           </span>
           <span class="count">${b.quantity || 1} ${currentLang === 'ar' ? 'مربع' : 'sq'}</span>
@@ -957,7 +957,7 @@ async function updateLeaderboard() {
         <div class="lb-item">
           <img src="${b.selfieUrl || ''}" alt="" class="${isBusiness ? 'business-logo' : ''}" onerror="this.style.display='none'">
           <span class="name">
-            ${b.userName || 'زائر'}
+            ${b.userName || (currentLang === 'ar' ? 'زائر' : 'Guest')}
             ${isBusiness ? '<span class="business-badge">🏢</span>' : ''}
           </span>
           <span class="count">❤️ ${b.likes || 0}</span>
@@ -2590,8 +2590,9 @@ function applyLanguage(lang) {
     }
   }
   
+  // 🆕 تحديث الإحصائيات وجدول الصدارة فوراً
   updateStats();
-  updateLeaderboard();
+  updateLeaderboard(lang);
 }
 
 // ===== تبديل اللغة =====
@@ -2608,6 +2609,12 @@ function setLanguage(lang) {
   
   applyLanguage(lang);
   localStorage.setItem('lang', lang);
+  
+  // 🆕 تمرير اللغة مباشرة إلى الدالة
+  updateStats();
+  updateLeaderboard(lang);
+  
+  drawGrid();
 }
 
 document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
