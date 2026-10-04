@@ -583,16 +583,52 @@ body {
   padding: 0 10px;
 }
 
-.zoom-controls {
+/* 🆕 أزرار التكبير/التصغير فوق الشبكة */
+.zoom-controls-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  width: 100%;
-  gap: 10px;
+  gap: 15px;
+  width: 90%;
+  margin: 0 auto 12px;
+  padding: 10px;
+  background: var(--bg-gray);
+  border: 1.5px solid var(--bg-light);
+  border-radius: 12px;
 }
 
-.zoom-controls .grid-frame { flex: 1; }
+.zoom-label {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Cairo', sans-serif;
+}
 
+.zoom-btn {
+  background: var(--bg-dark);
+  border: 1.5px solid var(--gold);
+  color: var(--gold);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  flex-shrink: 0;
+}
+
+.zoom-btn:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+  transform: scale(1.1);
+}
+
+.zoom-btn svg {
+  width: 18px;
+  height: 18px;
+}
 .zoom-btn {
   background: var(--bg-gray);
   border: 2px solid var(--gold);
@@ -615,7 +651,9 @@ body {
 }
 
 .grid-frame {
-  width: 100%;
+  width: 90%;
+  max-width: 90%;
+  margin: 0 auto;
   border: 2px solid var(--gold);
   border-radius: 12px;
   overflow: hidden;
@@ -1518,6 +1556,30 @@ html, body {
 
 /* ===== الجوال ===== */
 @media (max-width: 768px) {
+  .zoom-controls-top {
+  width: 90% !important;
+  padding: 8px;
+  gap: 10px;
+}
+
+.zoom-btn {
+  width: 34px;
+  height: 34px;
+}
+
+.zoom-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.zoom-label {
+  font-size: 11px;
+}
+
+.grid-frame {
+  width: 90% !important;
+  max-width: 90% !important;
+}
   .hero { padding: 80px 15px 40px; }
   .hero h1 { font-size: 36px; }
   .hero-desc { font-size: 15px; }
