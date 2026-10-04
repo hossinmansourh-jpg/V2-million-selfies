@@ -36,37 +36,52 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
-/* ===== الشريط العلوي ===== */
+/* ===== 🆕 شريط علوي عائم ===== */
 .topbar {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: 15px;
+  right: 15px;
   z-index: 100;
   display: flex;
-  justify-content: space-between;
+  gap: 10px;
   align-items: center;
-  padding: 15px 20px;
-  background: rgba(10, 10, 15, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--bg-light);
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom: none;
+  width: auto;
 }
 
-[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.95); }
-
 .theme-toggle {
-  background: transparent;
-  border: 2px solid var(--gold);
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--gold);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--gold);
   transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
-.theme-toggle:hover { background: var(--gold); color: var(--bg-dark); }
+[data-theme="light"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.theme-toggle:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+  transform: scale(1.1);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
 
 .icon-sun { display: none; }
 [data-theme="light"] .icon-sun { display: block; }
@@ -74,23 +89,29 @@ body {
 
 .lang-switch {
   display: flex;
-  gap: 5px;
-  background: var(--bg-gray);
+  gap: 3px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(10px);
   padding: 4px;
   border-radius: 25px;
-  border: 1px solid var(--bg-light);
+  border: 1.5px solid var(--bg-light);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .lang-switch {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .lang-option {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
   font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 11px;
   transition: 0.3s;
 }
 
@@ -101,7 +122,7 @@ body {
 
 /* ===== القسم الرئيسي ===== */
 .hero {
-  padding: 80px 20px 60px;
+  padding: 100px 20px 60px;
   text-align: center;
   background: radial-gradient(circle at top, rgba(212, 160, 23, 0.15), transparent 60%);
 }
@@ -206,7 +227,7 @@ body {
   background: var(--bg-gray);
   border: 2px solid var(--bg-light);
   border-radius: 16px;
-  padding: 30px 20px;
+  padding: 22px 15px;
   text-align: center;
   position: relative;
   transition: 0.3s;
@@ -232,37 +253,61 @@ body {
 
 .card-guide-num {
   position: absolute;
-  top: -15px;
-  right: 20px;
+  top: -10px;
+  right: 15px;
   background: var(--gold);
   color: var(--bg-dark);
-  width: 35px;
-  height: 35px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 16px;
+  font-size: 13px;
   box-shadow: 0 0 15px rgba(245, 179, 1, 0.6);
 }
 
-.card-guide-icon {
-  font-size: 45px;
-  margin-bottom: 15px;
+/* ===== 🆕 تصغير الأيقونات ===== */
+.card-guide-icon,
+.how-icon,
+.guide-icon {
+  font-size: 28px;
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, rgba(212, 160, 23, 0.15), rgba(212, 160, 23, 0.05));
+  border: 1.5px solid var(--gold);
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(212, 160, 23, 0.2);
+  transition: 0.3s;
 }
 
-.card-guide-step h3 {
+.card-guide-step:hover .card-guide-icon,
+.how-step:hover .how-icon,
+.guide-step:hover .guide-icon {
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: 0 8px 25px rgba(212, 160, 23, 0.5);
+}
+
+.card-guide-step h3,
+.how-step h3,
+.guide-step h3 {
   color: var(--gold-light);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.card-guide-step p {
+.card-guide-step p,
+.how-step p,
+.guide-step p {
   color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .card-guide-note {
@@ -280,7 +325,7 @@ body {
 }
 
 .note-icon {
-  font-size: 30px;
+  font-size: 22px;
   flex-shrink: 0;
 }
 
@@ -316,7 +361,7 @@ body {
   background: var(--bg-gray);
   border: 1px solid var(--bg-light);
   border-radius: 16px;
-  padding: 30px 20px;
+  padding: 22px 15px;
   text-align: center;
   position: relative;
   transition: 0.3s;
@@ -327,35 +372,20 @@ body {
   border-color: var(--gold);
 }
 
-.how-icon { font-size: 40px; margin-bottom: 15px; }
-
 .how-num {
   position: absolute;
-  top: 15px;
+  top: -10px;
   right: 15px;
   background: var(--gold);
   color: var(--bg-dark);
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 14px;
-}
-
-.how-step h3 {
-  color: var(--gold-light);
-  font-size: 18px;
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-
-.how-step p {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
 }
 
 /* ===== قسم التفاعل ===== */
@@ -383,7 +413,7 @@ body {
   background: var(--bg-gray);
   border: 1px solid var(--bg-light);
   border-radius: 16px;
-  padding: 25px 20px;
+  padding: 22px 15px;
   text-align: center;
   transition: 0.3s;
 }
@@ -391,21 +421,6 @@ body {
 .guide-step:hover {
   border-color: var(--gold);
   transform: translateY(-3px);
-}
-
-.guide-icon { font-size: 35px; margin-bottom: 15px; }
-
-.guide-step h3 {
-  color: var(--gold-light);
-  font-size: 16px;
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-
-.guide-step p {
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.6;
 }
 
 /* ===== بانر الإحالة ===== */
@@ -630,10 +645,13 @@ body {
   box-shadow: 0 0 30px rgba(212, 160, 23, 0.3);
 }
 
+/* ===== 🆕 تكبير الشبكة إلى 70% من الشاشة ===== */
 .grid-container {
   position: relative;
   width: 100%;
-  height: 600px;
+  height: 70vh;
+  min-height: 400px;
+  max-height: 800px;
   background: var(--bg-dark);
 }
 
@@ -1215,9 +1233,7 @@ body {
 .toast-notification.success { border-color: #4ade80; color: #4ade80; }
 .toast-notification.error { border-color: #ff5555; color: #ff5555; }
 
-/* ============================================ */
-/* ===== 🆕 إشعار الموافقة على الطلب ===== */
-/* ============================================ */
+/* ===== 🆕 إشعار الموافقة ===== */
 .approval-notification {
   position: fixed;
   top: 50%;
@@ -1568,56 +1584,83 @@ body {
   line-height: 2;
 }
 
-/* ===== التذييل ===== */
-footer {
-  text-align: center;
-  padding: 30px 20px;
-  color: var(--text-muted);
+/* ===== 🆕 أيقونة نسخ احترافية ===== */
+.copy-icon-btn {
+  background: var(--bg-dark);
+  border: 1.5px solid var(--gold);
+  color: var(--gold);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  flex-shrink: 0;
+  padding: 0;
+  position: relative;
+}
+
+.copy-icon-btn::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  top: 10px;
+  left: 10px;
+  opacity: 0.9;
+}
+
+.copy-icon-btn::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+  top: 14px;
+  left: 14px;
+  background: var(--bg-dark);
+}
+
+.copy-icon-btn:hover {
+  background: var(--gold);
+  color: var(--bg-dark);
+  transform: scale(1.05);
+}
+
+.referral-link-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.referral-link-box input {
+  flex: 1;
+  padding: 12px 15px;
+  background: var(--bg-dark);
+  border: 1.5px solid var(--bg-light);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'Cairo', sans-serif;
   font-size: 13px;
-  border-top: 1px solid var(--bg-light);
-  margin-top: 40px;
+  direction: ltr;
 }
 
-/* ===== الجوال ===== */
-@media (max-width: 768px) {
-  .hero h1 { font-size: 36px; }
-  .hero-desc { font-size: 15px; }
-  .card-guide-title { font-size: 24px; }
-  .card-guide-subtitle { font-size: 14px; }
-  .card-guide-steps { grid-template-columns: 1fr; }
-  .grid-container { height: 450px; }
-  .modal-content { padding: 25px 18px; }
-  .booking-type-options { grid-template-columns: 1fr; }
-  .share-card-content { padding: 20px 15px; }
-  .approval-notification { padding: 30px 25px; }
-  .approval-icon { font-size: 60px; }
-  .approval-title { font-size: 28px; }
-  .approval-message { font-size: 16px; }
-  .claim-card-btn { padding: 15px 30px; font-size: 16px; }
-}
-
-@media (max-width: 480px) {
-  .hero { padding: 50px 15px 40px; }
-  .hero h1 { font-size: 28px; }
-  .stat-value { font-size: 28px; }
-  .section-title { font-size: 22px; }
-  .legend { gap: 10px; padding: 12px; }
-  .legend-item { font-size: 11px; }
-}
-
-/* ===== 🆕 منع الانزياح الأفقي على الجوال ===== */
+/* ===== 🆕 منع الانزياح الأفقي ===== */
 html, body {
   overflow-x: hidden !important;
   max-width: 100vw !important;
   position: relative;
 }
 
-/* التأكد من أن كل العناصر لا تخرج عن الشاشة */
 * {
   max-width: 100%;
 }
 
-/* إصلاح نافذة الإحالة */
 .referral-modal-content,
 .modal-content,
 .share-card-content,
@@ -1628,71 +1671,60 @@ html, body {
   margin-right: auto !important;
 }
 
-/* إصلاح حقل رابط الإحالة الطويل */
-.referral-link-box input {
-  width: 100% !important;
-  box-sizing: border-box;
-}
-
-/* إصلاح النصوص الطويلة */
-.hero h1,
-.hero-desc,
-.section-title,
-.how-title,
-.guide-title,
-.card-guide-title,
-.leaderboard,
-.referral-banner,
-.stats,
-.progress-section,
-.wall-section {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* إصلاح الشبكة على الجوال */
-.grid-wrapper {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.grid-frame {
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* إصلاح لوحة الصدارة على الجوال */
-.leaderboard-grid {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* إصلاح نافذة الإحالة */
-.modal {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-/* إصلاح الشريط العلوي */
-.topbar {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* إصلاح الصور */
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* إصلاح لوحة الصدارة على الجوال */
+/* ===== الجوال ===== */
 @media (max-width: 768px) {
+  .hero { padding: 80px 15px 40px; }
+  .hero h1 { font-size: 36px; }
+  .hero-desc { font-size: 15px; }
+  .card-guide-title { font-size: 24px; }
+  .card-guide-subtitle { font-size: 14px; }
+  .card-guide-steps { grid-template-columns: 1fr; }
+  
+  /* 🆕 الشبكة 70% من الشاشة */
+  .grid-container {
+    height: 70vh !important;
+    min-height: 350px !important;
+    max-height: 600px !important;
+  }
+  
+  .modal-content { padding: 25px 18px; }
+  .booking-type-options { grid-template-columns: 1fr; }
+  .share-card-content { padding: 20px 15px; }
+  .approval-notification { padding: 30px 25px; }
+  .approval-icon { font-size: 60px; }
+  .approval-title { font-size: 28px; }
+  .approval-message { font-size: 16px; }
+  .claim-card-btn { padding: 15px 30px; font-size: 16px; }
+  
+  /* 🆕 لوحة الصدارة عمود واحد */
+  .leaderboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
   .lb-card[style*="grid-column: span 2"] {
     grid-column: span 1 !important;
   }
   
-  .leaderboard-grid {
-    grid-template-columns: 1fr !important;
+  /* 🆕 الشريط العلوي */
+  .topbar {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .theme-toggle svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .lang-option {
+    padding: 5px 10px;
+    font-size: 10px;
   }
   
   .wall-section,
@@ -1701,4 +1733,13 @@ img {
     padding-left: 15px !important;
     padding-right: 15px !important;
   }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 60px 12px 30px; }
+  .hero h1 { font-size: 28px; }
+  .stat-value { font-size: 28px; }
+  .section-title { font-size: 22px; }
+  .legend { gap: 10px; padding: 12px; }
+  .legend-item { font-size: 11px; }
 }
