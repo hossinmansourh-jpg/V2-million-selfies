@@ -43,7 +43,7 @@
     <p class="hero-price" data-i18n="priceNote">كل مربع 10×10 بكسل بـ دولار واحد فقط.</p>
   </section>
 
-  <!-- 🆕 قسم: كيف تحصل على بطاقتك؟ -->
+  <!-- قسم: كيف تحصل على بطاقتك؟ -->
   <section class="card-guide-section">
     <h2 class="card-guide-title" data-i18n="cardGuideTitle">🎁 كيف تحصل على بطاقة الإنجاز الخاصة بك؟</h2>
     <p class="card-guide-subtitle" data-i18n="cardGuideSubtitle">بعد الموافقة على طلبك، ستحصل على بطاقة رقمية أنيقة يمكنك مشاركتها مع أصدقائك على وسائل التواصل الاجتماعي!</p>
@@ -195,29 +195,32 @@
       <span id="selectedCountDisplay" class="selected-count" data-i18n="selectedCount">المربعات المختارة: 0</span>
     </div>
 
+    <!-- 🆕 الشبكة مع أزرار التكبير/التصغير على اليمين واليسار -->
     <div class="grid-wrapper">
-      <button id="zoomOut" class="zoom-btn zoom-out" title="تصغير">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          <line x1="8" y1="11" x2="14" y2="11"></line>
-        </svg>
-      </button>
+      <div class="zoom-controls">
+        <button id="zoomOut" class="zoom-btn" title="تصغير">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
 
-      <div class="grid-frame">
-        <div class="grid-container">
-          <canvas id="gridCanvas"></canvas>
+        <div class="grid-frame">
+          <div class="grid-container">
+            <canvas id="gridCanvas"></canvas>
+          </div>
         </div>
-      </div>
 
-      <button id="zoomIn" class="zoom-btn zoom-in" title="تكبير">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          <line x1="11" y1="8" x2="11" y2="14"></line>
-          <line x1="8" y1="11" x2="14" y2="11"></line>
-        </svg>
-      </button>
+        <button id="zoomIn" class="zoom-btn" title="تكبير">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <div class="hints-section">
@@ -407,7 +410,7 @@
         <label data-i18n="referralLinkLabel">🔗 الرابط الخاص بك</label>
         <div class="referral-link-box">
           <input type="text" id="referralLinkInput" readonly>
-           <button class="copy-icon-btn" onclick="copyReferralLinkOnly()" title="نسخ الرابط فقط"></button>
+          <button class="copy-icon-btn" onclick="copyReferralLinkOnly()" title="نسخ الرابط فقط"></button>
         </div>
       </div>
 
@@ -496,7 +499,7 @@
   <!-- إشعار عائم -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- 🆕 إشعار الموافقة على الطلب -->
+  <!-- إشعار الموافقة على الطلب -->
   <div id="approvalNotification" class="approval-notification hidden">
     <div class="approval-content">
       <div class="approval-icon">🎉</div>
@@ -506,7 +509,7 @@
     </div>
   </div>
 
-  <!-- 🆕 نافذة عرض البطاقة -->
+  <!-- نافذة عرض البطاقة -->
   <div id="myCardModal" class="my-card-modal hidden">
     <div class="my-card-content">
       <button class="my-card-close" onclick="closeMyCard()">✕</button>
