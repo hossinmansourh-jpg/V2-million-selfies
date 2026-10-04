@@ -1634,3 +1634,26 @@ html, body {
   .legend { gap: 10px; padding: 12px; }
   .legend-item { font-size: 11px; }
 }
+/* ===== 🆕 منع تكبير الصفحة داخل الشبكة فقط ===== */
+#gridCanvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.grid-container {
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.grid-frame {
+  touch-action: none;
+}
+
+/* منع التكبير على الشبكة فقط */
+@supports (touch-action: manipulation) {
+  #gridCanvas {
+    touch-action: manipulation;
+  }
+}
