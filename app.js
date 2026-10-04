@@ -52,10 +52,7 @@ let selectionMode = false;
 let previewImage = null;
 let previewImageUrl = null;
 
-// ===== Cache للحجوزات =====
 let bookingsIndexCache = new Map();
-
-// ===== منع الرسم المكرر =====
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
@@ -283,7 +280,6 @@ function convertToJPG(file) {
   });
 }
 
-// ===== إعداد Canvas =====
 function resizeCanvas() {
   const container = canvas.parentElement;
   const newWidth = container.clientWidth;
@@ -294,7 +290,6 @@ function resizeCanvas() {
   drawGrid();
 }
 
-// ===== بناء Cache الحجوزات =====
 function buildBookingsIndex() {
   bookingsIndexCache.clear();
   allBookings.forEach(b => {
@@ -793,7 +788,6 @@ async function updateLeaderboard(lang = null) {
   }
 }
 
-// ===== متغيرات السحب =====
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
@@ -880,7 +874,6 @@ function closeOnboarding() {
 }
 window.closeOnboarding = closeOnboarding;
 
-// ===== أحداث الفأرة =====
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   if (selectionMode) {
@@ -1089,6 +1082,9 @@ async function handleDoubleClick(e) {
 
 let longPressTimer = null;
 let longPressActive = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let lastTouchDist = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) { cancelAnimationFrame(inertiaFrame); inertiaFrame = null; }
@@ -1193,10 +1189,6 @@ function showOwnerCard(booking) {
   setTimeout(() => card.classList.add('show'), 50);
 }
 window.showOwnerCard = showOwnerCard;
-
-let touchStartX = 0;
-let touchStartY = 0;
-let lastTouchDist = 0;
 
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
@@ -1553,10 +1545,7 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
   toggleSelectionMode();
 });
 
-// ============================================
 // ===== نظام بطاقة المشاركة =====
-// ============================================
-
 let generatedCardBlob = null;
 let generatedCardDataURL = null;
 
@@ -2158,10 +2147,7 @@ function preloadImages() {
   });
 }
 
-// ============================================
-// ===== نظام إشعار الموافقة على الطلب =====
-// ============================================
-
+// ===== نظام إشعار الموافقة =====
 let myCardBlob = null;
 let myCardDataURL = null;
 let approvalCheckInterval = null;
