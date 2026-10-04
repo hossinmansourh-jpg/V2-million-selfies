@@ -2864,7 +2864,7 @@ resizeCanvas();
 loadBookings();
 trackVisit();
 
-setInterval(loadBookings, 60000);
+setInterval(loadBookings, 90000);
 
 setTimeout(preloadImages, 2000);
 
