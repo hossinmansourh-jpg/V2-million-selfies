@@ -1123,7 +1123,7 @@ canvas.addEventListener('touchstart', (e) => {
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
   }
-}, { passive: true });
+}, { passive: false });
 
 function handleLongPress(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
@@ -1235,6 +1235,36 @@ canvas.addEventListener('touchmove', (e) => {
     }
     lastTouchDist = dist;
   }
+}, { passive: false });
+
+// ===== 🆕 منع تكبير الصفحة عند النقر المزدوج داخل الشبكة =====
+let lastTouchEndTime = 0;
+
+canvas.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEndTime <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEndTime = now;
+}, { passive: false });
+
+// منع التكبير عند الإيماءات (Safari)
+canvas.addEventListener('gesturestart', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('gesturechange', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('gestureend', (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+// منع تكبير الصفحة بالنقر المزدوج (للأجهزة المكتبية)
+canvas.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  return false;
 }, { passive: false });
 
 canvas.addEventListener('touchend', () => {
