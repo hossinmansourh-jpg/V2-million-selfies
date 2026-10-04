@@ -802,20 +802,42 @@ async function loadBookings() {
   }
 }
 
+/
 // ===== تحديث الإحصائيات =====
 function updateStats() {
   const bookedCells = allBookings.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.quantity || 0), 0);
   const availableCells = TOTAL_CELLS - bookedCells;
   const selfiesCount = allBookings.filter(b => b.status === 'approved').length;
-  const progress = ((bookedCells / TOTAL_CELLS) * 100).toFixed(2);
+  
+  const rawProgress = (bookedCells / TOTAL_CELLS) * 100;
+  let progress;
+  
+  if (rawProgress === 0) {
+    progress = '0';
+  } else if (rawProgress < 0.01) {
+    progress = rawProgress.toFixed(4);
+  } else if (rawProgress < 1) {
+    progress = rawProgress.toFixed(3);
+  } else {
+    progress = rawProgress.toFixed(2);
+  }
 
   document.getElementById('statBooked').textContent = bookedCells.toLocaleString('en-US');
   document.getElementById('statAvailable').textContent = availableCells.toLocaleString('en-US');
   document.getElementById('statSelfies').textContent = selfiesCount.toLocaleString('en-US');
-  document.getElementById('progressFill').style.width = progress + '%';
-  document.getElementById('progressText').textContent = progress + '%';
+  
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  
+  if (progressFill) {
+    const visualProgress = Math.max(rawProgress, 0.5);
+    progressFill.style.width = visualProgress + '%';
+  }
+  
+  if (progressText) {
+    progressText.textContent = progress + '%';
+  }
 }
-
 // ===== تحديث لوحة الصدارة =====
 async function updateLeaderboard(lang = null) {
   try {
@@ -2899,3 +2921,62 @@ document.addEventListener('visibilitychange', () => {
     observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
   }
 })();
+
+
+// ============================================
+// ===== 🆕 تحسينات الأداء =====
+// ============================================
+
+let isPageVisible = true;
+document.addEventListener('visibilitychange', () => {
+  isPageVisible = !document.hidden;
+});
+
+const originalDrawGrid = drawGrid;
+let drawGridThrottleTimer = null;
+
+window.drawGrid = function() {
+  if (drawGridThrottleTimer) return;
+  drawGridThrottleTimer = setTimeout(() => {
+    drawGridThrottleTimer = null;
+    if (isPageVisible) {
+      originalDrawGrid();
+    }
+  }, 16);
+};
+
+const MAX_CONCURRENT_LOADS = 3;
+let activeLoads = 0;
+const loadQueue = [];
+
+const originalLoadBookingImage = loadBookingImage;
+window.loadBookingImage = function(booking) {
+  if (activeLoads >= MAX_CONCURRENT_LOADS) {
+    loadQueue.push(booking);
+    return;
+  }
+  
+  activeLoads++;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    imageCache[booking.id] = img;
+    pendingImageLoads.delete(booking.id);
+    activeLoads--;
+    processLoadQueue();
+    if (isPageVisible) drawGrid();
+  };
+  img.onerror = () => {
+    pendingImageLoads.delete(booking.id);
+    activeLoads--;
+    processLoadQueue();
+  };
+  img.src = booking.selfieUrl;
+};
+
+function processLoadQueue() {
+  if (loadQueue.length > 0 && activeLoads < MAX_CONCURRENT_LOADS) {
+    const next = loadQueue.shift();
+    loadBookingImage(next);
+  }
+}
