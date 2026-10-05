@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مكافأتي - جدارية مليون صورة سيلفي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .reward-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at top, rgba(212, 160, 23, 0.15), transparent 60%);
+    }
+    
+    .reward-card {
+      background: var(--bg-gray);
+      border: 3px solid var(--gold);
+      border-radius: 24px;
+      padding: 40px 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(212, 160, 23, 0.3);
+    }
+    
+    .reward-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    .reward-title {
+      color: var(--gold-light);
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 15px;
+    }
+    
+    .reward-subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 30px;
+      line-height: 1.7;
+    }
+    
+    .reward-code-box {
+      background: var(--bg-dark);
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .reward-code-label {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .reward-code {
+      color: var(--gold-light);
+      font-family: monospace;
+      font-size: 18px;
+      font-weight: 900;
+      direction: ltr;
+      letter-spacing: 2px;
+    }
+    
+    .progress-circle {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 30px;
+    }
+    
+    .progress-circle svg {
+      transform: rotate(-90deg);
+    }
+    
+    .progress-circle-bg {
+      fill: none;
+      stroke: var(--bg-light);
+      stroke-width: 12;
+    }
+    
+    .progress-circle-fill {
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 12;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s ease;
+      filter: drop-shadow(0 0 10px var(--gold));
+    }
+    
+    .progress-circle-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    
+    .progress-circle-number {
+      color: var(--gold-light);
+      font-size: 42px;
+      font-weight: 900;
+      display: block;
+      direction: ltr;
+    }
+    
+    .progress-circle-label {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    
+    .referral-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .referral-stat {
+      background: var(--bg-dark);
+      border: 1px solid var(--bg-light);
+      border-radius: 12px;
+      padding: 18px 12px;
+    }
+    
+    .referral-stat-value {
+      display: block;
+      color: var(--gold-light);
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 5px;
+      direction: ltr;
+    }
+    
+    .referral-stat-label {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    
+    .claim-reward-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg-dark);
+      border: none;
+      border-radius: 14px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 8px 25px rgba(245, 179, 1, 0.5);
+      animation: pulse 2s infinite;
+    }
+    
+    .claim-reward-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 40px rgba(245, 179, 1, 0.8);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    .claim-reward-btn:disabled {
+      background: var(--bg-light);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+      animation: none;
+    }
+    
+    .share-referral-btn {
+      width: 100%;
+      padding: 15px;
+      background: transparent;
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      border-radius: 14px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: 0.3s;
+    }
+    
+    .share-referral-btn:hover {
+      background: var(--gold);
+      color: var(--bg-dark);
+    }
+    
+    .back-link {
+      display: inline-block;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 20px;
+    }
+    
+    .back-link:hover {
+      color: var(--gold-light);
+    }
+  </style>
+</head>
+<body>
+  <div class="reward-page">
+    <div class="reward-card">
+      
+      <div class="reward-icon">🎁</div>
+      
+      <h1 class="reward-title">مكافأتك</h1>
+      <p class="reward-subtitle">ادعُ 10 من أصدقائك واحصل على مربع مجاني في الجدارية!</p>
+      
+      <div class="reward-code-box">
+        <div class="reward-code-label">🔗 رمز الإحالة الخاص بك</div>
+        <div class="reward-code" id="myReferralCode">جاري التحميل...</div>
+      </div>
+      
+      <div class="progress-circle">
+        <svg width="180" height="180">
+          <circle class="progress-circle-bg" cx="90" cy="90" r="78"></circle>
+          <circle class="progress-circle-fill" id="progressCircleFill" cx="90" cy="90" r="78" 
+                  stroke-dasharray="490" stroke-dashoffset="490"></circle>
+        </svg>
+        <div class="progress-circle-text">
+          <span class="progress-circle-number" id="referralCount">0</span>
+          <span class="progress-circle-label">من 10</span>
+        </div>
+      </div>
+      
+      <div class="referral-stats">
+        <div class="referral-stat">
+          <span class="referral-stat-value" id="totalReferrals">0</span>
+          <span class="referral-stat-label">إجمالي الإحالات</span>
+        </div>
+        <div class="referral-stat">
+          <span class="referral-stat-value" id="remainingReferrals">10</span>
+          <span class="referral-stat-label">المتبقي</span>
+        </div>
+      </div>
+      
+      <button class="claim-reward-btn" id="claimRewardBtn" disabled>
+        🔒 استلم مكافأتك
+      </button>
+      
+      <button class="share-referral-btn" id="shareReferralBtn">
+        📋 نسخ رابط الإحالة
+      </button>
+      
+      <a href="index.html" class="back-link">← العودة إلى الجدارية</a>
+      
+    </div>
+  </div>
+
+  <script type="module" src="reward.js"></script>
+</body>
+</html>
