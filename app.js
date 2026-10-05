@@ -56,6 +56,9 @@ let bookingsIndexCache = new Map();
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
+// ===== 🆕 وضع المربع المجاني =====
+let isFreeRewardMode = false;
+
 // ===== الثيم =====
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -984,6 +987,8 @@ let clickTimer = null;
 let clickCount = 0;
 
 canvas.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   if (selectionMode) return;
   if (hasDragged) { hasDragged = false; return; }
   clickCount++;
@@ -994,7 +999,8 @@ canvas.addEventListener('click', (e) => {
     clickCount = 0;
     handleDoubleClick(e);
   }
-});
+  return false;
+}, { passive: false });
 
 function handleSingleClick(e) {
   const rect = canvas.getBoundingClientRect();
@@ -1085,6 +1091,7 @@ let longPressActive = false;
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
+let lastTouchEndTime = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) { cancelAnimationFrame(inertiaFrame); inertiaFrame = null; }
@@ -1237,42 +1244,22 @@ canvas.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
-// ===== 🆕 منع تكبير الصفحة عند النقر المزدوج داخل الشبكة =====
-let lastTouchEndTime = 0;
-
 canvas.addEventListener('touchend', (e) => {
   const now = Date.now();
   if (now - lastTouchEndTime <= 300) {
     e.preventDefault();
   }
   lastTouchEndTime = now;
-}, { passive: false });
-
-// منع التكبير عند الإيماءات (Safari)
-canvas.addEventListener('gesturestart', (e) => {
-  e.preventDefault();
-}, { passive: false });
-
-canvas.addEventListener('gesturechange', (e) => {
-  e.preventDefault();
-}, { passive: false });
-
-canvas.addEventListener('gestureend', (e) => {
-  e.preventDefault();
-}, { passive: false });
-
-// منع تكبير الصفحة بالنقر المزدوج (للأجهزة المكتبية)
-canvas.addEventListener('dblclick', (e) => {
-  e.preventDefault();
-  return false;
-}, { passive: false });
-
-canvas.addEventListener('touchend', () => {
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
   if (selectionMode && isSelecting) { isSelecting = false; return; }
   lastTouchDist = 0;
   if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) startInertia();
-}, { passive: true });
+}, { passive: false });
+
+canvas.addEventListener('gesturestart', (e) => { e.preventDefault(); }, { passive: false });
+canvas.addEventListener('gesturechange', (e) => { e.preventDefault(); }, { passive: false });
+canvas.addEventListener('gestureend', (e) => { e.preventDefault(); }, { passive: false });
+canvas.addEventListener('dblclick', (e) => { e.preventDefault(); return false; }, { passive: false });
 
 function updateSelectedCount() {
   if (!selectionStart || !selectionEnd) return;
@@ -1313,12 +1300,40 @@ function updatePriceDisplay() {
   }
 }
 
+// ===== فتح نافذة الحجز =====
 function openBookingModal(startCell) {
   document.getElementById('bookingModal').classList.remove('hidden');
   document.getElementById('bookingModal').dataset.startCell = startCell;
   document.body.style.overflow = 'hidden';
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) qtyInput.readOnly = true;
+  
+  // 🆕 التحقق من وضع المربع المجاني
+  const urlParams = new URLSearchParams(window.location.search);
+  isFreeRewardMode = urlParams.get('free_reward') === 'true';
+  
+  if (isFreeRewardMode) {
+    currentCellPrice = 0;
+    
+    const modalTitle = document.querySelector('#bookingModal h2');
+    if (modalTitle) {
+      modalTitle.textContent = '🎁 حجز مربع مجاني';
+    }
+    
+    const paymentGroup = document.querySelector('#paymentMethod')?.closest('.form-group');
+    const paymentInfo = document.getElementById('paymentInfo');
+    const receiptGroup = document.getElementById('receiptInput')?.closest('.form-group');
+    
+    if (paymentGroup) paymentGroup.style.display = 'none';
+    if (paymentInfo) {
+      paymentInfo.innerHTML = '<p style="color:var(--gold-light);font-weight:700;">🎁 هذا المربع مجاني! لا تحتاج إلى دفع.</p>';
+    }
+    if (receiptGroup) receiptGroup.style.display = 'none';
+    
+    const bookingTypeGroup = document.querySelector('.booking-type-group');
+    if (bookingTypeGroup) bookingTypeGroup.style.display = 'none';
+  }
+  
   updatePaymentInfo();
   updatePriceDisplay();
 }
@@ -1339,6 +1354,10 @@ document.getElementById('paymentMethod').addEventListener('change', updatePaymen
 function updatePaymentInfo() {
   const method = document.getElementById('paymentMethod').value;
   const info = document.getElementById('paymentInfo');
+  if (isFreeRewardMode) {
+    info.innerHTML = '<p style="color:var(--gold-light);font-weight:700;">🎁 هذا المربع مجاني! لا تحتاج إلى دفع.</p>';
+    return;
+  }
   if (method === 'chamacash') {
     info.innerHTML = `
       <p>💳 حوّل المبلغ إلى محفظة شام كاش:</p>
@@ -1407,24 +1426,35 @@ document.getElementById('receiptInput').addEventListener('change', (e) => {
 document.getElementById('submitBooking').addEventListener('click', async () => {
   const btn = document.getElementById('submitBooking');
   const msg = document.getElementById('formMessage');
+  
   if (!document.getElementById('termsCheck').checked) {
     msg.textContent = 'يجب الموافقة على الشروط';
     msg.className = 'form-message error';
     showToast('⚠️ يجب الموافقة على الشروط', 'error');
     return;
   }
+  
   const selfieFile = document.getElementById('selfieInput').files[0];
   const receiptFile = document.getElementById('receiptInput').files[0];
-  if (!selfieFile || !receiptFile) {
-    msg.textContent = 'يجب رفع صورة السيلفي والإيصال';
+  
+  if (!selfieFile) {
+    msg.textContent = 'يجب رفع صورة السيلفي';
     msg.className = 'form-message error';
-    showToast('⚠️ يجب رفع صورة السيلفي والإيصال', 'error');
+    showToast('⚠️ يجب رفع صورة السيلفي', 'error');
     return;
   }
+  
+  if (!isFreeRewardMode && !receiptFile) {
+    msg.textContent = 'يجب رفع الإيصال';
+    msg.className = 'form-message error';
+    showToast('⚠️ يجب رفع الإيصال', 'error');
+    return;
+  }
+  
   const isBusiness = selectedBookingType === 'business';
   let brandName = '';
   let ctaButton = '';
-  if (isBusiness) {
+  if (isBusiness && !isFreeRewardMode) {
     brandName = document.getElementById('brandNameInput').value.trim();
     ctaButton = document.getElementById('ctaButtonInput').value.trim();
     if (!brandName) {
@@ -1476,25 +1506,30 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
   msg.className = 'form-message';
   try {
     const selfieUrl = await uploadToImgBB(selfieFile);
-    const receiptUrl = await uploadToImgBB(receiptFile);
+    let receiptUrl = '';
+    if (!isFreeRewardMode && receiptFile) {
+      receiptUrl = await uploadToImgBB(receiptFile);
+    }
     const cellIndices = [];
     for (let i = 0; i < quantity; i++) cellIndices.push(startCell + i);
-    const unitPrice = isBusiness ? BUSINESS_CELL_PRICE : CELL_PRICE;
-    const totalPrice = quantity * unitPrice;
+    const unitPrice = isFreeRewardMode ? 0 : (isBusiness ? BUSINESS_CELL_PRICE : CELL_PRICE);
+    const totalPrice = isFreeRewardMode ? 0 : quantity * unitPrice;
     const bookingData = {
       startCell, cellIndices, gridShape: { rows, cols }, quantity, totalPrice, unitPrice,
       bookingType: isBusiness ? 'business' : 'personal',
       isBusiness: isBusiness,
       brandName: isBusiness ? brandName : '',
       ctaButton: isBusiness ? ctaButton : '',
-      paymentMethod: document.getElementById('paymentMethod').value,
+      paymentMethod: isFreeRewardMode ? 'free_reward' : document.getElementById('paymentMethod').value,
       uid: 'guest_' + Date.now(),
       userName: document.getElementById('nameInput').value || (isBusiness ? brandName : 'زائر'),
       userPhone: document.getElementById('phoneInput').value || '',
       userLink: document.getElementById('linkInput').value || '',
-      userNote: document.getElementById('noteInput').value || '',
+      userNote: document.getElementById('noteInput').value || (isFreeRewardMode ? '🎁 مربع مجاني' : ''),
       selfieUrl, receiptUrl,
-      status: 'pending',
+      status: isFreeRewardMode ? 'approved' : 'pending',
+      isFreeReward: isFreeRewardMode,
+      rewardReason: isFreeRewardMode ? (localStorage.getItem('free_booking_reason') || '10 إحالات') : null,
       termsAccepted: true,
       termsAcceptedAt: Timestamp.now(),
       termsVersion: '1.0',
@@ -1508,9 +1543,11 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     localStorage.setItem('my_booking_id', docRef.id);
     localStorage.removeItem('my_card_claimed');
     localStorage.removeItem('approval_notification_shown_at');
-    msg.textContent = '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
+    localStorage.removeItem('free_booking_mode');
+    localStorage.removeItem('free_booking_reason');
+    msg.textContent = isFreeRewardMode ? '🎉 تم إرسال طلبك! سيتم مراجعته قريباً.' : '✅ تم إرسال طلبك بنجاح! سيتم مراجعته قريباً.';
     msg.className = 'form-message success';
-    showToast('✅ تم إرسال طلبك بنجاح!', 'success');
+    showToast(isFreeRewardMode ? '🎉 تم استلام مكافأتك!' : '✅ تم إرسال طلبك بنجاح!', 'success');
     btn.textContent = 'تم الإرسال';
     btn.disabled = true;
     selectionStart = null;
