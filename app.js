@@ -112,8 +112,8 @@ function showToast(message, type = 'info') {
 function showLikeNotification(booking, count) {
   const currentLang = localStorage.getItem('lang') || 'ar';
   const message = currentLang === 'ar' 
-    ? `أعجبك صورة ${booking.userName || 'زائر'}! (${count} إعجاب)` 
-    : `You liked ${booking.userName || 'Guest'}'s photo! (${count} likes)`;
+    ? `أعجبك ${booking.userName || 'زائر'}! (${count} إعجاب)` 
+    : `You liked ${booking.userName || 'Guest'}! (${count} likes)`;
   const toast = document.createElement('div');
   toast.className = 'like-notification';
   toast.innerHTML = `
@@ -156,22 +156,22 @@ function getReferredBy() {
 
 const REFERRAL_TEXTS = {
   ar: {
-    direct: `🎨 انضم إليّ في جدارية مليون صورة سيلفي!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n{LINK}`,
-    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟\nادخل على الجدارية الأكبر في العالم واحجز مربعك قبل أن يُحجز مكانك!\n👇 الرابط:\n\n{LINK}`,
-    mysterious: `🤫 اكتشفت شيئاً مميزاً...\nمليون صورة سيلفي على جدارية رقمية واحدة.\nاحجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!\n👇 جرّب من هنا:\n\n{LINK}`,
-    short: `🎨 انضم لجدارية مليون صورة سيلفي!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
+    direct: `🖐️ انضم إليّ في مليون بصمة رقمية!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n{LINK}`,
+    challenge: `🏆 قبلت التحدي... هل تقبله أنت؟\nادخل على أكبر جدارية رقمية في العالم واحجز مربعك قبل أن يُحجز مكانك!\n👇 الرابط:\n\n{LINK}`,
+    mysterious: `🤫 اكتشفت شيئاً مميزاً...\nمليون بصمة رقمية على جدارية واحدة.\nاحجز مربعك بـ 1$ فقط قبل أن تنفد الأماكن!\n👇 جرّب من هنا:\n\n{LINK}`,
+    short: `🖐️ انضم لمليون بصمة رقمية!\nمربعك بـ 1$ فقط → اترك بصمتك للأبد\n👇\n\n{LINK}`,
     friendly: `مرحباً 👋\nجربت هذا الموقع، وهو فكرة عبقرية!\nادخل واحجز مربعك قبل أن يمتلئ 👇\n\n{LINK}\n\n(استخدم رابطي لتحصل أنت وأنا على مكافأة 🎁)`,
-    emotional: `📸 صورتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
-    professional: `🏢 جدارية مليون صورة سيلفي\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
+    emotional: `📸 بصمتك قد تبقى للأبد!\nكن جزءاً من أكبر جدارية رقمية في العالم.\nمربع واحد بـ 1$ فقط!\n👇 سجّل الآن:\n\n{LINK}`,
+    professional: `🏢 مليون بصمة رقمية\nفرصة تسويقية فريدة لعلامتك التجارية.\nاحجز مربعك الآن من الرابط:\n\n{LINK}`
   },
   en: {
-    direct: `🎨 Join me on the Million Selfies Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
-    challenge: `🏆 I accepted the challenge... Do you?\nJoin the world's largest wall and book your square before it's taken!\n👇 Link:\n\n{LINK}`,
-    mysterious: `🤫 I discovered something special...\nA million selfies on one digital wall.\nBook your square for $1 before spots run out!\n👇 Try here:\n\n{LINK}`,
-    short: `🎨 Join the Million Selfies Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
+    direct: `🖐️ Join me on the Million Digital Marks Wall!\nBook your square for just $1 and be part of digital history.\n👇 Sign up now from my link:\n\n{LINK}`,
+    challenge: `🏆 I accepted the challenge... Do you?\nJoin the world's largest digital wall and book your square before it's taken!\n👇 Link:\n\n{LINK}`,
+    mysterious: `🤫 I discovered something special...\nA million digital marks on one digital wall.\nBook your square for $1 before spots run out!\n👇 Try here:\n\n{LINK}`,
+    short: `🖐️ Join the Million Digital Marks Wall!\nYour square for $1 → leave your mark forever\n👇\n\n{LINK}`,
     friendly: `Hey 👋\nI tried this site, it's genius!\nJoin and book your square before it fills up 👇\n\n{LINK}\n\n(Use my link so we both get a reward 🎁)`,
-    emotional: `📸 Your photo could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
-    professional: `🏢 Million Selfies Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
+    emotional: `📸 Your mark could last forever!\nBe part of the largest digital wall in the world.\nOne square for just $1!\n👇 Sign up now:\n\n{LINK}`,
+    professional: `🏢 Million Digital Marks Wall\nA unique marketing opportunity for your brand.\nBook your square now:\n\n{LINK}`
   }
 };
 
@@ -747,7 +747,7 @@ async function updateLeaderboard(lang = null) {
     const totalBooked = approvedOnly.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const businessCount = approvedOnly.filter(b => b.isBusiness === true).length;
     const tBooked = currentLang === 'ar' ? 'المربعات المحجوزة' : 'Booked Squares';
-    const tApproved = currentLang === 'ar' ? 'الصور المعتمدة' : 'Approved Photos';
+    const tApproved = currentLang === 'ar' ? 'البصمات المعتمدة' : 'Approved Marks';
     const tBusiness = currentLang === 'ar' ? 'حسابات تجارية' : 'Business Accounts';
     const statsEl = document.getElementById('liveStats');
     if (statsEl) {
@@ -1027,7 +1027,7 @@ function handleSingleClickOnly(e) {
         const currentLang = localStorage.getItem('lang') || 'ar';
         const isBusiness = booking.isBusiness === true;
         const name = isBusiness ? (booking.brandName || booking.userName || 'شركة') : (booking.userName || 'زائر');
-        showToast(currentLang === 'ar' ? `📸 صاحب الصورة: ${name}` : `📸 Photo owner: ${name}`);
+        showToast(currentLang === 'ar' ? `🖐️ صاحب البصمة: ${name}` : `🖐️ Mark owner: ${name}`);
       }
       return;
     }
@@ -1209,7 +1209,6 @@ canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
   
-  // 🆕 حساب مسافة السحب
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
@@ -1274,7 +1273,6 @@ canvas.addEventListener('touchend', (e) => {
   }
   lastTouchDist = 0;
   
-  // 🆕 إذا تحرك الإصبع أكثر من 10 بكسل → كان تمريراً، لا نعالج النقر
   if (touchMovedDistance > 10 || hasDragged) {
     hasDragged = false;
     touchMovedDistance = 0;
@@ -1303,7 +1301,6 @@ canvas.addEventListener('touchend', (e) => {
   const touchX = touch.clientX - rect.left + offsetX;
   const touchY = touch.clientY - rect.top + offsetY;
   
-  // 🆕 إذا كان الوقت أقل من 350 مللي ثانية → نقر مزدوج (إعجاب)
   if (timeSinceLastTouch < 350 && timeSinceLastTouch > 0) {
     e.preventDefault();
     
@@ -1319,7 +1316,6 @@ canvas.addEventListener('touchend', (e) => {
     return;
   }
   
-  // 🆕 نقر مفرد على الجوال (بدون سحب)
   const savedTouchX = touchX;
   const savedTouchY = touchY;
   
@@ -1333,7 +1329,6 @@ canvas.addEventListener('touchend', (e) => {
   touchMovedDistance = 0;
 }, { passive: false });
 
-// 🆕 دالة النقر المفرد على الجوال
 function handleMobileSingleTap(touchX, touchY) {
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
@@ -1351,7 +1346,7 @@ function handleMobileSingleTap(touchX, touchY) {
         const currentLang = localStorage.getItem('lang') || 'ar';
         const isBusiness = booking.isBusiness === true;
         const name = isBusiness ? (booking.brandName || booking.userName || 'شركة') : (booking.userName || 'زائر');
-        showToast(currentLang === 'ar' ? `📸 صاحب الصورة: ${name}` : `📸 Photo owner: ${name}`);
+        showToast(currentLang === 'ar' ? `🖐️ صاحب البصمة: ${name}` : `🖐️ Mark owner: ${name}`);
       }
       return;
     }
@@ -1386,7 +1381,6 @@ function handleMobileSingleTap(touchX, touchY) {
   openBookingModal(startCell);
 }
 
-// 🆕 دالة النقر المزدوج على الجوال (إعجاب)
 async function handleMobileDoubleTap(touchX, touchY) {
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
@@ -1463,7 +1457,6 @@ function updatePriceDisplay() {
   }
 }
 
-// ===== فتح نافذة الحجز =====
 function openBookingModal(startCell) {
   document.getElementById('bookingModal').classList.remove('hidden');
   document.getElementById('bookingModal').dataset.startCell = startCell;
@@ -1773,6 +1766,7 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
   }
   toggleSelectionMode();
 });
+
 // ===== نظام بطاقة المشاركة =====
 let generatedCardBlob = null;
 let generatedCardDataURL = null;
@@ -1885,13 +1879,13 @@ async function generateShareCard(bookingData) {
       ctx2.direction = 'rtl';
       ctx2.font = 'bold 80px Cairo, sans-serif';
       ctx2.fillStyle = '#f5b301';
-      ctx2.fillText(isBusiness ? '🏢' : '🎨', WIDTH / 2, 180);
+      ctx2.fillText(isBusiness ? '🏢' : '🖐️', WIDTH / 2, 180);
       ctx2.font = 'bold 52px Cairo, sans-serif';
       ctx2.fillStyle = '#d4a017';
-      ctx2.fillText('جدارية مليون صورة سيلفي', WIDTH / 2, 260);
+      ctx2.fillText('مليون بصمة رقمية', WIDTH / 2, 260);
       ctx2.font = 'bold 28px Cairo, sans-serif';
       ctx2.fillStyle = '#a0a0b0';
-      ctx2.fillText('Million Selfies Wall', WIDTH / 2, 310);
+      ctx2.fillText('Million Digital Marks', WIDTH / 2, 310);
       if (isBusiness) {
         ctx2.font = 'bold 24px Cairo, sans-serif';
         const badgeText = '🏢 حساب تجاري معتمد';
@@ -1944,9 +1938,9 @@ async function generateShareCard(bookingData) {
       const titleY = isBusiness ? 1100 : 1050;
       if (isBusiness) {
         ctx2.fillText('علامة تجارية على', WIDTH / 2, titleY);
-        ctx2.fillText('الجدارية الأكبر! 🏢', WIDTH / 2, titleY + 80);
+        ctx2.fillText('أكبر جدارية رقمية! 🏢', WIDTH / 2, titleY + 80);
       } else {
-        ctx2.fillText('أنا الآن جزء من', WIDTH / 2, titleY);
+        ctx2.fillText('بصمتي أصبحت جزءاً من', WIDTH / 2, titleY);
         ctx2.fillText('التاريخ الرقمي! 🚀', WIDTH / 2, titleY + 80);
       }
       const dataY = isBusiness ? 1300 : 1250;
@@ -2043,7 +2037,7 @@ function downloadShareCard() {
     return;
   }
   const link = document.createElement('a');
-  link.download = `million-selfies-card-${Date.now()}.png`;
+  link.download = `million-digital-marks-card-${Date.now()}.png`;
   link.href = generatedCardDataURL;
   link.click();
   const currentLang = localStorage.getItem('lang') || 'ar';
@@ -2057,14 +2051,14 @@ async function shareCard() {
     return;
   }
   const currentLang = localStorage.getItem('lang') || 'ar';
-  const shareText = currentLang === 'ar' ? '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀' : '🎨 I\'m now part of the Million Selfies Wall! Book your square now for $1 🚀';
+  const shareText = currentLang === 'ar' ? '🖐️ بصمتي أصبحت جزءاً من مليون بصمة رقمية! احجز مربعك الآن بـ 1$ فقط 🚀' : '🖐️ My mark is now part of the Million Digital Marks! Book your square now for $1 🚀';
   const shareUrl = window.location.origin + window.location.pathname;
-  const shareFile = new File([generatedCardBlob], 'million-selfies-card.png', { type: 'image/png' });
+  const shareFile = new File([generatedCardBlob], 'million-digital-marks-card.png', { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
     try {
       await navigator.share({
         files: [shareFile],
-        title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
+        title: currentLang === 'ar' ? 'مليون بصمة رقمية' : 'Million Digital Marks',
         text: shareText,
         url: shareUrl
       });
@@ -2084,7 +2078,7 @@ function fallbackShare(url, text) {
   const currentLang = localStorage.getItem('lang') || 'ar';
   if (navigator.share) {
     navigator.share({
-      title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
+      title: currentLang === 'ar' ? 'مليون بصمة رقمية' : 'Million Digital Marks',
       text: text,
       url: url
     }).catch(() => {
@@ -2096,503 +2090,3 @@ function fallbackShare(url, text) {
     showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!', 'success');
   }
 }
-
-// ===== الترجمات =====
-const translations = {
-  ar: {
-    badge: '🚀 تحدي رقمي تاريخي',
-    heroTitle: 'جدارية مليون\nصورة سيلفي',
-    heroSubtitle: 'كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.',
-    priceNote: 'كل مربع 10×10 بكسل بـ دولار واحد فقط.',
-    statBooked: 'مربعات محجوزة',
-    statAvailable: 'مربعات متبقية',
-    statSelfies: 'صورة سيلفي',
-    progressLabel: 'نسبة الحجز',
-    wallTitle: 'لوحة الجدارية التفاعلية',
-    legendEmpty: 'مربع فارغ',
-    legendBooked: 'محجوز',
-    legendPersonal: 'شخصي',
-    legendBusiness: 'تجاري',
-    legendHint: 'انقر على أي مربع للحجز',
-    hint: '💡 مرر داخل الشبكة لاستكشاف المليون مربع',
-    hintLink: '🔗 انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها',
-    hintLike: '❤️ انقر مرتين على أي صورة لإعجابها',
-    hintLongPress: '👇 اضغط ضغطة مطولة على أي صورة لعرض معلومات صاحبها',
-    selectModeBtn: '🖱️ تحديد المربعات',
-    selectedCount: 'المربعات المختارة: 0',
-    bookingTitle: 'حجز المربعات',
-    bookingTypeLabel: 'نوع الحجز',
-    bookingTypePersonal: 'حجز شخصي',
-    bookingTypeBusiness: 'حجز تجاري / شركات',
-    brandNameLabel: 'اسم العلامة التجارية / الشركة',
-    brandNamePlaceholder: 'مثال: مطعم الشام',
-    ctaButtonLabel: 'نص زر الدعوة للاتخاذ إجراء',
-    ctaButtonPlaceholder: 'اتصل بنا / تصفح المتجر',
-    ctaButtonNote: '📌 سيظهر هذا النص كزر على مربعك في الجدارية',
-    quantityLabel: 'عدد المربعات (1-400)',
-    nameLabel: 'الاسم',
-    phoneLabel: 'رقم الهاتف (اختياري)',
-    linkLabel: 'رابط حسابك (اختياري)',
-    linkNote: '📌 سيتمكن الزوار من النقر على صورتك للانتقال إلى حسابك',
-    noteLabel: 'ملاحظة (اختياري)',
-    selfieLabel: 'صورة السيلفي / شعار الشركة',
-    receiptLabel: 'إيصال الدفع',
-    paymentLabel: 'طريقة الدفع',
-    termsTitle: '📋 الشروط والأحكام',
-    term1: '• يجب أن تكون الصورة سيلفي شخصية وحقيقية (أو شعار رسمي للشركة).',
-    term2: '• يُمنع رفع صور مخالفة للقوانين أو الآداب العامة.',
-    term3: '• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.',
-    term4: '• مدة معالجة الطلب: 24-48 ساعة.',
-    termsLabel: 'أوافق على الشروط والأحكام',
-    refundNotice: '💡 في حال رفض الصورة، يرجى التواصل معنا عبر تيليجرام لاسترجاع المال.',
-    totalLabel: 'الإجمالي:',
-    submitBtn: 'إرسال الطلب',
-    contactUs: 'تواصل معنا',
-    howTitle: '🎯 كيف يعمل الموقع؟',
-    howStep1Title: 'اختر مربعك',
-    howStep1Desc: 'اضغط على "تحديد المربعات" واسحب لتحديد منطقتك',
-    howStep2Title: 'ارفع صورتك',
-    howStep2Desc: 'ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)',
-    howStep3Title: 'ادفع بـ 1$',
-    howStep3Desc: 'ادفع عبر شام كاش أو USDT وارفع الإيصال',
-    guideTitle: '🎮 كيف تتفاعل مع الصور؟',
-    guideClickTitle: 'انقر مرة واحدة',
-    guideClickDesc: 'انقر على أي صورة محجوزة للانتقال إلى حساب صاحبها (إذا كان الرابط موجوداً)',
-    guideLikeTitle: 'انقر مرتين للإعجاب',
-    guideLikeDesc: 'انقر مرتين (Double Click) على أي صورة لإعجابها. ستظهر عدد الإعجابات على الصورة',
-    guideLongPressTitle: 'اضغط ضغطة مطولة',
-    guideLongPressDesc: 'اضغط ضغطة مطولة (Long Press) على أي صورة لعرض معلومات صاحبها بشكل احترافي',
-    referralText: '🎁 ادعُ 10 من أصدقائك واحصل على مربع مجاني!',
-    referralBtn: '📋 نسخ رابط الإحالة',
-    referralModalTitle: '🎁 شارك رابط الإحالة',
-    referralLinkLabel: '🔗 الرابط الخاص بك',
-    referralTextLabel: '✍️ اختر نص الدعوة أو اكتب نصك:',
-    referralEditLabel: '✏️ يمكنك التعديل على النص:',
-    copyAllBtn: 'نسخ النص والرابط',
-    leaderboardTitle: '🏆 لوحة الصدارة',
-    lbRecent: '📸 آخر الحجوزات',
-    lbStats: '📊 إحصائيات حية',
-    lbTopLiked: '❤️ الأكثر إعجاباً',
-    onboardingTitle: '📌 كيف تحجز؟',
-    onboardingStep1: 'اضغط واسحب لتحديد المربعات التي تريدها',
-    onboardingStep2: 'اضغط على "✅ إنهاء التحديد" لفتح نموذج الحجز',
-    onboardingStep3: 'ارفع صورتك، املأ البيانات، وادفع',
-    onboardingBtn: 'فهمت، لنبدأ!',
-    generateCard: 'توليد بطاقة الإنجاز',
-    shareCardTitle: '🎉 مبروك! بطاقتك جاهزة',
-    shareCardSubtitle: 'شاركها مع أصدقائك على إنستغرام وتيك توك',
-    downloadCard: 'تنزيل البطاقة',
-    shareNow: 'مشاركة مباشرة',
-    closeBtn: 'إغلاق',
-    cardGuideTitle: '🎁 كيف تحصل على بطاقة الإنجاز الخاصة بك؟',
-    cardGuideSubtitle: 'بعد الموافقة على طلبك، ستحصل على بطاقة رقمية أنيقة يمكنك مشاركتها مع أصدقائك على وسائل التواصل الاجتماعي!',
-    cardGuideStep1Title: 'احجز مربعك',
-    cardGuideStep1Desc: 'اختر المربعات التي تريدها وارفع صورتك',
-    cardGuideStep2Title: 'انتظر الموافقة',
-    cardGuideStep2Desc: 'سيتم مراجعة طلبك خلال 24-48 ساعة',
-    cardGuideStep3Title: 'ابقَ في الموقع',
-    cardGuideStep3Desc: 'عند الموافقة، سيظهر لك إشعار فوري مع صوت نجاح',
-    cardGuideStep4Title: 'استلم بطاقتك',
-    cardGuideStep4Desc: 'اضغط على زر "استلم بطاقتك" وشاركها مع العالم!',
-    cardGuideNote: 'نصيحة: احفظ الموقع في المفضلة، وعد إليه بعد الموافقة لاستلام بطاقتك!',
-    approvalTitle: 'مبروك!',
-    approvalMessage: 'تم قبول طلبك بنجاح',
-    claimCardBtn: '📸 استلم بطاقتك',
-    myCardTitle: '🎉 بطاقتك جاهزة!'
-  },
-  en: {
-    badge: '🚀 Historic Digital Challenge',
-    heroTitle: 'Million Selfies\nWall',
-    heroSubtitle: 'Be part of the largest interactive digital wall in the world. Book your square and leave your mark forever.',
-    priceNote: 'Each 10×10 pixel square for just $1.',
-    statBooked: 'Booked Squares',
-    statAvailable: 'Available Squares',
-    statSelfies: 'Selfies',
-    progressLabel: 'Booking Progress',
-    wallTitle: 'Interactive Wall',
-    legendEmpty: 'Empty',
-    legendBooked: 'Booked',
-    legendPersonal: 'Personal',
-    legendBusiness: 'Business',
-    legendHint: 'Click any square to book',
-    hint: '💡 Scroll inside the grid to explore the million squares',
-    hintLink: '🔗 Click any booked photo to visit the owner\'s account',
-    hintLike: '❤️ Double-click any photo to like it',
-    hintLongPress: '👇 Long-press any photo to see the owner\'s info',
-    selectModeBtn: '🖱️ Select Squares',
-    selectedCount: 'Selected squares: 0',
-    bookingTitle: 'Book Squares',
-    bookingTypeLabel: 'Booking Type',
-    bookingTypePersonal: 'Personal Booking',
-    bookingTypeBusiness: 'Business / Company',
-    brandNameLabel: 'Brand / Company Name',
-    brandNamePlaceholder: 'e.g., Al-Sham Restaurant',
-    ctaButtonLabel: 'Call-to-Action Button Text',
-    ctaButtonPlaceholder: 'Contact Us / Visit Store',
-    ctaButtonNote: '📌 This text will appear as a button on your square',
-    quantityLabel: 'Number of Squares (1-400)',
-    nameLabel: 'Name',
-    phoneLabel: 'Phone (optional)',
-    linkLabel: 'Your Profile Link (optional)',
-    linkNote: '📌 Visitors can click your photo to visit your account',
-    noteLabel: 'Note (optional)',
-    selfieLabel: 'Selfie / Company Logo',
-    receiptLabel: 'Payment Receipt',
-    paymentLabel: 'Payment Method',
-    termsTitle: '📋 Terms & Conditions',
-    term1: '• Image must be a real personal selfie (or official company logo).',
-    term2: '• Images violating laws or public morals are prohibited.',
-    term3: '• If your image is rejected, contact us for a full refund.',
-    term4: '• Processing time: 24-48 hours.',
-    termsLabel: 'I agree to the Terms & Conditions',
-    refundNotice: '💡 If your image is rejected, please contact us via Telegram for a refund.',
-    totalLabel: 'Total:',
-    submitBtn: 'Submit Request',
-    contactUs: 'Contact Us',
-    howTitle: '🎯 How It Works?',
-    howStep1Title: 'Choose Your Square',
-    howStep1Desc: 'Click "Select Squares" and drag to select your area',
-    howStep2Title: 'Upload Your Photo',
-    howStep2Desc: 'Upload a clear selfie and add your profile link (optional)',
-    howStep3Title: 'Pay $1',
-    howStep3Desc: 'Pay via Sham Cash or USDT and upload the receipt',
-    guideTitle: '🎮 How to Interact with Photos?',
-    guideClickTitle: 'Click Once',
-    guideClickDesc: 'Click any booked photo to visit the owner\'s account (if link exists)',
-    guideLikeTitle: 'Double-Click to Like',
-    guideLikeDesc: 'Double-click any photo to like it. The like count will appear on the photo',
-    guideLongPressTitle: 'Long Press',
-    guideLongPressDesc: 'Long-press any photo to see the owner\'s info professionally',
-    referralText: '🎁 Invite 10 friends and get a free square!',
-    referralBtn: '📋 Copy Referral Link',
-    referralModalTitle: '🎁 Share Referral Link',
-    referralLinkLabel: '🔗 Your Link',
-    referralTextLabel: '✍️ Choose a message or write your own:',
-    referralEditLabel: '✏️ You can edit the text:',
-    copyAllBtn: 'Copy Text & Link',
-    leaderboardTitle: '🏆 Leaderboard',
-    lbRecent: '📸 Recent Bookings',
-    lbStats: '📊 Live Stats',
-    lbTopLiked: '❤️ Most Liked',
-    onboardingTitle: '📌 How to Book?',
-    onboardingStep1: 'Click and drag to select the squares you want',
-    onboardingStep2: 'Click "✅ Finish Selection" to open the booking form',
-    onboardingStep3: 'Upload your photo, fill the form, and pay',
-    onboardingBtn: 'Got it, let\'s start!',
-    generateCard: 'Generate Achievement Card',
-    shareCardTitle: '🎉 Congratulations! Your card is ready',
-    shareCardSubtitle: 'Share it with your friends on Instagram and TikTok',
-    downloadCard: 'Download Card',
-    shareNow: 'Share Now',
-    closeBtn: 'Close',
-    cardGuideTitle: '🎁 How to Get Your Achievement Card?',
-    cardGuideSubtitle: 'After your request is approved, you will receive an elegant digital card that you can share with your friends on social media!',
-    cardGuideStep1Title: 'Book Your Square',
-    cardGuideStep1Desc: 'Choose the squares you want and upload your photo',
-    cardGuideStep2Title: 'Wait for Approval',
-    cardGuideStep2Desc: 'Your request will be reviewed within 24-48 hours',
-    cardGuideStep3Title: 'Stay on the Site',
-    cardGuideStep3Desc: 'Upon approval, you will receive an instant notification with a success sound',
-    cardGuideStep4Title: 'Claim Your Card',
-    cardGuideStep4Desc: 'Click "Claim Your Card" button and share it with the world!',
-    cardGuideNote: 'Tip: Bookmark the site and return after approval to claim your card!',
-    approvalTitle: 'Congratulations!',
-    approvalMessage: 'Your request has been approved',
-    claimCardBtn: '📸 Claim Your Card',
-    myCardTitle: '🎉 Your card is ready!'
-  }
-};
-
-function applyLanguage(lang) {
-  const t = translations[lang];
-  if (!t) return;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (t[key]) {
-      if (t[key].includes('\n')) el.innerHTML = t[key].replace(/\n/g, '<br>');
-      else el.textContent = t[key];
-    }
-  });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    const key = el.getAttribute('data-i18n-placeholder');
-    if (t[key]) el.placeholder = t[key];
-  });
-  if (selectionStart && selectionEnd) updateSelectedCount();
-  const btn = document.getElementById('selectModeBtn');
-  if (btn) {
-    if (selectionMode) btn.textContent = lang === 'ar' ? '✅ إنهاء التحديد' : '✅ Finish Selection';
-    else btn.textContent = lang === 'ar' ? '🖱️ تحديد المربعات' : '🖱️ Select Squares';
-  }
-  updateStats();
-  updateLeaderboard(lang);
-}
-
-function setLanguage(lang) {
-  const html = document.documentElement;
-  html.lang = lang;
-  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  const arBtn = document.getElementById('langAr');
-  const enBtn = document.getElementById('langEn');
-  if (arBtn) arBtn.classList.toggle('active', lang === 'ar');
-  if (enBtn) enBtn.classList.toggle('active', lang === 'en');
-  applyLanguage(lang);
-  localStorage.setItem('lang', lang);
-  updateStats();
-  updateLeaderboard(lang);
-  drawGrid();
-}
-
-document.getElementById('langAr').addEventListener('click', () => setLanguage('ar'));
-document.getElementById('langEn').addEventListener('click', () => setLanguage('en'));
-
-const savedLang = localStorage.getItem('lang') || 'ar';
-setLanguage(savedLang);
-
-async function trackVisit() {
-  const lastVisit = localStorage.getItem('last_visit_time');
-  const now = Date.now();
-  const thirtyMinutes = 30 * 60 * 1000;
-  if (!lastVisit || (now - parseInt(lastVisit)) > thirtyMinutes) {
-    try {
-      await addDoc(collection(db, "visits"), {
-        timestamp: now,
-        date: new Date().toISOString().split('T')[0],
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        screen: `${screen.width}x${screen.height}`,
-        referrer: document.referrer || 'direct'
-      });
-      localStorage.setItem('last_visit_time', now.toString());
-    } catch (error) {
-      console.error('خطأ في تسجيل الزيارة:', error);
-    }
-  }
-}
-
-function preloadImages() {
-  allBookings.filter(b => b.status === 'approved').slice(0, 20).forEach(booking => {
-    if (booking.selfieUrl && !imageCache[booking.id]) loadBookingImage(booking);
-  });
-}
-
-// ===== نظام إشعار الموافقة =====
-let myCardBlob = null;
-let myCardDataURL = null;
-let approvalCheckInterval = null;
-let currentApprovedBooking = null;
-
-function playSuccessSound() {
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-    const durations = [0.15, 0.15, 0.15, 0.4];
-    let startTime = audioContext.currentTime;
-    notes.forEach((freq, i) => {
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + durations[i]);
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
-      osc.start(startTime);
-      osc.stop(startTime + durations[i]);
-      startTime += durations[i];
-    });
-  } catch (e) {
-    console.log('لم يتم تشغيل الصوت:', e);
-  }
-}
-
-function showApprovalNotification() {
-  const notification = document.getElementById('approvalNotification');
-  if (!notification) return;
-  notification.classList.remove('hidden');
-  setTimeout(() => notification.classList.add('show'), 50);
-  playSuccessSound();
-  setTimeout(() => {
-    const title = notification.querySelector('.approval-title');
-    const message = notification.querySelector('.approval-message');
-    const icon = notification.querySelector('.approval-icon');
-    if (title) title.style.display = 'none';
-    if (message) message.style.display = 'none';
-    if (icon) icon.style.display = 'none';
-  }, 7000);
-}
-
-function hideApprovalNotification() {
-  const notification = document.getElementById('approvalNotification');
-  if (!notification) return;
-  notification.classList.remove('show');
-  setTimeout(() => notification.classList.add('hidden'), 500);
-}
-
-async function checkMyBookingStatus() {
-  const myBookingId = localStorage.getItem('my_booking_id');
-  const cardClaimed = localStorage.getItem('my_card_claimed');
-  if (!myBookingId) return;
-  if (cardClaimed === 'true') return;
-  const notificationShownAt = localStorage.getItem('approval_notification_shown_at');
-  if (notificationShownAt && (Date.now() - parseInt(notificationShownAt)) < 3600000) {
-    const notification = document.getElementById('approvalNotification');
-    if (!notification || notification.classList.contains('hidden')) showApprovalNotification();
-    return;
-  }
-  try {
-    const docSnap = await getDocs(collection(db, "bookings"));
-    const myBooking = docSnap.docs.find(d => d.id === myBookingId);
-    if (!myBooking) return;
-    const bookingData = { id: myBooking.id, ...myBooking.data() };
-    if (bookingData.status === 'approved') {
-      currentApprovedBooking = bookingData;
-      localStorage.setItem('approval_notification_shown_at', Date.now().toString());
-      showApprovalNotification();
-    }
-  } catch (error) {
-    console.error('خطأ في التحقق من حالة الحجز:', error);
-  }
-}
-
-async function claimMyCard() {
-  if (!currentApprovedBooking) {
-    const myBookingId = localStorage.getItem('my_booking_id');
-    if (!myBookingId) return;
-    try {
-      const docSnap = await getDocs(collection(db, "bookings"));
-      const myBooking = docSnap.docs.find(d => d.id === myBookingId);
-      if (myBooking) currentApprovedBooking = { id: myBooking.id, ...myBooking.data() };
-    } catch (e) {
-      console.error(e);
-      return;
-    }
-  }
-  if (!currentApprovedBooking) return;
-  hideApprovalNotification();
-  const modal = document.getElementById('myCardModal');
-  const preview = document.getElementById('myCardPreview');
-  if (!modal || !preview) return;
-  modal.classList.remove('hidden');
-  preview.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="533"><rect fill="%2314141c" width="300" height="533"/><text x="150" y="266" fill="%23f5b301" text-anchor="middle" font-size="20" font-family="Cairo">⏳ جاري توليد البطاقة...</text></svg>';
-  try {
-    const dataURL = await generateShareCard(currentApprovedBooking);
-    preview.src = dataURL;
-    myCardDataURL = dataURL;
-    const response = await fetch(dataURL);
-    myCardBlob = await response.blob();
-    localStorage.setItem('my_card_claimed', 'true');
-  } catch (error) {
-    console.error('فشل توليد البطاقة:', error);
-    showToast('حدث خطأ أثناء توليد البطاقة', 'error');
-  }
-}
-
-function closeMyCard() {
-  const modal = document.getElementById('myCardModal');
-  if (modal) modal.classList.add('hidden');
-}
-window.closeMyCard = closeMyCard;
-window.claimMyCard = claimMyCard;
-
-function downloadMyCard() {
-  if (!myCardDataURL) return;
-  const link = document.createElement('a');
-  link.download = `million-selfies-card-${Date.now()}.png`;
-  link.href = myCardDataURL;
-  link.click();
-  showToast('✅ تم تنزيل البطاقة!', 'success');
-}
-window.downloadMyCard = downloadMyCard;
-
-async function shareMyCard() {
-  if (!myCardBlob) return;
-  const currentLang = localStorage.getItem('lang') || 'ar';
-  const shareText = currentLang === 'ar' ? '🎨 أنا الآن جزء من جدارية مليون صورة سيلفي! احجز مربعك الآن بـ 1$ فقط 🚀' : '🎨 I\'m now part of the Million Selfies Wall! Book your square now for $1 🚀';
-  const shareUrl = window.location.origin + window.location.pathname;
-  const shareFile = new File([myCardBlob], 'million-selfies-card.png', { type: 'image/png' });
-  if (navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-    try {
-      await navigator.share({
-        files: [shareFile],
-        title: currentLang === 'ar' ? 'جدارية مليون صورة سيلفي' : 'Million Selfies Wall',
-        text: shareText,
-        url: shareUrl
-      });
-    } catch (error) {
-      if (error.name !== 'AbortError') fallbackShare(shareUrl, shareText);
-    }
-  } else {
-    fallbackShare(shareUrl, shareText);
-  }
-}
-window.shareMyCard = shareMyCard;
-
-document.addEventListener('DOMContentLoaded', () => {
-  const claimBtn = document.getElementById('claimCardBtn');
-  if (claimBtn) claimBtn.addEventListener('click', claimMyCard);
-  setTimeout(checkMyBookingStatus, 5000);
-  approvalCheckInterval = setInterval(checkMyBookingStatus, 30000);
-});
-
-window.addEventListener('beforeunload', () => {
-  if (approvalCheckInterval) clearInterval(approvalCheckInterval);
-});
-
-// ===== التشغيل =====
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(resizeCanvas, 200);
-});
-
-resizeCanvas();
-loadBookings();
-trackVisit();
-
-setInterval(loadBookings, 90000);
-
-setTimeout(preloadImages, 2000);
-
-let pulseInterval = null;
-function startPulseAnimation() {
-  if (pulseInterval) return;
-  pulseInterval = setInterval(() => {
-    const hasPending = approvedBookings.some(b => b.status === 'pending');
-    const hasBusiness = approvedBookings.some(b => b.isBusiness === true);
-    if ((hasPending || hasBusiness) && !isDragging && !inertiaFrame && !isSelecting) {
-      drawGrid();
-    }
-  }, 600);
-}
-
-setTimeout(startPulseAnimation, 3000);
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    if (pulseInterval) {
-      clearInterval(pulseInterval);
-      pulseInterval = null;
-    }
-  } else {
-    startPulseAnimation();
-  }
-});
-
-(function protectQuantityInput() {
-  const protect = () => {
-    const qtyInput = document.getElementById('quantityInput');
-    if (!qtyInput) return;
-    qtyInput.readOnly = true;
-    qtyInput.addEventListener('paste', e => e.preventDefault());
-    qtyInput.addEventListener('drop', e => e.preventDefault());
-    qtyInput.addEventListener('keydown', e => {
-      const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Escape', 'Enter'];
-      if (!allowed.includes(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault();
-    });
-  };
-  protect();
-  const observer = new MutationObserver(protect);
-  const modal = document.getElementById('bookingModal');
-  if (modal) observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
-})();
