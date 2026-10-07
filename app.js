@@ -56,7 +56,6 @@ let bookingsIndexCache = new Map();
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
-// ===== وضع المربع المجاني =====
 let isFreeRewardMode = false;
 
 // ===== الثيم =====
@@ -983,7 +982,6 @@ canvas.addEventListener('wheel', (e) => {
   }, 16);
 }, { passive: false });
 
-// ===== 🆕 معالجة النقر (معدلة) =====
 let clickTimer = null;
 let clickCount = 0;
 
@@ -996,13 +994,11 @@ canvas.addEventListener('click', (e) => {
   clickCount++;
   
   if (clickCount === 1) {
-    // ننتظر 350 مللي ثانية لنتأكد من أنه ليس نقراً مزدوجاً
     clickTimer = setTimeout(() => {
       handleSingleClickOnly(e);
       clickCount = 0;
     }, 350);
   } else if (clickCount === 2) {
-    // نقر مزدوج → إلغاء فتح الرابط → إعجاب
     clearTimeout(clickTimer);
     clickCount = 0;
     handleDoubleClickOnly(e);
@@ -1011,7 +1007,6 @@ canvas.addEventListener('click', (e) => {
   return false;
 }, { passive: false });
 
-// ===== 🆕 دالة النقر المفرد =====
 function handleSingleClickOnly(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1061,7 +1056,6 @@ function handleSingleClickOnly(e) {
   openBookingModal(startCell);
 }
 
-// ===== 🆕 دالة النقر المزدوج =====
 async function handleDoubleClickOnly(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
@@ -1256,17 +1250,147 @@ canvas.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
+// ===== 🆕 touchend معدّلة لمعالجة النقر المفرد/المزدوج على الجوال =====
 canvas.addEventListener('touchend', (e) => {
   const now = Date.now();
-  if (now - lastTouchEndTime <= 300) {
-    e.preventDefault();
-  }
-  lastTouchEndTime = now;
+  const timeSinceLastTouch = now - lastTouchEndTime;
+  
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-  if (selectionMode && isSelecting) { isSelecting = false; return; }
+  if (selectionMode && isSelecting) { isSelecting = false; lastTouchEndTime = now; return; }
   lastTouchDist = 0;
-  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) startInertia();
+  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+    startInertia();
+    lastTouchEndTime = now;
+    return;
+  }
+  
+  // التحقق من وجود لمسة واحدة صالحة
+  if (!e.changedTouches || e.changedTouches.length === 0) {
+    lastTouchEndTime = now;
+    return;
+  }
+  
+  const touch = e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const touchX = touch.clientX - rect.left + offsetX;
+  const touchY = touch.clientY - rect.top + offsetY;
+  
+  // 🆕 إذا كان الوقت أقل من 350 مللي ثانية → نقر مزدوج (إعجاب)
+  if (timeSinceLastTouch < 350 && timeSinceLastTouch > 0 && !hasDragged) {
+    e.preventDefault();
+    
+    // إلغاء مؤقت النقر المفرد
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+    }
+    clickCount = 0;
+    
+    handleMobileDoubleTap(touchX, touchY);
+    lastTouchEndTime = 0;
+    return;
+  }
+  
+  // 🆕 نقر مفرد على الجوال → ننتظر وننفذ
+  if (!hasDragged) {
+    const savedTouchX = touchX;
+    const savedTouchY = touchY;
+    
+    if (clickTimer) clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      handleMobileSingleTap(savedTouchX, savedTouchY);
+      clickCount = 0;
+    }, 350);
+  }
+  
+  lastTouchEndTime = now;
 }, { passive: false });
+
+// ===== 🆕 دالة النقر المفرد على الجوال =====
+function handleMobileSingleTap(touchX, touchY) {
+  for (const booking of approvedBookings) {
+    if (booking.status !== 'approved') continue;
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+    
+    if (touchX >= startX && touchX <= startX + width && touchY >= startY && touchY <= startY + height) {
+      if (booking.userLink && booking.userLink.trim()) {
+        let url = booking.userLink.trim();
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        window.open(url, '_blank', 'noopener');
+      } else {
+        const currentLang = localStorage.getItem('lang') || 'ar';
+        const isBusiness = booking.isBusiness === true;
+        const name = isBusiness ? (booking.brandName || booking.userName || 'شركة') : (booking.userName || 'زائر');
+        showToast(currentLang === 'ar' ? `📸 صاحب الصورة: ${name}` : `📸 Photo owner: ${name}`);
+      }
+      return;
+    }
+  }
+  
+  for (const booking of approvedBookings) {
+    if (booking.status !== 'pending') continue;
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+    
+    if (touchX >= startX && touchX <= startX + width && touchY >= startY && touchY <= startY + height) {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      showToast(currentLang === 'ar' ? '⏳ هذا المربع محجوز مؤقتاً - قيد المراجعة' : '⏳ This square is temporarily booked - under review');
+      return;
+    }
+  }
+  
+  const cellX = Math.floor(touchX / CELL_PIXEL_SIZE);
+  const cellY = Math.floor(touchY / CELL_PIXEL_SIZE);
+  
+  if (cellX < 0 || cellX >= GRID_SIZE || cellY < 0 || cellY >= GRID_SIZE) return;
+  
+  if (isCellBooked(cellX, cellY)) {
+    const currentLang = localStorage.getItem('lang') || 'ar';
+    showToast(currentLang === 'ar' ? '⚠️ هذا المربع محجوز بالفعل' : '⚠️ This square is already booked');
+    return;
+  }
+  
+  const startCell = cellY * GRID_SIZE + cellX;
+  openBookingModal(startCell);
+}
+
+// ===== 🆕 دالة النقر المزدوج على الجوال (إعجاب) =====
+async function handleMobileDoubleTap(touchX, touchY) {
+  for (const booking of approvedBookings) {
+    if (booking.status !== 'approved') continue;
+    const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
+    const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
+    const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
+    const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+    
+    if (touchX >= startX && touchX <= startX + width && touchY >= startY && touchY <= startY + height) {
+      const currentLang = localStorage.getItem('lang') || 'ar';
+      
+      if (hasLiked(booking.id)) {
+        showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
+        return;
+      }
+      
+      try {
+        const newLikes = (booking.likes || 0) + 1;
+        await updateDoc(doc(db, "bookings", booking.id), { likes: newLikes });
+        saveLike(booking.id);
+        booking.likes = newLikes;
+        drawGrid();
+        updateLeaderboard();
+        showLikeNotification(booking, newLikes);
+      } catch (error) {
+        console.error('خطأ في الإعجاب:', error);
+      }
+      return;
+    }
+  }
+}
 
 canvas.addEventListener('gesturestart', (e) => { e.preventDefault(); }, { passive: false });
 canvas.addEventListener('gesturechange', (e) => { e.preventDefault(); }, { passive: false });
@@ -1622,7 +1746,6 @@ document.getElementById('selectModeBtn').addEventListener('click', function() {
   }
   toggleSelectionMode();
 });
-
 // ===== نظام بطاقة المشاركة =====
 let generatedCardBlob = null;
 let generatedCardDataURL = null;
