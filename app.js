@@ -56,7 +56,7 @@ let bookingsIndexCache = new Map();
 let drawGridPending = false;
 const pendingImageLoads = new Set();
 
-// ===== 🆕 وضع المربع المجاني =====
+// ===== وضع المربع المجاني =====
 let isFreeRewardMode = false;
 
 // ===== الثيم =====
@@ -983,6 +983,7 @@ canvas.addEventListener('wheel', (e) => {
   }, 16);
 }, { passive: false });
 
+// ===== 🆕 معالجة النقر (معدلة) =====
 let clickTimer = null;
 let clickCount = 0;
 
@@ -991,21 +992,31 @@ canvas.addEventListener('click', (e) => {
   e.stopPropagation();
   if (selectionMode) return;
   if (hasDragged) { hasDragged = false; return; }
+  
   clickCount++;
+  
   if (clickCount === 1) {
-    clickTimer = setTimeout(() => { handleSingleClick(e); clickCount = 0; }, 280);
+    // ننتظر 350 مللي ثانية لنتأكد من أنه ليس نقراً مزدوجاً
+    clickTimer = setTimeout(() => {
+      handleSingleClickOnly(e);
+      clickCount = 0;
+    }, 350);
   } else if (clickCount === 2) {
+    // نقر مزدوج → إلغاء فتح الرابط → إعجاب
     clearTimeout(clickTimer);
     clickCount = 0;
-    handleDoubleClick(e);
+    handleDoubleClickOnly(e);
   }
+  
   return false;
 }, { passive: false });
 
-function handleSingleClick(e) {
+// ===== 🆕 دالة النقر المفرد =====
+function handleSingleClickOnly(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
   const clickY = e.clientY - rect.top + offsetY;
+  
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
@@ -1013,12 +1024,6 @@ function handleSingleClick(e) {
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
     if (clickX >= startX && clickX <= startX + width && clickY >= startY && clickY <= startY + height) {
-      if (booking.isBusiness === true && booking.ctaButton && booking.userLink) {
-        let url = booking.userLink.trim();
-        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-        window.open(url, '_blank', 'noopener');
-        return;
-      }
       if (booking.userLink && booking.userLink.trim()) {
         let url = booking.userLink.trim();
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -1032,6 +1037,7 @@ function handleSingleClick(e) {
       return;
     }
   }
+  
   for (const booking of approvedBookings) {
     if (booking.status !== 'pending') continue;
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
@@ -1044,6 +1050,7 @@ function handleSingleClick(e) {
       return;
     }
   }
+  
   if (!hoveredCell) return;
   const startCell = hoveredCell.y * GRID_SIZE + hoveredCell.x;
   if (isCellBooked(hoveredCell.x, hoveredCell.y)) {
@@ -1054,22 +1061,27 @@ function handleSingleClick(e) {
   openBookingModal(startCell);
 }
 
-async function handleDoubleClick(e) {
+// ===== 🆕 دالة النقر المزدوج =====
+async function handleDoubleClickOnly(e) {
   const rect = canvas.getBoundingClientRect();
   const clickX = e.clientX - rect.left + offsetX;
   const clickY = e.clientY - rect.top + offsetY;
+  
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
     const startX = (booking.startCell % GRID_SIZE) * CELL_PIXEL_SIZE;
     const startY = Math.floor(booking.startCell / GRID_SIZE) * CELL_PIXEL_SIZE;
     const width = booking.gridShape.cols * CELL_PIXEL_SIZE;
     const height = booking.gridShape.rows * CELL_PIXEL_SIZE;
+    
     if (clickX >= startX && clickX <= startX + width && clickY >= startY && clickY <= startY + height) {
       const currentLang = localStorage.getItem('lang') || 'ar';
+      
       if (hasLiked(booking.id)) {
         showToast(currentLang === 'ar' ? '❤️ لقد أعجبت بهذه الصورة مسبقاً' : '❤️ You already liked this photo');
         return;
       }
+      
       try {
         const newLikes = (booking.likes || 0) + 1;
         await updateDoc(doc(db, "bookings", booking.id), { likes: newLikes });
@@ -1085,7 +1097,7 @@ async function handleDoubleClick(e) {
     }
   }
 }
-
+// ===== الضغط المطول =====
 let longPressTimer = null;
 let longPressActive = false;
 let touchStartX = 0;
@@ -1308,7 +1320,6 @@ function openBookingModal(startCell) {
   const qtyInput = document.getElementById('quantityInput');
   if (qtyInput) qtyInput.readOnly = true;
   
-  // 🆕 التحقق من وضع المربع المجاني
   const urlParams = new URLSearchParams(window.location.search);
   isFreeRewardMode = urlParams.get('free_reward') === 'true';
   
