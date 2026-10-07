@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>جدارية مليون صورة سيلفي</title>
+  <title>مليون بصمة رقمية</title>
+  <meta name="description" content="اترك بصمتك في أكبر جدارية رقمية في العالم. احجز مربعك بـ 1$ فقط.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -38,8 +39,8 @@
   <!-- القسم الرئيسي -->
   <section class="hero">
     <div class="badge" data-i18n="badge">🚀 تحدي رقمي تاريخي</div>
-    <h1 data-i18n="heroTitle">جدارية مليون<br>صورة سيلفي</h1>
-    <p class="hero-desc" data-i18n="heroSubtitle">كن جزءاً من أكبر لوحة رقمية تفاعلية في العالم. احجز مربعك واترك بصمتك للأبد.</p>
+    <h1 data-i18n="heroTitle">مليون بصمة<br>رقمية</h1>
+    <p class="hero-desc" data-i18n="heroSubtitle">اترك بصمتك في أكبر جدارية رقمية في العالم. احجز مربعك وكن جزءاً من التاريخ.</p>
     <p class="hero-price" data-i18n="priceNote">كل مربع 10×10 بكسل بـ دولار واحد فقط.</p>
   </section>
 
@@ -95,7 +96,7 @@
         <div class="how-icon">📸</div>
         <div class="how-num">2</div>
         <h3 data-i18n="howStep2Title">ارفع صورتك</h3>
-        <p data-i18n="howStep2Desc">ارفع صورة سيلفي واضحة وأضف رابط حسابك (اختياري)</p>
+        <p data-i18n="howStep2Desc">ارفع صورة سيلفي واضحة أو شعار شركتك</p>
       </div>
       <div class="how-step">
         <div class="how-icon">💰</div>
@@ -148,7 +149,7 @@
     </div>
     <div class="stat-card">
       <span class="stat-value" id="statSelfies">0</span>
-      <span class="stat-label" data-i18n="statSelfies">صورة سيلفي</span>
+      <span class="stat-label" data-i18n="statSelfies">بصمات رقمية</span>
     </div>
   </section>
 
@@ -195,35 +196,34 @@
       <span id="selectedCountDisplay" class="selected-count" data-i18n="selectedCount">المربعات المختارة: 0</span>
     </div>
 
-    <!-- 🆕 الشبكة مع أزرار التكبير/التصغير على اليمين واليسار -->
     <div class="grid-wrapper">
-  <div class="zoom-controls-top">
-    <button id="zoomOut" class="zoom-btn" title="تصغير">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        <line x1="8" y1="11" x2="14" y2="11"></line>
-      </svg>
-    </button>
+      <div class="zoom-controls-top">
+        <button id="zoomOut" class="zoom-btn" title="تصغير">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
 
-    <span class="zoom-label">🔍 تكبير / تصغير</span>
+        <span class="zoom-label">🔍 تكبير / تصغير</span>
 
-    <button id="zoomIn" class="zoom-btn" title="تكبير">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        <line x1="11" y1="8" x2="11" y2="14"></line>
-        <line x1="8" y1="11" x2="14" y2="11"></line>
-      </svg>
-    </button>
-  </div>
+        <button id="zoomIn" class="zoom-btn" title="تكبير">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+      </div>
 
-  <div class="grid-frame">
-    <div class="grid-container">
-      <canvas id="gridCanvas"></canvas>
+      <div class="grid-frame">
+        <div class="grid-container">
+          <canvas id="gridCanvas"></canvas>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <div class="hints-section">
       <p class="hint" data-i18n="hint">💡 مرر داخل الشبكة لاستكشاف المليون مربع</p>
@@ -373,7 +373,7 @@
       <div class="terms-box">
         <h4 data-i18n="termsTitle">📋 الشروط والأحكام</h4>
         <ul class="terms-list">
-          <li data-i18n="term1">• يجب أن تكون الصورة سيلفي شخصية وحقيقية (أو شعار رسمي للشركة).</li>
+          <li data-i18n="term1">• يجب أن تكون الصورة سيلفي شخصية حقيقية (أو شعار رسمي للشركة).</li>
           <li data-i18n="term2">• يُمنع رفع صور مخالفة للقوانين أو الآداب العامة.</li>
           <li data-i18n="term3">• في حال رفض الصورة من قبل الإدارة، يمكنك التواصل معنا لاسترجاع المبلغ كاملاً.</li>
           <li data-i18n="term4">• مدة معالجة الطلب: 24-48 ساعة.</li>
