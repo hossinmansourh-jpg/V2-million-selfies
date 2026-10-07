@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة التحكم - جدارية المليون</title>
+  <title>لوحة التحكم - مليون بصمة رقمية</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
@@ -698,7 +698,7 @@
     const auth = getAuth(app);
 
     const ADMIN_EMAIL = "hossinmansourh@gmail.com";
-    const REWARD_THRESHOLD = 10;   // 🆕 تم تغييرها من 5 إلى 10
+    const REWARD_THRESHOLD = 10;
 
     let allBookings = [];
     let currentTab = 'pending';
@@ -796,7 +796,6 @@
         }
         lastLikesCount = totalLikes;
 
-        // 🆕 إشعار الحجوزات التجارية الجديدة
         const businessCount = allBookings.filter(b => b.isBusiness === true).length;
         if (!isFirstLoad && businessCount > 0) {
           const lastBusinessCount = parseInt(localStorage.getItem('last_business_count') || '0');
@@ -848,7 +847,6 @@
       const totalLikes = allBookings
         .reduce((sum, b) => sum + (b.likes || 0), 0);
 
-      // 🆕 إحصائيات تجارية
       const businessBookings = allBookings.filter(b => b.isBusiness === true);
       const businessRevenue = businessBookings
         .filter(b => b.status === 'approved')
@@ -861,7 +859,6 @@
       document.getElementById('totalRevenue').textContent = '$' + totalRevenue.toLocaleString('en-US');
       document.getElementById('totalLikes').textContent = totalLikes.toLocaleString('en-US');
       
-      // 🆕 عرض الإحصائيات التجارية
       document.getElementById('businessCount').textContent = businessBookings.length.toLocaleString('en-US');
       document.getElementById('businessRevenue').textContent = '$' + businessRevenue.toLocaleString('en-US');
     }
@@ -889,13 +886,16 @@
         return;
       }
 
+      const baseUrl = window.location.origin + window.location.pathname.replace('hossin.html', '');
+      
       tbody.innerHTML = referrers.map(r => {
         const eligible = r.count >= REWARD_THRESHOLD;
         const rewardHTML = eligible 
           ? `<span class="ref-reward">🎁 مستحق</span>`
           : `<span class="ref-reward pending">${r.count}/${REWARD_THRESHOLD}</span>`;
         
-        const shareUrl = window.location.origin + '/V2-million-selfies/';
+        const refLink = baseUrl + '?ref=' + r.code;
+        
         return `
           <tr>
             <td><span class="ref-code">${r.code}</span></td>
@@ -921,7 +921,6 @@
       const list = document.getElementById('bookingsList');
       let filtered = allBookings;
 
-      // 🆕 تبويب الحجوزات التجارية
       if (currentTab === 'business') {
         filtered = filtered.filter(b => b.isBusiness === true);
       } else if (currentTab !== 'all') {
@@ -950,21 +949,17 @@
         const statusText = b.status === 'pending' ? 'قيد الانتظار' :
                           b.status === 'approved' ? 'مقبولة' : 'مرفوضة';
 
-        // 🆕 تحديد إن كان تجارياً
         const isBusiness = b.isBusiness === true;
         const businessTagHTML = isBusiness ? '<span class="business-tag-admin">🏢 تجاري</span>' : '';
 
-        // 🆕 اسم العرض (شركة أو شخصي)
         const displayName = isBusiness 
           ? `<span class="brand-name">${b.brandName || b.userName || 'شركة'}</span>`
           : (b.userName || 'زائر');
 
-        // 🆕 اسم الشركة المسجل
         const brandNameRow = isBusiness && b.brandName 
           ? `<p><strong>الاسم المسجل:</strong> ${b.userName || '-'}</p>`
           : '';
 
-        // 🆕 زر CTA
         const ctaRow = isBusiness && b.ctaButton 
           ? `<p><strong>نص CTA:</strong> <span class="brand-name">"${b.ctaButton}"</span></p>`
           : '';
@@ -1059,7 +1054,6 @@
         quantity: booking.quantity || 1,
         selfieUrl: booking.selfieUrl || '',
         referralCode: booking.referralCode || '',
-        // 🆕 تمرير البيانات التجارية
         isBusiness: (booking.isBusiness === true).toString(),
         brandName: booking.brandName || '',
         ctaButton: booking.ctaButton || ''
@@ -1077,7 +1071,6 @@
         });
         await loadBookings();
         
-        // فتح بطاقة المشاركة في تبويب جديد
         const booking = allBookings.find(b => b.id === id);
         if (booking) {
           const params = new URLSearchParams({
@@ -1086,7 +1079,6 @@
             quantity: booking.quantity || 1,
             selfieUrl: booking.selfieUrl || '',
             referralCode: booking.referralCode || '',
-            // 🆕 تمرير البيانات التجارية
             isBusiness: (booking.isBusiness === true).toString(),
             brandName: booking.brandName || '',
             ctaButton: booking.ctaButton || ''
