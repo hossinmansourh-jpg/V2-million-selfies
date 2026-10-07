@@ -1098,9 +1098,11 @@ let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
 let lastTouchEndTime = 0;
+let touchMovedDistance = 0;
 
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) { cancelAnimationFrame(inertiaFrame); inertiaFrame = null; }
+  touchMovedDistance = 0;
   if (selectionMode) {
     if (e.touches.length === 1) {
       const rect = canvas.getBoundingClientRect();
@@ -1206,6 +1208,15 @@ window.showOwnerCard = showOwnerCard;
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  
+  // 🆕 حساب مسافة السحب
+  if (e.touches.length === 1) {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > touchMovedDistance) touchMovedDistance = dist;
+  }
+  
   if (selectionMode && isSelecting && e.touches.length === 1) {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((e.touches[0].clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
@@ -1250,23 +1261,40 @@ canvas.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
-// ===== 🆕 touchend معدّلة لمعالجة النقر المفرد/المزدوج على الجوال =====
 canvas.addEventListener('touchend', (e) => {
   const now = Date.now();
   const timeSinceLastTouch = now - lastTouchEndTime;
   
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-  if (selectionMode && isSelecting) { isSelecting = false; lastTouchEndTime = now; return; }
+  if (selectionMode && isSelecting) { 
+    isSelecting = false; 
+    lastTouchEndTime = now; 
+    touchMovedDistance = 0; 
+    return; 
+  }
   lastTouchDist = 0;
-  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
-    startInertia();
+  
+  // 🆕 إذا تحرك الإصبع أكثر من 10 بكسل → كان تمريراً، لا نعالج النقر
+  if (touchMovedDistance > 10 || hasDragged) {
+    hasDragged = false;
+    touchMovedDistance = 0;
+    if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+      startInertia();
+    }
     lastTouchEndTime = now;
     return;
   }
   
-  // التحقق من وجود لمسة واحدة صالحة
+  if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
+    startInertia();
+    lastTouchEndTime = now;
+    touchMovedDistance = 0;
+    return;
+  }
+  
   if (!e.changedTouches || e.changedTouches.length === 0) {
     lastTouchEndTime = now;
+    touchMovedDistance = 0;
     return;
   }
   
@@ -1276,10 +1304,9 @@ canvas.addEventListener('touchend', (e) => {
   const touchY = touch.clientY - rect.top + offsetY;
   
   // 🆕 إذا كان الوقت أقل من 350 مللي ثانية → نقر مزدوج (إعجاب)
-  if (timeSinceLastTouch < 350 && timeSinceLastTouch > 0 && !hasDragged) {
+  if (timeSinceLastTouch < 350 && timeSinceLastTouch > 0) {
     e.preventDefault();
     
-    // إلغاء مؤقت النقر المفرد
     if (clickTimer) {
       clearTimeout(clickTimer);
       clickTimer = null;
@@ -1288,25 +1315,25 @@ canvas.addEventListener('touchend', (e) => {
     
     handleMobileDoubleTap(touchX, touchY);
     lastTouchEndTime = 0;
+    touchMovedDistance = 0;
     return;
   }
   
-  // 🆕 نقر مفرد على الجوال → ننتظر وننفذ
-  if (!hasDragged) {
-    const savedTouchX = touchX;
-    const savedTouchY = touchY;
-    
-    if (clickTimer) clearTimeout(clickTimer);
-    clickTimer = setTimeout(() => {
-      handleMobileSingleTap(savedTouchX, savedTouchY);
-      clickCount = 0;
-    }, 350);
-  }
+  // 🆕 نقر مفرد على الجوال (بدون سحب)
+  const savedTouchX = touchX;
+  const savedTouchY = touchY;
+  
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => {
+    handleMobileSingleTap(savedTouchX, savedTouchY);
+    clickCount = 0;
+  }, 350);
   
   lastTouchEndTime = now;
+  touchMovedDistance = 0;
 }, { passive: false });
 
-// ===== 🆕 دالة النقر المفرد على الجوال =====
+// 🆕 دالة النقر المفرد على الجوال
 function handleMobileSingleTap(touchX, touchY) {
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
@@ -1359,7 +1386,7 @@ function handleMobileSingleTap(touchX, touchY) {
   openBookingModal(startCell);
 }
 
-// ===== 🆕 دالة النقر المزدوج على الجوال (إعجاب) =====
+// 🆕 دالة النقر المزدوج على الجوال (إعجاب)
 async function handleMobileDoubleTap(touchX, touchY) {
   for (const booking of approvedBookings) {
     if (booking.status !== 'approved') continue;
