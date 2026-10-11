@@ -58,6 +58,13 @@ const pendingImageLoads = new Set();
 
 let isFreeRewardMode = false;
 
+// ===== متغيرات الضغطة المطولة (جديد) =====
+let longPressTimer = null;
+let longPressActive = false;
+let longPressStartX = 0;
+let longPressStartY = 0;
+let longPressTriggered = false;
+
 // ===== الثيم =====
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -446,7 +453,6 @@ function drawGridNow() {
   }
   drawScrollbars();
 }
-
 function drawScrollbars() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   const totalWidth = GRID_SIZE * CELL_PIXEL_SIZE;
@@ -1091,9 +1097,8 @@ async function handleDoubleClickOnly(e) {
     }
   }
 }
+
 // ===== الضغط المطول =====
-let longPressTimer = null;
-let longPressActive = false;
 let touchStartX = 0;
 let touchStartY = 0;
 let lastTouchDist = 0;
@@ -1103,6 +1108,8 @@ let touchMovedDistance = 0;
 canvas.addEventListener('touchstart', (e) => {
   if (inertiaFrame) { cancelAnimationFrame(inertiaFrame); inertiaFrame = null; }
   touchMovedDistance = 0;
+  longPressTriggered = false;
+  
   if (selectionMode) {
     if (e.touches.length === 1) {
       const rect = canvas.getBoundingClientRect();
@@ -1118,15 +1125,27 @@ canvas.addEventListener('touchstart', (e) => {
     }
     return;
   }
+  
   if (e.touches.length === 1) {
     const touch = e.touches[0];
     longPressActive = false;
-    longPressTimer = setTimeout(() => { longPressActive = true; handleLongPress(touch.clientX, touch.clientY); }, 600);
+    longPressTriggered = false;
+    longPressStartX = touch.clientX;
+    longPressStartY = touch.clientY;
+    
+    // ✅ بدء مؤقّت الضغطة المطولة (600ms)
+    longPressTimer = setTimeout(() => {
+      longPressActive = true;
+      longPressTriggered = true;
+      handleLongPress(longPressStartX, longPressStartY);
+    }, 600);
+    
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     lastMoveTime = Date.now();
     velocityX = 0;
     velocityY = 0;
+    
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((touch.clientX - rect.left + offsetX) / CELL_PIXEL_SIZE);
     const y = Math.floor((touch.clientY - rect.top + offsetY) / CELL_PIXEL_SIZE);
@@ -1207,13 +1226,18 @@ window.showOwnerCard = showOwnerCard;
 
 canvas.addEventListener('touchmove', (e) => {
   e.preventDefault();
-  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
   
   if (e.touches.length === 1) {
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist > touchMovedDistance) touchMovedDistance = dist;
+    
+    // ✅ إلغاء الضغطة المطولة فقط عند حركة فعلية (أكثر من 10 بكسل)
+    if (longPressTimer && touchMovedDistance > 10) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
   }
   
   if (selectionMode && isSelecting && e.touches.length === 1) {
@@ -1265,6 +1289,15 @@ canvas.addEventListener('touchend', (e) => {
   const timeSinceLastTouch = now - lastTouchEndTime;
   
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  
+  // ✅ إذا كانت ضغطة مطولة، لا تُنفّذ أي شيء آخر
+  if (longPressTriggered) {
+    longPressTriggered = false;
+    touchMovedDistance = 0;
+    lastTouchEndTime = 0;
+    return;
+  }
+  
   if (selectionMode && isSelecting) { 
     isSelecting = false; 
     lastTouchEndTime = now; 
@@ -1417,7 +1450,6 @@ canvas.addEventListener('gesturestart', (e) => { e.preventDefault(); }, { passiv
 canvas.addEventListener('gesturechange', (e) => { e.preventDefault(); }, { passive: false });
 canvas.addEventListener('gestureend', (e) => { e.preventDefault(); }, { passive: false });
 canvas.addEventListener('dblclick', (e) => { e.preventDefault(); return false; }, { passive: false });
-
 function updateSelectedCount() {
   if (!selectionStart || !selectionEnd) return;
   const x1 = Math.min(selectionStart.x, selectionEnd.x);
