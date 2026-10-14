@@ -1,6 +1,6 @@
 // ===== استيراد Firebase =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDeNKi4mjxT8ADaDRSwa8Hriyl_ocC315A",
@@ -17,76 +17,135 @@ const db = getFirestore(app);
 const REWARD_TARGET = 10;
 
 let myReferralCode = null;
-let referralCount = 0;
+
+// ===== الحصول على رمز الإحالة الخاص بالمستخدم =====
+function getMyReferralCode() {
+  let code = localStorage.getItem('my_referral_code');
+  if (!code) {
+    code = 'USER' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    localStorage.setItem('my_referral_code', code);
+  }
+  return code;
+}
+
+// ===== إنشاء وثيقة المُحيل إذا لم تكن موجودة =====
+async function ensureReferrerDoc(code) {
+  try {
+    const referrerRef = doc(db, 'referrers', code);
+    const referrerSnap = await getDoc(referrerRef);
+
+    if (!referrerSnap.exists()) {
+      await setDoc(referrerRef, {
+        code: code,
+        userId: 'user_' + Date.now(),
+        name: '',
+        email: '',
+        telegramChatId: '',
+        totalReferrals: 0,
+        approvedReferrals: 0,
+        pendingReferrals: 0,
+        rewardThreshold: REWARD_TARGET,
+        rewardReceived: false,
+        rewardDate: null,
+        rewardBookingId: null,
+        createdAt: Timestamp.now(),
+        lastReferralAt: null
+      });
+      return null;
+    }
+
+    return referrerSnap.data();
+  } catch (error) {
+    console.error('خطأ:', error);
+    return null;
+  }
+}
 
 // ===== تحميل البيانات =====
 async function loadRewardData() {
-  myReferralCode = localStorage.getItem('my_referral_code');
-  
-  if (!myReferralCode) {
-    // إنشاء رمز جديد
-    myReferralCode = 'USER' + Math.random().toString(36).substr(2, 8).toUpperCase();
-    localStorage.setItem('my_referral_code', myReferralCode);
-  }
-  
+  myReferralCode = getMyReferralCode();
   document.getElementById('myReferralCode').textContent = myReferralCode;
   
   try {
-    const snapshot = await getDocs(collection(db, "bookings"));
-    const allBookings = snapshot.docs.map(d => d.data());
+    const data = await ensureReferrerDoc(myReferralCode);
     
-    // عدّ الإحالات
-    referralCount = allBookings.filter(b => b.referredBy === myReferralCode).length;
+    const referrerData = data || {
+      approvedReferrals: 0,
+      pendingReferrals: 0,
+      rewardReceived: false,
+      rewardThreshold: REWARD_TARGET
+    };
     
-    // التحقق من استلام المكافأة سابقاً
-    const rewardClaimed = localStorage.getItem('reward_claimed') === 'true';
+    updateUI(referrerData);
     
-    updateUI(referralCount, rewardClaimed);
+    // إخفاء شاشة التحميل
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('contentState').style.display = 'block';
     
   } catch (error) {
     console.error('خطأ في تحميل البيانات:', error);
+    document.getElementById('loadingState').innerHTML = `
+      <p style="color: #ff5555;">❌ حدث خطأ في تحميل البيانات</p>
+      <p style="font-size: 13px; margin-top: 10px;">حاول تحديث الصفحة</p>
+    `;
   }
 }
 
 // ===== تحديث واجهة المستخدم =====
-function updateUI(count, claimed) {
-  document.getElementById('referralCount').textContent = count;
-  document.getElementById('totalReferrals').textContent = count;
-  
-  const remaining = Math.max(0, REWARD_TARGET - count);
-  document.getElementById('remainingReferrals').textContent = remaining;
-  
-  // تحديث الدائرة
+function updateUI(data) {
+  const approved = data.approvedReferrals || 0;
+  const pending = data.pendingReferrals || 0;
+  const received = data.rewardReceived || false;
+  const threshold = data.rewardThreshold || REWARD_TARGET;
+
+  // تحديث الأرقام
+  document.getElementById('referralCount').textContent = approved;
+  document.getElementById('approvedCount').textContent = approved;
+  document.getElementById('pendingCount').textContent = pending;
+
+  // تحديث الدائرة التقدمية
   const circle = document.getElementById('progressCircleFill');
   const circumference = 490;
-  const progress = Math.min(count / REWARD_TARGET, 1);
+  const progress = Math.min(approved / threshold, 1);
   const offset = circumference - (progress * circumference);
   circle.style.strokeDashoffset = offset;
-  
-  // تحديث الزر
+
+  // تحديث حالة المكافأة + الرسالة
+  const statusValue = document.getElementById('rewardStatusValue');
+  const messageBox = document.getElementById('rewardMessage');
   const claimBtn = document.getElementById('claimRewardBtn');
-  
-  if (claimed) {
+
+  if (received) {
+    statusValue.textContent = '✅';
+    messageBox.className = 'reward-message success';
+    messageBox.innerHTML = '🎉 <strong>مبروك!</strong> لقد استلمت مكافأتك — مربع مجاني على الجدارية!';
+    messageBox.style.display = 'block';
+    
     claimBtn.textContent = '✅ لقد استلمت مكافأتك';
     claimBtn.disabled = true;
-  } else if (count >= REWARD_TARGET) {
+  } else if (approved >= threshold) {
+    statusValue.textContent = '🎁';
+    messageBox.className = 'reward-message eligible';
+    messageBox.innerHTML = '✅ <strong>أنت مستحق للمكافأة!</strong><br>اضغط على الزر أدناه لاستلام مربعك المجاني.';
+    messageBox.style.display = 'block';
+    
     claimBtn.textContent = '🎉 استلم مكافأتك الآن!';
     claimBtn.disabled = false;
   } else {
-    claimBtn.textContent = `🔒 استلم مكافأتك (${count}/${REWARD_TARGET})`;
+    statusValue.textContent = '⏳';
+    const remaining = threshold - approved;
+    messageBox.className = 'reward-message info';
+    messageBox.innerHTML = `🎯 <strong>باقي ${remaining} ${remaining === 1 ? 'إحالة' : 'إحالات'}</strong> للحصول على مربع مجاني!`;
+    messageBox.style.display = 'block';
+    
+    claimBtn.textContent = `🔒 استلم مكافأتك (${approved}/${threshold})`;
     claimBtn.disabled = true;
   }
 }
 
 // ===== استلام المكافأة =====
 document.getElementById('claimRewardBtn').addEventListener('click', () => {
-  if (referralCount < REWARD_TARGET) return;
-  
-  // حفظ حالة الاستلام
-  localStorage.setItem('reward_claimed', 'true');
-  localStorage.setItem('reward_claimed_at', Date.now().toString());
-  
-  // فتح نموذج الحجز بسعر 0
+  // التحقق من الأهلية (سيتم إعادة التحقق في app.js)
   localStorage.setItem('free_booking_mode', 'true');
   localStorage.setItem('free_booking_reason', `${REWARD_TARGET} إحالات`);
   
@@ -98,13 +157,29 @@ document.getElementById('claimRewardBtn').addEventListener('click', () => {
 document.getElementById('shareReferralBtn').addEventListener('click', () => {
   const url = window.location.origin + window.location.pathname.replace('reward.html', '') + '?ref=' + myReferralCode;
   
-  navigator.clipboard.writeText(url).then(() => {
+  const shareText = `🖐️ انضم إليّ في مليون بصمة رقمية!\nاحجز مربعك بـ 1$ فقط وكن جزءاً من التاريخ الرقمي.\n👇 سجّل الآن من رابطي:\n\n${url}`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'مليون بصمة رقمية',
+      text: shareText,
+      url: url
+    }).catch(() => {
+      copyToClipboard(shareText);
+    });
+  } else {
+    copyToClipboard(shareText);
+  }
+});
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('shareReferralBtn');
     const originalText = btn.textContent;
     btn.textContent = '✅ تم النسخ!';
-    btn.style.background = '#3a9a3a';
+    btn.style.background = 'var(--green)';
     btn.style.color = '#fff';
-    btn.style.borderColor = '#3a9a3a';
+    btn.style.borderColor = 'var(--green)';
     
     setTimeout(() => {
       btn.textContent = originalText;
@@ -115,7 +190,7 @@ document.getElementById('shareReferralBtn').addEventListener('click', () => {
   }).catch(() => {
     alert('❌ فشل النسخ');
   });
-});
+}
 
 // ===== التشغيل =====
 loadRewardData();
