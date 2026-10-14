@@ -1671,3 +1671,33 @@ html, body {
     -webkit-tap-highlight-color: transparent;
     touch-action: none;
 }
+
+/* ============================================ */
+/* 🆕 أنماط زر "مكافآتي" */
+/* ============================================ */
+.rewards-btn {
+  background: linear-gradient(135deg, #d4a017, #f5b301);
+  color: var(--bg-dark);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+  box-shadow: 0 0 15px rgba(245, 179, 1, 0.5);
+  animation: rewardsPulse 3s infinite;
+}
+
+.rewards-btn:hover {
+  transform: scale(1.15) rotate(-5deg);
+  box-shadow: 0 0 30px rgba(245, 179, 1, 1);
+}
+
+@keyframes rewardsPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(245, 179, 1, 0.5); }
+  50% { box-shadow: 0 0 30px rgba(245, 179, 1, 1); }
+}
+
+.rewards-label {
+  color: var(--gold-light) !important;
+  font-weight: 900 !important;
+}
