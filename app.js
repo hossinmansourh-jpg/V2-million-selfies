@@ -1,6 +1,6 @@
 // ===== استيراد Firebase =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, Timestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, Timestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDeNKi4mjxT8ADaDRSwa8Hriyl_ocC315A",
@@ -152,6 +152,81 @@ function getReferredBy() {
   if (ref) localStorage.setItem('referred_by', ref);
   return ref || localStorage.getItem('referred_by') || null;
 }
+
+// ===== 🆕 نظام تتبع الإحالة (referrers) =====
+
+/**
+ * تُنشئ وثيقة referrer جديدة إذا لم تكن موجودة.
+ * @param {string} code - رمز الإحالة
+ * @param {object} userData - بيانات المستخدم (الاسم، الإيميل، إلخ)
+ */
+async function ensureReferrerDoc(code, userData = {}) {
+  if (!code) return;
+  
+  try {
+    const referrerRef = doc(db, 'referrers', code);
+    const referrerSnap = await getDoc(referrerRef);
+    
+    if (!referrerSnap.exists()) {
+      // إنشاء وثيقة جديدة
+      await setDoc(referrerRef, {
+        code: code,
+        userId: userData.userId || 'guest_' + Date.now(),
+        name: userData.name || '',
+        email: userData.email || '',
+        telegramChatId: userData.telegramChatId || '',
+        totalReferrals: 0,
+        approvedReferrals: 0,
+        pendingReferrals: 0,
+        rewardThreshold: REFERRAL_TARGET,
+        rewardReceived: false,
+        rewardDate: null,
+        rewardBookingId: null,
+        createdAt: Timestamp.now(),
+        lastReferralAt: null
+      });
+      console.log('✅ تم إنشاء وثيقة المُحيل:', code);
+    }
+    return true;
+  } catch (error) {
+    console.error('❌ خطأ في ensureReferrerDoc:', error);
+    return false;
+  }
+}
+
+/**
+ * تُسجّل إحالة جديدة في وثيقة المُحيل.
+ * - تزيد pendingReferrals بـ 1
+ * - تحدّث lastReferralAt
+ * @param {string} referralCode - رمز الإحالة
+ */
+async function trackReferral(referralCode) {
+  if (!referralCode) return;
+  
+  try {
+    // تأكد من وجود الوثيقة أولاً
+    await ensureReferrerDoc(referralCode);
+    
+    const referrerRef = doc(db, 'referrers', referralCode);
+    
+    // تحديث العدّاد
+    await updateDoc(referrerRef, {
+      pendingReferrals: increment(1),
+      totalReferrals: increment(1),
+      lastReferralAt: Timestamp.now()
+    });
+    
+    console.log('✅ تم تسجيل الإحالة لـ:', referralCode);
+  } catch (error) {
+    console.error('❌ خطأ في trackReferral:', error);
+  }
+}
+
+/**
+ * تُحدّث وثيقة referrer عند قبول حجز (يُستدعى من hossin.html)
+ * ملاحظة: هذه الدالة موجودة في hossin.html أيضاً، لكن نضعها هنا للتوثيق.
+ */
+// async function approveReferral(referralCode) { ... }
 
 const REFERRAL_TEXTS = {
   ar: {
@@ -875,7 +950,7 @@ function closeOnboarding() {
 window.closeOnboarding = closeOnboarding;
 
 // ==========================================================
-// ===== نظام اللمس الموحّد (الحل الجذري) =====
+// ===== نظام اللمس الموحّد =====
 // ==========================================================
 
 let touchStartX = 0;
@@ -1696,6 +1771,10 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
     for (let i = 0; i < quantity; i++) cellIndices.push(startCell + i);
     const unitPrice = isFreeRewardMode ? 0 : (isBusiness ? BUSINESS_CELL_PRICE : CELL_PRICE);
     const totalPrice = isFreeRewardMode ? 0 : quantity * unitPrice;
+    
+    // ✅ الحصول على رمز الإحالة الحالي
+    const referredBy = getReferredBy();
+    
     const bookingData = {
       startCell, cellIndices, gridShape: { rows, cols }, quantity, totalPrice, unitPrice,
       bookingType: isBusiness ? 'business' : 'personal',
@@ -1718,10 +1797,19 @@ document.getElementById('submitBooking').addEventListener('click', async () => {
       createdAt: Timestamp.now(),
       timestamp: Date.now(),
       referralCode: getMyReferralCode(),
-      referredBy: getReferredBy() || null,
+      referredBy: referredBy || null,
       likes: 0
     };
+    
+    // ✅ حفظ الحجز في Firestore
     const docRef = await addDoc(collection(db, "bookings"), bookingData);
+    
+    // ✅ 🆕 تسجيل الإحالة في وثيقة referrers
+    if (referredBy) {
+      await trackReferral(referredBy);
+      console.log('✅ تم تسجيل الإحالة للمُحيل:', referredBy);
+    }
+    
     localStorage.setItem('my_booking_id', docRef.id);
     localStorage.removeItem('my_card_claimed');
     localStorage.removeItem('approval_notification_shown_at');
@@ -1871,7 +1959,6 @@ async function generateQRCode(ctx, text, x, y, size) {
   });
 }
 
-// ✅ دالة معدّلة: توليد البطاقة بأبعاد ديناميكية
 async function generateShareCard(bookingData) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -1879,7 +1966,6 @@ async function generateShareCard(bookingData) {
       const HEIGHT = 1920;
       const isBusiness = bookingData.isBusiness === true;
       
-      // ✅ حساب أبعاد الصورة ديناميكياً حسب نسبة المربع المحجوز
       const gridCols = (bookingData.gridShape && bookingData.gridShape.cols) || 1;
       const gridRows = (bookingData.gridShape && bookingData.gridShape.rows) || 1;
       const aspectRatio = gridCols / gridRows;
@@ -1890,7 +1976,6 @@ async function generateShareCard(bookingData) {
       let photoWidth, photoHeight;
       
       if (aspectRatio >= 1) {
-        // أفقية أو مربعة
         photoWidth = MAX_PHOTO_WIDTH;
         photoHeight = photoWidth / aspectRatio;
         if (photoHeight > MAX_PHOTO_HEIGHT) {
@@ -1898,7 +1983,6 @@ async function generateShareCard(bookingData) {
           photoWidth = photoHeight * aspectRatio;
         }
       } else {
-        // عمودية
         photoHeight = MAX_PHOTO_HEIGHT;
         photoWidth = photoHeight * aspectRatio;
         if (photoWidth > MAX_PHOTO_WIDTH) {
@@ -1965,11 +2049,9 @@ async function generateShareCard(bookingData) {
       const photoX = (WIDTH - photoWidth) / 2;
       const photoBottom = photoY + photoHeight;
       
-      // إطار ذهبي خارجي
       ctx2.fillStyle = '#d4a017';
       roundRect(ctx2, photoX - 15, photoY - 15, photoWidth + 30, photoHeight + 30, 30);
       ctx2.fill();
-      // إطار ذهبي داخلي متوهج
       ctx2.shadowColor = '#f5b301';
       ctx2.shadowBlur = 40;
       ctx2.fillStyle = '#f5b301';
@@ -1981,20 +2063,17 @@ async function generateShareCard(bookingData) {
         try {
           const img = await loadImage(bookingData.selfieUrl);
           
-          // ✅ استخدام "cover" لعرض الصورة كاملة بدون تشويه
           const imgAspect = img.width / img.height;
           const frameAspect = photoWidth / photoHeight;
           
           let drawWidth, drawHeight, drawX, drawY;
           
           if (imgAspect > frameAspect) {
-            // الصورة أعرض → اقتطع من الجانبين
             drawHeight = photoHeight;
             drawWidth = photoHeight * imgAspect;
             drawX = photoX + (photoWidth - drawWidth) / 2;
             drawY = photoY;
           } else {
-            // الصورة أطول → اقتطع من الأعلى والأسفل
             drawWidth = photoWidth;
             drawHeight = photoWidth / imgAspect;
             drawX = photoX;
@@ -2014,7 +2093,6 @@ async function generateShareCard(bookingData) {
         }
       }
       
-      // ✅ العنوان الرئيسي بعد الصورة
       ctx2.font = 'bold 60px Cairo, sans-serif';
       ctx2.fillStyle = '#f5b301';
       const titleY = photoBottom + 100;
@@ -2026,7 +2104,6 @@ async function generateShareCard(bookingData) {
         ctx2.fillText('التاريخ الرقمي! 🚀', WIDTH / 2, titleY + 75);
       }
       
-      // ✅ صندوق البيانات
       const dataY = titleY + 140;
       const dataBoxWidth = 780;
       const dataBoxHeight = 250;
@@ -2055,7 +2132,6 @@ async function generateShareCard(bookingData) {
         ctx2.fillText(`🎁 رمز الإحالة: ${bookingData.referralCode}`, WIDTH / 2, dataY + 215);
       }
       
-      // ✅ QR في الأسفل
       const qrSize = 180;
       const qrX = (WIDTH - qrSize) / 2;
       const qrY = dataY + dataBoxHeight + 50;
@@ -2065,7 +2141,6 @@ async function generateShareCard(bookingData) {
       ctx2.fillStyle = '#a0a0b0';
       ctx2.fillText('امسح الرمز لزيارة الصفحة', WIDTH / 2, qrY + qrSize + 35);
       
-      // ✅ CTA في الأسفل
       const ctaY = HEIGHT - 100;
       ctx2.font = 'bold 36px Cairo, sans-serif';
       ctx2.fillStyle = '#d4a017';
