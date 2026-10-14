@@ -32,7 +32,6 @@
       padding-bottom: 60px;
     }
 
-    /* ===== تسجيل الدخول ===== */
     .login-box {
       max-width: 400px;
       margin: 80px auto;
@@ -84,7 +83,6 @@
 
     .error-msg { color: var(--red); font-size: 14px; margin-top: 10px; font-weight: 700; min-height: 20px; }
 
-    /* ===== لوحة التحكم ===== */
     .admin-panel { max-width: 900px; margin: 0 auto; display: none; }
     .admin-panel.active { display: block; }
 
@@ -141,7 +139,6 @@
       padding-right: 12px;
     }
 
-    /* ===== الإحصائيات ===== */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -176,7 +173,6 @@
       box-shadow: 0 0 12px var(--gold);
     }
 
-    /* 🆕 شريط تجاري */
     .stat-box.business-top::before {
       content: '';
       position: absolute;
@@ -258,6 +254,34 @@
     .ref-count { color: var(--blue); font-weight: 900; font-size: 16px; }
     .ref-reward { color: var(--green); font-weight: 900; font-size: 14px; }
     .ref-reward.pending { color: #8a6a1a; }
+    .ref-reward.received { color: #4ade80; }
+
+    /* 🆕 زر منح المكافأة */
+    .grant-reward-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg-dark);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      font-family: 'Cairo', sans-serif;
+      transition: 0.3s;
+      box-shadow: 0 0 10px rgba(245, 179, 1, 0.5);
+    }
+
+    .grant-reward-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(245, 179, 1, 0.8);
+    }
+
+    .grant-reward-btn:disabled {
+      background: var(--bg-light);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
     .copy-btn {
       background: var(--bg-dark);
@@ -281,7 +305,6 @@
       font-weight: 700;
     }
 
-    /* ===== التبويبات ===== */
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
 
     .tab-btn {
@@ -300,7 +323,6 @@
     .tab-btn.active { background: var(--gold); color: var(--bg-dark); border-color: var(--gold); }
     .tab-btn:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
 
-    /* 🆕 تبويب تجاري */
     .tab-btn.business-tab.active {
       background: linear-gradient(135deg, var(--gold), var(--gold-light));
       box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
@@ -321,7 +343,6 @@
     .search-box:focus { outline: none; border-color: var(--gold); }
     .search-box::placeholder { color: var(--text-muted); }
 
-    /* ===== بطاقات الطلبات ===== */
     .booking-card {
       background: var(--bg-gray);
       border: 1px solid var(--bg-light);
@@ -334,7 +355,6 @@
       align-items: flex-start;
     }
 
-    /* 🆕 بطاقة تجارية */
     .booking-card.business-card {
       border: 1.5px solid var(--gold);
       background: linear-gradient(135deg, rgba(212, 160, 23, 0.08), var(--bg-gray));
@@ -372,7 +392,6 @@
     .selfie-img { border-color: var(--gold); }
     .receipt-img { border-color: #4a9eff; }
 
-    /* 🆕 شعار الشركة */
     .booking-img.business-selfie {
       border-color: var(--gold-light);
       box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
@@ -390,13 +409,11 @@
 
     .booking-info p strong { color: #fff; }
 
-    /* 🆕 اسم الشركة */
     .booking-info p .brand-name {
       color: var(--gold-light);
       font-weight: 900;
     }
 
-    /* 🆕 شارة تجارية داخل البطاقة */
     .business-tag-admin {
       display: inline-block;
       background: linear-gradient(135deg, var(--gold), var(--gold-light));
@@ -464,7 +481,6 @@
       border: 1px dashed var(--bg-light);
     }
 
-    /* ===== نافذة الصورة ===== */
     .image-modal {
       display: none;
       position: fixed;
@@ -512,7 +528,6 @@
 
     .image-close-btn:hover { background: #c44; transform: scale(1.1); }
 
-    /* ===== إشعار الإدارة ===== */
     .admin-notification {
       position: fixed;
       top: 20px;
@@ -535,13 +550,23 @@
     .admin-notification.show { transform: translateX(0); }
     .admin-notification.new-booking { border-color: #4ade80; color: #4ade80; }
     .admin-notification.new-like { border-color: #ff3366; color: #ff3366; }
-    .admin-notification.new-business { 
-      border-color: var(--gold-light); 
+    .admin-notification.new-business {
+      border-color: var(--gold-light);
       color: var(--gold-light);
       box-shadow: 0 10px 30px rgba(212, 160, 23, 0.6);
     }
+    .admin-notification.new-reward {
+      border-color: #f5b301;
+      color: #f5b301;
+      box-shadow: 0 10px 30px rgba(245, 179, 1, 0.8);
+      animation: rewardPulse 2s infinite;
+    }
 
-    /* ===== الهاتف ===== */
+    @keyframes rewardPulse {
+      0%, 100% { box-shadow: 0 10px 30px rgba(245, 179, 1, 0.6); }
+      50% { box-shadow: 0 10px 50px rgba(245, 179, 1, 1); }
+    }
+
     @media (max-width: 600px) {
       .admin-header h1 { font-size: 22px; }
       .stat-box .num { font-size: 26px; }
@@ -555,7 +580,6 @@
 </head>
 <body>
 
-  <!-- شاشة تسجيل الدخول -->
   <div class="login-box" id="loginBox">
     <h1>🔒 لوحة التحكم</h1>
     <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور" />
@@ -563,7 +587,6 @@
     <p class="error-msg" id="errorMsg"></p>
   </div>
 
-  <!-- لوحة التحكم -->
   <div class="admin-panel" id="adminPanel">
     
     <div class="admin-header">
@@ -574,7 +597,6 @@
       </div>
     </div>
 
-    <!-- إحصائيات الزوار -->
     <div class="section-heading">👥 إحصائيات الزوار</div>
     <div class="stats-grid">
       <div class="stat-box blue-top">
@@ -595,7 +617,6 @@
       </div>
     </div>
 
-    <!-- إحصائيات الطلبات -->
     <div class="section-heading">📋 إحصائيات الطلبات</div>
     <div class="stats-grid">
       <div class="stat-box gold-top">
@@ -622,7 +643,6 @@
         <span class="num red" id="totalLikes">0</span>
         <span class="lbl">إجمالي الإعجابات</span>
       </div>
-      <!-- 🆕 إحصائيات تجارية -->
       <div class="stat-box business-top">
         <span class="num business" id="businessCount">0</span>
         <span class="lbl">🏢 حجوزات تجارية</span>
@@ -633,25 +653,25 @@
       </div>
     </div>
 
-    <!-- المُحيلين -->
+    <!-- ===== 🆕 المُحيلين (محدّث) ===== -->
     <div class="section-heading">🏆 أكثر المُحيلين</div>
     <div class="referrers-table">
       <table>
         <thead>
           <tr>
             <th>رمز المُحيل</th>
-            <th>عدد الإحالات</th>
+            <th>✅ مقبول</th>
+            <th>⏳ معلق</th>
             <th>المكافأة</th>
-            <th>الرابط</th>
+            <th>الإجراء</th>
           </tr>
         </thead>
         <tbody id="referrersTableBody">
-          <tr><td colspan="4" class="empty-row">لا توجد إحالات بعد</td></tr>
+          <tr><td colspan="5" class="empty-row">لا توجد إحالات بعد</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- إدارة الطلبات -->
     <div class="section-heading">🗂️ إدارة الطلبات</div>
 
     <div class="tabs">
@@ -659,7 +679,6 @@
       <button class="tab-btn" data-tab="approved">مقبولة</button>
       <button class="tab-btn" data-tab="rejected">مرفوضة</button>
       <button class="tab-btn" data-tab="all">الكل</button>
-      <!-- 🆕 تبويب الحجوزات التجارية -->
       <button class="tab-btn business-tab" data-tab="business">🏢 تجارية</button>
     </div>
 
@@ -669,19 +688,16 @@
 
   </div>
 
-  <!-- نافذة عرض الصورة -->
   <div class="image-modal" id="imageModal">
     <button class="image-close-btn" id="imageCloseBtn">✕</button>
     <img id="modalImage" src="" alt="صورة كبيرة">
   </div>
 
-  <!-- إشعار الإدارة -->
   <div id="adminNotification" class="admin-notification"></div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, getDoc, setDoc, doc, updateDoc, deleteDoc, query, orderBy, increment, Timestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -701,13 +717,14 @@
     const REWARD_THRESHOLD = 10;
 
     let allBookings = [];
+    let allReferrers = [];
     let currentTab = 'pending';
     let searchQuery = '';
     let lastBookingsCount = 0;
     let lastLikesCount = 0;
+    let lastRewardCount = 0;
     let isFirstLoad = true;
 
-    // ===== إشعار الإدارة =====
     function showAdminNotification(message, type = 'info') {
       const notification = document.getElementById('adminNotification');
       notification.textContent = message;
@@ -718,7 +735,6 @@
       }, 4000);
     }
 
-    // ===== تسجيل الدخول =====
     document.getElementById('loginBtn').addEventListener('click', async () => {
       const password = document.getElementById('passwordInput').value;
       const errMsg = document.getElementById('errorMsg');
@@ -774,6 +790,7 @@
 
     async function loadAllData() {
       await loadBookings();
+      await loadReferrers();
       await loadVisits();
     }
 
@@ -809,11 +826,141 @@
 
         updateBookingStats();
         renderBookings();
-        updateReferrers();
       } catch (error) {
         console.error("خطأ في تحميل الحجوزات:", error);
       }
     }
+
+    // ===== 🆕 تحميل المُحيلين من collection referrers =====
+    async function loadReferrers() {
+      try {
+        const snapshot = await getDocs(collection(db, "referrers"));
+        allReferrers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        // ترتيب حسب الإحالات المقبولة
+        allReferrers.sort((a, b) => (b.approvedReferrals || 0) - (a.approvedReferrals || 0));
+        
+        // إشعار المكافآت المستحقة
+        const eligibleCount = allReferrers.filter(r => 
+          (r.approvedReferrals || 0) >= REWARD_THRESHOLD && !r.rewardReceived
+        ).length;
+        
+        if (!isFirstLoad && eligibleCount > lastRewardCount) {
+          showAdminNotification(`🎁 لديك ${eligibleCount - lastRewardCount} مُحيل مستحق للمكافأة!`, 'new-reward');
+        }
+        lastRewardCount = eligibleCount;
+        
+        updateReferrersTable();
+      } catch (error) {
+        console.error("خطأ في تحميل المُحيلين:", error);
+      }
+    }
+
+    function updateReferrersTable() {
+      const tbody = document.getElementById('referrersTableBody');
+
+      if (allReferrers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-row">لا توجد إحالات بعد</td></tr>';
+        return;
+      }
+
+      const baseUrl = window.location.origin + window.location.pathname.replace('hossin.html', '');
+      
+      tbody.innerHTML = allReferrers.map(r => {
+        const approved = r.approvedReferrals || 0;
+        const pending = r.pendingReferrals || 0;
+        const received = r.rewardReceived || false;
+        const eligible = approved >= REWARD_THRESHOLD;
+        
+        let rewardHTML = '';
+        let actionHTML = '';
+        
+        if (received) {
+          rewardHTML = `<span class="ref-reward received">🎁 استلم</span>`;
+          actionHTML = `<span style="color: #64748b;">—</span>`;
+        } else if (eligible) {
+          rewardHTML = `<span class="ref-reward">✅ مستحق</span>`;
+          actionHTML = `<button class="grant-reward-btn" onclick="grantReward('${r.id}', '${r.code || r.id}', '${(r.name || '').replace(/'/g, "\\'")}')">🎁 منح</button>`;
+        } else {
+          rewardHTML = `<span class="ref-reward pending">⏳ ${approved}/${REWARD_THRESHOLD}</span>`;
+          actionHTML = `<span style="color: #64748b;">—</span>`;
+        }
+        
+        const refLink = baseUrl + '?ref=' + (r.code || r.id);
+        
+        return `
+          <tr>
+            <td>
+              <span class="ref-code">${r.code || r.id}</span><br>
+              <small style="color: var(--text-muted); font-size: 11px;">${r.name || 'مستخدم'}</small>
+            </td>
+            <td><span class="ref-count">${approved}</span></td>
+            <td><span class="ref-count" style="color: #8a6a1a;">${pending}</span></td>
+            <td>${rewardHTML}</td>
+            <td>
+              ${actionHTML}
+              <button class="copy-btn" onclick="copyReferrerLink('${refLink}')" style="margin-right: 4px;">📋</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===== 🆕 منح المكافأة يدوياً =====
+    window.grantReward = async function(referrerId, referrerCode, referrerName) {
+      if (!confirm(`هل تريد منح المكافأة للمُحيل "${referrerName || referrerCode}"؟\nسيتم إنشاء حجز مجاني تلقائياً.`)) return;
+      
+      try {
+        // إنشاء حجز مجاني
+        const bookingData = {
+          name: `مكافأة إحالة - ${referrerName || 'مستخدم'}`,
+          userName: referrerName || 'مستخدم',
+          email: '',
+          link: '',
+          imageUrl: '',
+          selfieUrl: '',
+          isBusiness: false,
+          squares: [],
+          quantity: 1,
+          totalPrice: 0,
+          unitPrice: 0,
+          status: 'approved',
+          isFreeReward: true,
+          referredBy: referrerCode,
+          rewardFor: referrerCode,
+          likes: 0,
+          createdAt: Timestamp.now(),
+          timestamp: Date.now(),
+          approvedAt: Date.now()
+        };
+        
+        const newBooking = await addDoc(collection(db, "bookings"), bookingData);
+        
+        // تحديث وثيقة المُحيل
+        await updateDoc(doc(db, "referrers", referrerId), {
+          rewardReceived: true,
+          rewardDate: Timestamp.now(),
+          rewardBookingId: newBooking.id
+        });
+        
+        showAdminNotification(`🎁 تم منح المكافأة لـ ${referrerName || referrerCode}!`, 'new-reward');
+        
+        // إعادة التحميل
+        await loadReferrers();
+        await loadBookings();
+      } catch (error) {
+        console.error('خطأ في منح المكافأة:', error);
+        alert('❌ حدث خطأ في منح المكافأة');
+      }
+    };
+
+    window.copyReferrerLink = function(link) {
+      navigator.clipboard.writeText(link).then(() => {
+        showAdminNotification('✅ تم نسخ الرابط!', 'new-booking');
+      }).catch(() => {
+        alert('❌ فشل النسخ');
+      });
+    };
 
     async function loadVisits() {
       try {
@@ -862,60 +1009,6 @@
       document.getElementById('businessCount').textContent = businessBookings.length.toLocaleString('en-US');
       document.getElementById('businessRevenue').textContent = '$' + businessRevenue.toLocaleString('en-US');
     }
-
-    function updateReferrers() {
-      const referrersMap = {};
-      
-      allBookings.forEach(b => {
-        if (b.referredBy) {
-          if (!referrersMap[b.referredBy]) {
-            referrersMap[b.referredBy] = 0;
-          }
-          referrersMap[b.referredBy]++;
-        }
-      });
-
-      const referrers = Object.entries(referrersMap)
-        .map(([code, count]) => ({ code, count }))
-        .sort((a, b) => b.count - a.count);
-
-      const tbody = document.getElementById('referrersTableBody');
-
-      if (referrers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-row">لا توجد إحالات بعد</td></tr>';
-        return;
-      }
-
-      const baseUrl = window.location.origin + window.location.pathname.replace('hossin.html', '');
-      
-      tbody.innerHTML = referrers.map(r => {
-        const eligible = r.count >= REWARD_THRESHOLD;
-        const rewardHTML = eligible 
-          ? `<span class="ref-reward">🎁 مستحق</span>`
-          : `<span class="ref-reward pending">${r.count}/${REWARD_THRESHOLD}</span>`;
-        
-        const refLink = baseUrl + '?ref=' + r.code;
-        
-        return `
-          <tr>
-            <td><span class="ref-code">${r.code}</span></td>
-            <td><span class="ref-count">${r.count}</span></td>
-            <td>${rewardHTML}</td>
-            <td>
-              <button class="copy-btn" onclick="copyReferrerLink('${refLink}')">📋 نسخ</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    window.copyReferrerLink = function(link) {
-      navigator.clipboard.writeText(link).then(() => {
-        alert('✅ تم نسخ الرابط');
-      }).catch(() => {
-        alert('❌ فشل النسخ');
-      });
-    };
 
     function renderBookings() {
       const list = document.getElementById('bookingsList');
@@ -1040,7 +1133,6 @@
       }
     });
 
-    // ===== فتح بطاقة الإنجاز =====
     window.openCard = function(id) {
       const booking = allBookings.find(b => b.id === id);
       if (!booking) {
@@ -1062,16 +1154,104 @@
       window.open('card.html?' + params.toString(), '_blank');
     };
 
+    // ===== 🆕 تحديث referrers عند القبول =====
+    async function approveReferral(referralCode) {
+      if (!referralCode) return;
+      
+      try {
+        const referrerRef = doc(db, 'referrers', referralCode);
+        const referrerSnap = await getDoc(referrerRef);
+        
+        if (!referrerSnap.exists()) {
+          // إنشاء وثيقة إن لم تكن موجودة
+          await setDoc(referrerRef, {
+            code: referralCode,
+            userId: 'admin_created',
+            name: '',
+            email: '',
+            telegramChatId: '',
+            totalReferrals: 1,
+            approvedReferrals: 1,
+            pendingReferrals: 0,
+            rewardThreshold: REWARD_THRESHOLD,
+            rewardReceived: false,
+            rewardDate: null,
+            rewardBookingId: null,
+            createdAt: Timestamp.now(),
+            lastReferralAt: Timestamp.now()
+          });
+          console.log('✅ تم إنشاء وثيقة مُحيل جديدة:', referralCode);
+        } else {
+          // تحديث العدّادات
+          await updateDoc(referrerRef, {
+            approvedReferrals: increment(1),
+            pendingReferrals: increment(-1)
+          });
+          console.log('✅ تم تحديث الإحالة المقبولة:', referralCode);
+        }
+      } catch (error) {
+        console.error('❌ خطأ في approveReferral:', error);
+      }
+    }
+
+    // ===== 🆕 تحديث referrers عند الرفض =====
+    async function rejectReferral(referralCode) {
+      if (!referralCode) return;
+      
+      try {
+        const referrerRef = doc(db, 'referrers', referralCode);
+        const referrerSnap = await getDoc(referrerRef);
+        
+        if (referrerSnap.exists()) {
+          await updateDoc(referrerRef, {
+            pendingReferrals: increment(-1)
+          });
+          console.log('✅ تم إلغاء الإحالة المعلقة:', referralCode);
+        }
+      } catch (error) {
+        console.error('❌ خطأ في rejectReferral:', error);
+      }
+    }
+
+    // ===== 🆕 تحديث referrers عند الحذف =====
+    async function deleteReferral(referralCode, wasApproved) {
+      if (!referralCode) return;
+      
+      try {
+        const referrerRef = doc(db, 'referrers', referralCode);
+        const referrerSnap = await getDoc(referrerRef);
+        
+        if (referrerSnap.exists()) {
+          const updateData = wasApproved 
+            ? { approvedReferrals: increment(-1), totalReferrals: increment(-1) }
+            : { pendingReferrals: increment(-1), totalReferrals: increment(-1) };
+          
+          await updateDoc(referrerRef, updateData);
+          console.log('✅ تم تحديث الإحالة المحذوفة:', referralCode);
+        }
+      } catch (error) {
+        console.error('❌ خطأ في deleteReferral:', error);
+      }
+    }
+
+    // ===== الموافقة على الحجز =====
     window.approveBooking = async (id) => {
       if (!confirm('هل تريد قبول هذا الطلب؟')) return;
       try {
+        const booking = allBookings.find(b => b.id === id);
+        
         await updateDoc(doc(db, "bookings", id), {
           status: 'approved',
           approvedAt: Date.now()
         });
-        await loadBookings();
         
-        const booking = allBookings.find(b => b.id === id);
+        // ✅ تحديث referrers
+        if (booking && booking.referredBy) {
+          await approveReferral(booking.referredBy);
+        }
+        
+        await loadAllData();
+        
         if (booking) {
           const params = new URLSearchParams({
             userName: booking.userName || 'زائر',
@@ -1091,25 +1271,46 @@
       }
     };
 
+    // ===== رفض الحجز =====
     window.rejectBooking = async (id) => {
       if (!confirm('هل تريد رفض هذا الطلب؟')) return;
       try {
+        const booking = allBookings.find(b => b.id === id);
+        const wasPending = booking && booking.status === 'pending';
+        
         await updateDoc(doc(db, "bookings", id), {
           status: 'rejected',
           rejectedAt: Date.now()
         });
-        await loadBookings();
+        
+        // ✅ تحديث referrers
+        if (booking && booking.referredBy && wasPending) {
+          await rejectReferral(booking.referredBy);
+        }
+        
+        await loadAllData();
       } catch (error) {
         console.error(error);
         alert('حدث خطأ');
       }
     };
 
+    // ===== حذف الحجز =====
     window.deleteBooking = async (id) => {
       if (!confirm('هل تريد حذف هذا الطلب نهائياً؟')) return;
       try {
+        const booking = allBookings.find(b => b.id === id);
+        const wasApproved = booking && booking.status === 'approved';
+        const wasPending = booking && booking.status === 'pending';
+        
         await deleteDoc(doc(db, "bookings", id));
-        await loadBookings();
+        
+        // ✅ تحديث referrers
+        if (booking && booking.referredBy && (wasApproved || wasPending)) {
+          await deleteReferral(booking.referredBy, wasApproved);
+        }
+        
+        await loadAllData();
       } catch (error) {
         console.error(error);
         alert('حدث خطأ');
